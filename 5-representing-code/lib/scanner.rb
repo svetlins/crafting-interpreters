@@ -46,14 +46,7 @@ module TokenTypes
   EOF = "EOF"
 end
 
-class Token
-  def initialize(type, lexeme, literal, line)
-    @type = type
-    @lexeme = lexeme
-    @literal = literal
-    @line = line
-  end
-end
+Token = Struct.new(:type, :lexeme, :literal, :line)
 
 class Scanner
   include TokenTypes

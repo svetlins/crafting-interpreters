@@ -1,6 +1,7 @@
 $LOAD_PATH.unshift File.join(__dir__, 'lib')
 
 require 'scanner'
+require 'expression'
 
 class Rlox
   def initialize(argv)
@@ -49,4 +50,5 @@ class Rlox
   end
 end
 
+Expression.test_mest
 Rlox.new(ARGV).main

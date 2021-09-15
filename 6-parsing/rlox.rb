@@ -2,6 +2,7 @@ $LOAD_PATH.unshift File.join(__dir__, 'lib')
 
 require 'scanner'
 require 'expression'
+require 'parser'
 
 class Rlox
   def initialize(argv)
@@ -50,5 +51,13 @@ class Rlox
   end
 end
 
-Expression.test_mest
+require 'pp'
+source = '1 + 2 *'
+puts source
+pp Scanner.new(source).scan
+pp Parser.new(Scanner.new(source).scan).parse_expression
+puts Parser.new(Scanner.new(source).scan).parse_expression.accept(Expression::BadPrinter.new)
+puts Parser.new(Scanner.new(source).scan).parse_expression.accept(Expression::SexpPrinter.new)
+
+
 Rlox.new(ARGV).main

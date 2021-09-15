@@ -14,29 +14,28 @@ module Expression
   Literal = define_expression_type('Literal', :value)
   Unary = define_expression_type('Unary', :operator, :right)
 
-  def self.test_mest
-    an_expression = Binary.new(
-      Grouping.new(
-        Binary.new(
-          Literal.new(1),
-          Token.new(TokenTypes::PLUS, "+", nil, 1),
-          Literal.new(2)
-        )
-      ),
-      Token.new(TokenTypes::STAR, "*", nil, 1),
-      Grouping.new(
-        Binary.new(
-          Literal.new(4),
-          Token.new(TokenTypes::MINUS, "-", nil, 1),
-          Literal.new(3)
-        )
-      ),
-    )
+  # Usage of visitor operations
+  # an_expression = Binary.new(
+  #   Grouping.new(
+  #     Binary.new(
+  #       Literal.new(1),
+  #       Token.new(TokenTypes::PLUS, "+", nil, 1),
+  #       Literal.new(2)
+  #     )
+  #   ),
+  #   Token.new(TokenTypes::STAR, "*", nil, 1),
+  #   Grouping.new(
+  #     Binary.new(
+  #       Literal.new(4),
+  #       Token.new(TokenTypes::MINUS, "-", nil, 1),
+  #       Literal.new(3)
+  #     )
+  #   ),
+  # )
 
-    puts an_expression.accept(BadPrinter.new)
-    puts an_expression.accept(SexpPrinter.new)
-    puts an_expression.accept(RPNPrinter.new)
-  end
+  # puts an_expression.accept(BadPrinter.new)
+  # puts an_expression.accept(SexpPrinter.new)
+  # puts an_expression.accept(RPNPrinter.new)
 
   class BadPrinter
     def visit_binary(binary)
@@ -52,7 +51,7 @@ module Expression
     end
 
     def visit_unary(unary)
-      operator.lexeme + unary.right.accept(self)
+      unary.operator.lexeme + unary.right.accept(self)
     end
   end
 

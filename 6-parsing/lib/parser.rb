@@ -3,6 +3,8 @@ class Parser
   include TokenTypes
   include Expression
 
+  class ParserError < RuntimeError; end
+
   def initialize(tokens)
     @tokens = tokens
     @current = 0
@@ -131,6 +133,14 @@ class Parser
   def advance
     @current += 1 if has_more?
     previous
+  end
+
+  def consume(token_type, message)
+    if peek.type == token_type
+      advance
+    end
+
+    return ParserError.new(message)
   end
 
   def at_end?

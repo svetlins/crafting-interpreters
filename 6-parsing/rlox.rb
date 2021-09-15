@@ -3,6 +3,7 @@ $LOAD_PATH.unshift File.join(__dir__, 'lib')
 require 'scanner'
 require 'expression'
 require 'parser'
+require 'lab'
 
 class Rlox
   def initialize(argv)
@@ -11,13 +12,15 @@ class Rlox
   end
 
   def main
-    if @argv.size > 1
+    if @argv.size > 2
       puts "Usage: rlox [source_file]"
       exit(64)
-    elsif @argv.size == 1
-      run_file(@argv.first)
-    else
+    elsif @argv.size == 0
       run_prompt
+    elsif @argv.first == 'run'
+      run_file(@argv[1])
+    elsif @argv.first == 'lab'
+      Lab.run
     end
   end
 
@@ -50,14 +53,5 @@ class Rlox
     @@had_error = true
   end
 end
-
-require 'pp'
-source = '1 + 2 *'
-puts source
-pp Scanner.new(source).scan
-pp Parser.new(Scanner.new(source).scan).parse_expression
-puts Parser.new(Scanner.new(source).scan).parse_expression.accept(Expression::BadPrinter.new)
-puts Parser.new(Scanner.new(source).scan).parse_expression.accept(Expression::SexpPrinter.new)
-
 
 Rlox.new(ARGV).main

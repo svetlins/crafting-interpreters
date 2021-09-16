@@ -70,13 +70,15 @@ class Scanner
     "while" => WHILE
   }
 
-  def initialize(source)
+  def initialize(source, error_reporter: nil)
     @source = source
     @tokens = []
 
     @start = 0
     @current = 0
     @line = 1
+
+    @error_reporter = error_reporter
   end
 
   def scan
@@ -84,6 +86,8 @@ class Scanner
       @start = @current
       scan_token
     end
+
+    @start = @current
 
     add_token(EOF)
 
@@ -121,7 +125,7 @@ class Scanner
     when /\d/ then consume_number
     when /\w/ then consume_identifier
     else
-      Rlox.report_error(@line, "invalid token")
+      @error_reporter.report_scanner_error(@line, "invalid token")
     end
   end
 
@@ -165,7 +169,7 @@ class Scanner
     end
 
     if at_end?
-      RLox.report_error(@line, "unterminated string")
+      @error_reporter.report_scanner_error(@line, "unterminated string")
     end
 
     advance # closing "

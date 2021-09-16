@@ -81,11 +81,20 @@ module Lab
   end
 
   def scan(source)
-    Scanner.new(source).scan
+    Scanner.new(source, error_reporter: self).scan
   end
 
   def parse(source)
-    Parser.new(scan(source)).parse_expression
+    Parser.new(scan(source), error_reporter: self).parse
+  end
+
+  def report_scanner_error(line, message)
+    raise
+    pp ["scanner error", line, message]
+  end
+
+  def report_parser_error(token, message)
+    pp ["parser error", token, message]
   end
 
   def sample_source1
@@ -94,6 +103,10 @@ module Lab
 
   def sample_source2
     "(1 + 2) * 3"
+  end
+
+  def malformed_source1
+    "1 * (1 + 3"
   end
 
   def sample_expression1

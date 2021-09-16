@@ -40,7 +40,7 @@ class Rlox
   end
 
   def run(source)
-    scanner = Scanner.new(source)
+    scanner = Scanner.new(source, error_reporter: self)
     tokens = scanner.scan
 
     tokens.each do |token|
@@ -48,8 +48,18 @@ class Rlox
     end
   end
 
-  def self.report_error(line, message)
+  def self.report_scanner_error(line, message)
     $stderr.puts "line: #{line} - error: #{message}"
+    @@had_error = true
+  end
+
+  def self.report_parser_error(token, message)
+    if token.type == TokenTypes.EOF
+      $stderr.puts "line: #{token.line} at end - error: #{message}"
+    else
+      $stderr.puts "line: #{token.line}, token: #{token.lexeme} - error: #{message}"
+    end
+
     @@had_error = true
   end
 end

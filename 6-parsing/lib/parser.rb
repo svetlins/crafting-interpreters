@@ -1,13 +1,21 @@
 require 'scanner'
+
 class Parser
   include TokenTypes
   include Expression
 
   class ParserError < RuntimeError; end
 
-  def initialize(tokens)
+  def initialize(tokens, error_reporter: nil)
     @tokens = tokens
     @current = 0
+    @error_reporter = error_reporter
+  end
+
+  def parse
+    parse_expression
+  rescue ParserError
+    nil
   end
 
   def parse_expression
@@ -104,6 +112,8 @@ class Parser
       consume(RIGHT_PAREN, "Expected ')' after expression")
       Grouping.new(expression)
     end
+
+    raise error(peek, "Expected expression")
   end
 
   def match_any?(*token_types)
@@ -136,11 +146,28 @@ class Parser
   end
 
   def consume(token_type, message)
-    if peek.type == token_type
+    if check(token_type)
       advance
+      return
     end
 
-    return ParserError.new(message)
+    raise error(peek, message)
+  end
+
+  def error(token, message)
+    @error_reporter.report_parser_error(token, message) if @error_reporter
+    return ParserError.new
+  end
+
+  # Not yet utilized :shrug:
+  def synchronize
+    advance
+    while has_more?
+      return if previous.type == SEMICOLON
+      return if [CLASS, FOR, FUN, IF, PRINT, RETURN, VAR, WHILE].include? peek.type
+
+      advance
+    end
   end
 
   def at_end?

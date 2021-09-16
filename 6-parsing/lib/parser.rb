@@ -110,7 +110,7 @@ class Parser
     if match_any?(LEFT_PAREN)
       expression = parse_expression
       consume(RIGHT_PAREN, "Expected ')' after expression")
-      Grouping.new(expression)
+      return Grouping.new(expression)
     end
 
     raise error(peek, "Expected expression")

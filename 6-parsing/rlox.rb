@@ -13,7 +13,7 @@ class Rlox
 
   def main
     if @argv.size > 2
-      puts "Usage: rlox [source_file]"
+      puts "Usage: rlox run [source_file] or rlox lab"
       exit(64)
     elsif @argv.size == 0
       run_prompt
@@ -42,9 +42,13 @@ class Rlox
   def run(source)
     scanner = Scanner.new(source, error_reporter: self)
     tokens = scanner.scan
+    parser = Parser.new(tokens)
+    expression = parser.parse
 
-    tokens.each do |token|
-      p token
+    if @@had_error
+      puts 'Aborting due to errors'
+    else
+      puts expression.accept(Lab::Printer.new)
     end
   end
 

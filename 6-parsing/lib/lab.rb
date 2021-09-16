@@ -10,7 +10,7 @@ module Lab
 
   extend self
 
-  class BadPrinter
+  class Printer
     def visit_binary(binary)
       binary.left.accept(self) + binary.operator.lexeme + binary.right.accept(self)
     end
@@ -84,12 +84,15 @@ module Lab
     Scanner.new(source, error_reporter: self).scan
   end
 
+  def parse_tokens(tokens)
+    Parser.new(tokens, error_reporter: self).parse
+  end
+
   def parse(source)
     Parser.new(scan(source), error_reporter: self).parse
   end
 
   def report_scanner_error(line, message)
-    raise
     pp ["scanner error", line, message]
   end
 

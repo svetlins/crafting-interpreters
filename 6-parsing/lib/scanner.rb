@@ -198,9 +198,9 @@ class Scanner
       advance
     end
 
-    text = @source[@start ... @current]
+    lexeme = @source[@start ... @current]
 
-    add_token(KEY_WORDS[text] || IDENTIFIER)
+    add_token(KEY_WORDS[lexeme] || IDENTIFIER)
   end
 
   def digit?(char)

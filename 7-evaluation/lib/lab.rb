@@ -6,6 +6,7 @@ require 'parser'
 require 'printers/printer'
 require 'printers/sexp_printer'
 require 'printers/rpn_printer'
+require 'interpreter'
 
 module Lab
   include TokenTypes
@@ -32,12 +33,22 @@ module Lab
     Parser.new(scan(source), error_reporter: self).parse
   end
 
+  def interpret(source)
+    Interpreter.new(
+      error_reporter: self
+    ).interpret(parse(source))
+  end
+
   def report_scanner_error(line, message)
     pp ["scanner error", line, message]
   end
 
   def report_parser_error(token, message)
     pp ["parser error", token, message]
+  end
+
+  def report_runtime_error(token, message)
+    pp ["interpreter error", token, message]
   end
 
   def sample_source1

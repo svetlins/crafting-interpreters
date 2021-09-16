@@ -9,7 +9,8 @@ require 'printers/printer'
 class Rlox
   def initialize(argv)
     @argv = argv
-    @@had_error = false
+    @had_error = false
+    @interpreter = Interpreter.new(error_reporter: self)
   end
 
   def main
@@ -27,7 +28,7 @@ class Rlox
 
   def run_file(file_name)
     run(File.read(file_name))
-    exit(65) if @@had_error
+    exit(65) if @had_error
   end
 
   def run_prompt
@@ -36,7 +37,7 @@ class Rlox
       line = $stdin.gets
       break if line.nil?
       run(line)
-      @@had_error = false
+      @had_error = false
     end
   end
 
@@ -45,27 +46,33 @@ class Rlox
     tokens = scanner.scan
     parser = Parser.new(tokens)
     expression = parser.parse
+    value =
 
-    if @@had_error
+    if @had_error
       puts 'Aborting due to errors'
     else
-      puts Printer.print(expression)
+      puts @interpreter.interpret(expression)
     end
   end
 
-  def self.report_scanner_error(line, message)
+  def report_scanner_error(line, message)
     $stderr.puts "line: #{line} - error: #{message}"
-    @@had_error = true
+    @had_error = true
   end
 
-  def self.report_parser_error(token, message)
+  def report_parser_error(token, message)
     if token.type == TokenTypes.EOF
       $stderr.puts "line: #{token.line} at end - error: #{message}"
     else
       $stderr.puts "line: #{token.line}, token: #{token.lexeme} - error: #{message}"
     end
 
-    @@had_error = true
+    @had_error = true
+  end
+
+  def report_runtime_error(token, message)
+    $stderr.puts "line: #{token.line} - error: #{message}"
+    @had_error = true
   end
 end
 

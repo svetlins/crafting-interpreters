@@ -46,7 +46,6 @@ class Rlox
     tokens = scanner.scan
     parser = Parser.new(tokens)
     expression = parser.parse
-    value =
 
     if @had_error
       puts 'Aborting due to errors'

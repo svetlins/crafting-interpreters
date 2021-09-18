@@ -1,4 +1,5 @@
 require 'scanner'
+require 'environment'
 
 class Interpreter
   include TokenTypes
@@ -13,18 +14,59 @@ class Interpreter
   end
 
   def initialize(error_reporter: nil)
+    @environment = Environment.new
     @error_reporter = error_reporter
   end
 
-  def interpret(expression)
-    expression.accept(self)
+  def interpret(statements)
+    statements.each do |statement|
+      execute(statement)
+    end
   rescue LoxRuntimeError => error
     @error_reporter.report_runtime_error(error.token, error.message) if @error_reporter
   end
 
+  def execute(statement)
+    statement.accept(self)
+  end
+
+  def evaluate(expression)
+    expression.accept(self)
+  end
+
+  def visit_print_statement(print_statement)
+    puts evaluate(print_statement.expression)
+    return nil
+  end
+
+  def visit_block(block_statement)
+    execute_block(block_statement.statements, Environment.new(@environment))
+    return nil
+  end
+
+  def visit_expression_statement(expression_statement)
+    evaluate(expression_statement.expression)
+  end
+
+  def visit_var_statement(var_statement)
+    @environment.define(
+      var_statement.name.lexeme,
+      var_statement.initializer ? evaluate(var_statement.initializer) : nil
+    )
+
+    return nil
+  end
+
+  def visit_assign(assign)
+    value = evaluate(assign.value)
+    @environment.assign(assign.name, value)
+
+    value
+  end
+
   def visit_binary(binary)
-    left = interpret(binary.left)
-    right = interpret(binary.right)
+    left = evaluate(binary.left)
+    right = evaluate(binary.right)
 
     case binary.operator.type
     when MINUS
@@ -64,7 +106,7 @@ class Interpreter
   end
 
   def visit_grouping(grouping)
-    interpret(grouping.expression)
+    evaluate(grouping.expression)
   end
 
   def visit_literal(literal)
@@ -72,7 +114,7 @@ class Interpreter
   end
 
   def visit_unary(unary)
-    right = interpret(unary.right)
+    right = evaluate(unary.right)
 
     case unary.operator.type
     when BANG
@@ -82,8 +124,19 @@ class Interpreter
     end
   end
 
-  def parenthesize(name, *items)
-    "(" + name + items.map { |item| " #{item.accept(self)}" }.join + ")"
+  def visit_variable(variable)
+    @environment.get(variable.name)
+  end
+
+  def execute_block(statements, environment)
+    saved_environment = @environment
+    @environment = environment
+
+    statements.each do |statement|
+      execute(statement)
+    end
+  ensure
+    @environment = saved_environment
   end
 
   def truthy?(value)

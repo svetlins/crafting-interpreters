@@ -1,8 +1,11 @@
 require 'scanner'
+require 'expression'
+require 'statement'
 
 class Parser
   include TokenTypes
   include Expression
+  include Statement
 
   class ParserError < RuntimeError; end
 
@@ -13,13 +16,90 @@ class Parser
   end
 
   def parse
-    parse_expression
-  rescue ParserError
-    nil
+    statements = []
+    statements << parse_toplevel_statement while has_more?
+
+    statements
+  end
+
+  def parse_toplevel_statement
+    if match_any?(VAR)
+      parse_variable_declaration
+    else
+      parse_statement
+    end
+  rescue ParserError => error
+    synchronize
+    return nil
+  end
+
+  def parse_variable_declaration
+    name = consume(IDENTIFIER, "Expected variable name")
+
+    if match_any?(EQUAL)
+      initializer = parse_expression
+    end
+
+    consume(SEMICOLON, "Expected ; after variable declaration")
+
+    VarStatement.new(name, initializer)
+  end
+
+  def parse_statement
+    if match_any?(PRINT)
+      parse_print_statement
+    elsif match_any?(LEFT_BRACE)
+      BlockStatement.new(parse_block_statement)
+    else
+      parse_expression_statement
+    end
+  end
+
+  def parse_print_statement
+    expression = parse_expression
+    consume(SEMICOLON, "Expected ; after expression")
+
+    PrintStatement.new(expression)
+  end
+
+  def parse_block_statement
+    statements = []
+
+    while !check(RIGHT_BRACE) && has_more?
+      statements << parse_toplevel_statement
+    end
+
+    consume(RIGHT_BRACE, "Expected } at end of block")
+
+    statements
+  end
+
+  def parse_expression_statement
+    expression = parse_expression
+    consume(SEMICOLON, "Expected ; after expression")
+
+    ExpressionStatement.new(expression)
   end
 
   def parse_expression
-    parse_equality
+    parse_assignment
+  end
+
+  def parse_assignment
+    expression = parse_equality
+
+    if match_any?(EQUAL)
+      equal = previous
+
+      if name = l_value(expression)
+        value = parse_expression
+        return Assign.new(name, value)
+      else
+        error(equal, "Expected variable name on left side of assignment")
+      end
+    end
+
+    expression
   end
 
   def parse_equality
@@ -106,6 +186,7 @@ class Parser
     if match_any?(FALSE)          then return Literal.new(false) end
     if match_any?(TRUE)           then return Literal.new(true) end
     if match_any?(NIL)            then return Literal.new(nil) end
+    if match_any?(IDENTIFIER)     then return Variable.new(previous) end
 
     if match_any?(LEFT_PAREN)
       expression = parse_expression
@@ -148,10 +229,9 @@ class Parser
   def consume(token_type, message)
     if check(token_type)
       advance
-      return
+    else
+      raise error(peek, message)
     end
-
-    raise error(peek, message)
   end
 
   def error(token, message)
@@ -168,6 +248,12 @@ class Parser
 
       advance
     end
+  end
+
+  def l_value(expression)
+    return expression.name if expression.is_a? Variable
+
+    return nil
   end
 
   def at_end?

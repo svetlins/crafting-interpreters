@@ -45,33 +45,32 @@ class Rlox
     scanner = Scanner.new(source, error_reporter: self)
     tokens = scanner.scan
     parser = Parser.new(tokens)
-    expression = parser.parse
-    value =
+    statements = parser.parse
 
     if @had_error
       puts 'Aborting due to errors'
     else
-      puts @interpreter.interpret(expression)
+      @interpreter.interpret(statements)
     end
   end
 
   def report_scanner_error(line, message)
-    $stderr.puts "line: #{line} - error: #{message}"
+    $stderr.puts "scanner error. line: #{line} - error: #{message}"
     @had_error = true
   end
 
   def report_parser_error(token, message)
     if token.type == TokenTypes.EOF
-      $stderr.puts "line: #{token.line} at end - error: #{message}"
+      $stderr.puts "parser error. line: #{token.line} at end - error: #{message}"
     else
-      $stderr.puts "line: #{token.line}, token: #{token.lexeme} - error: #{message}"
+      $stderr.puts "parser error. line: #{token.line}, token: #{token.lexeme} - error: #{message}"
     end
 
     @had_error = true
   end
 
   def report_runtime_error(token, message)
-    $stderr.puts "line: #{token.line} - error: #{message}"
+    $stderr.puts "runtime error. line: #{token.line} - error: #{message}"
     @had_error = true
   end
 end

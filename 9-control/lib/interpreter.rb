@@ -69,6 +69,14 @@ class Interpreter
     return nil
   end
 
+  def visit_while_statement(while_statement)
+    while truthy?(evaluate(while_statement.condition))
+      execute(while_statement.body)
+    end
+
+    return nil
+  end
+
   def visit_assign(assign)
     value = evaluate(assign.value)
     @environment.assign(assign.name, value)

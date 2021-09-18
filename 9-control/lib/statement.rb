@@ -14,4 +14,5 @@ module Statement
   VarStatement = define_statement_type('var_statement', :name, :initializer)
   BlockStatement = define_statement_type('block_statement', :statements)
   IfStatement = define_statement_type('if_statement', :condition, :then_branch, :else_branch)
+  WhileStatement = define_statement_type('while_statement', :condition, :body)
 end

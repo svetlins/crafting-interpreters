@@ -46,25 +46,36 @@ class Parser
   end
 
   def parse_statement
-    if match_any?(PRINT)
-      parse_print_statement
-    elsif match_any?(LEFT_BRACE)
-      BlockStatement.new(parse_block_statement)
-    elsif match_any?(IF)
-      consume(LEFT_PAREN, "Expected ( before if condition")
-      condition = parse_expression
-      consume(RIGHT_PAREN, "Expected ) after if condition")
-
-      then_branch = parse_statement
-
-      if match_any?(ELSE)
-        else_branch = parse_statement
-      end
-
-      IfStatement.new(condition, then_branch, else_branch)
-    else
-      parse_expression_statement
+    if match_any?(PRINT) then parse_print_statement
+    elsif match_any?(LEFT_BRACE) then BlockStatement.new(parse_block_statement)
+    elsif match_any?(IF) then parse_if
+    elsif match_any?(WHILE) then parse_while
+    else parse_expression_statement
     end
+  end
+
+  def parse_if
+    consume(LEFT_PAREN, "Expected ( before if condition")
+    condition = parse_expression
+    consume(RIGHT_PAREN, "Expected ) after if condition")
+
+    then_branch = parse_statement
+
+    if match_any?(ELSE)
+      else_branch = parse_statement
+    end
+
+    IfStatement.new(condition, then_branch, else_branch)
+  end
+
+  def parse_while
+    consume(LEFT_PAREN, "Expected ( before while condition")
+    condition = parse_expression
+    consume(RIGHT_PAREN, "Expected ) after while condition")
+
+    body = parse_statement
+
+    WhileStatement.new(condition, body)
   end
 
   def parse_print_statement

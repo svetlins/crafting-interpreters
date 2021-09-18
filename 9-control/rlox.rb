@@ -42,7 +42,7 @@ class Rlox
   def run(source)
     scanner = Scanner.new(source, error_reporter: self)
     tokens = scanner.scan
-    parser = Parser.new(tokens)
+    parser = Parser.new(tokens, error_reporter: self)
     statements = parser.parse
 
     if @had_error
@@ -58,7 +58,7 @@ class Rlox
   end
 
   def report_parser_error(token, message)
-    if token.type == TokenTypes.EOF
+    if token.type == TokenTypes::EOF
       $stderr.puts "parser error. line: #{token.line} at end - error: #{message}"
     else
       $stderr.puts "parser error. line: #{token.line}, token: #{token.lexeme} - error: #{message}"

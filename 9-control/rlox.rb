@@ -5,6 +5,7 @@ require 'expression'
 require 'parser'
 require 'lab'
 require 'printers/printer'
+require 'readline'
 
 class Rlox
   def initialize(argv)
@@ -32,10 +33,7 @@ class Rlox
   end
 
   def run_prompt
-    loop do
-      print '> '
-      line = $stdin.gets
-      break if line.nil?
+    while line = Readline.readline("> ", true)
       run(line)
       @had_error = false
     end

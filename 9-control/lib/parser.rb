@@ -98,7 +98,7 @@ class Parser
   end
 
   def parse_assignment
-    expression = parse_equality
+    expression = parse_or
 
     if match_any?(EQUAL)
       equal = previous
@@ -109,6 +109,30 @@ class Parser
       else
         error(equal, "Expected variable name on left side of assignment")
       end
+    end
+
+    expression
+  end
+
+  def parse_or
+    expression = parse_and
+
+    while match_any?(OR)
+      operator = previous
+      right = parse_and
+      expression = Logical.new(expression, operator, right)
+    end
+
+    expression
+  end
+
+  def parse_and
+    expression = parse_equality
+
+    while match_any?(AND)
+      operator = previous
+      right = parse_equality
+      expression = Logical.new(expression, operator, right)
     end
 
     expression

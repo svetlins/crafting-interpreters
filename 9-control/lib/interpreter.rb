@@ -125,6 +125,18 @@ class Interpreter
     literal.value
   end
 
+  def visit_logical(logical)
+    left = evaluate(logical.left)
+
+    if logical.operator.type == OR
+      if truthy?(left) then return left end
+    else
+      if !truthy?(left) then return left end
+    end
+
+    evaluate(logical.right)
+  end
+
   def visit_unary(unary)
     right = evaluate(unary.right)
 

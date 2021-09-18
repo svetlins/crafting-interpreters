@@ -13,6 +13,7 @@ module Expression
   Binary = define_expression_type('binary', :left, :operator, :right)
   Grouping = define_expression_type('grouping', :expression)
   Literal = define_expression_type('literal', :value)
+  Logical = define_expression_type('logical', :left, :operator, :right)
   Unary = define_expression_type('unary', :operator, :right)
   Variable = define_expression_type('variable', :name)
 end

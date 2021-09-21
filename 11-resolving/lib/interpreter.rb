@@ -22,6 +22,7 @@ class Interpreter
   def initialize(error_reporter: nil)
     @globals = Environment.new
     @environment = @globals
+    @static_resolutions = {}
     define_globals
     @error_reporter = error_reporter
   end
@@ -43,6 +44,10 @@ class Interpreter
     end
   rescue LoxRuntimeError => error
     @error_reporter.report_runtime_error(error.token, error.message) if @error_reporter
+  end
+
+  def resolve(expression, depth)
+    @static_resolutions[expression] = depth
   end
 
   def execute(statement)
@@ -116,7 +121,14 @@ class Interpreter
 
   def visit_assign(assign)
     value = evaluate(assign.value)
-    @environment.assign(assign.name, value)
+
+    depth = @static_resolutions[assign]
+
+    if depth
+      @environment.assign_at(depth, assign.name, value)
+    else
+      @globals.assign(assign.name, value)
+    end
 
     value
   end
@@ -194,7 +206,17 @@ class Interpreter
   end
 
   def visit_variable(variable)
-    @environment.get(variable.name)
+    lookup_variable(variable.name, variable)
+  end
+
+  def lookup_variable(name, expression)
+    depth = @static_resolutions[expression]
+
+    if depth
+      @environment.get_at(depth, name)
+    else
+      @globals.get(name)
+    end
   end
 
   def visit_call(call_expression)

@@ -13,8 +13,6 @@ class Environment
   def assign(name, value)
     if @binding.include?(name.lexeme)
       @binding[name.lexeme] = value
-    elsif @enclosing
-      @enclosing.assign(name, value)
     else
       raise Interpreter::LoxRuntimeError.new(name, "Undefined variable #{name.lexeme}")
     end
@@ -22,8 +20,18 @@ class Environment
 
   def get(name)
     value = @binding[name.lexeme]
-    value ||= @enclosing&.get(name)
-
     value or raise Interpreter::LoxRuntimeError.new(name, "Undefined name #{name.lexeme}.")
+  end
+
+  def get_at(depth, name)
+    ancestor(depth).get(name)
+  end
+
+  def assign_at(depth, name, value)
+    ancestor(depth).assign(name, value)
+  end
+
+  def ancestor(depth)
+    depth == 0 ? self : @enclosing.ancestor(depth - 1)
   end
 end

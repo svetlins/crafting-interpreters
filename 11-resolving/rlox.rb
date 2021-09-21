@@ -3,9 +3,13 @@ $LOAD_PATH.unshift File.join(__dir__, 'lib')
 require 'scanner'
 require 'expression'
 require 'parser'
+require 'static_resolver'
+require 'interpreter'
+
 require 'lab'
 require 'printers/printer'
 require 'readline'
+
 
 class Rlox
   def initialize(argv)
@@ -45,11 +49,14 @@ class Rlox
     parser = Parser.new(tokens, error_reporter: self)
     statements = parser.parse
 
-    if @had_error
-      puts 'Aborting due to errors'
-    else
-      @interpreter.interpret(statements)
-    end
+    return if @had_error
+
+    resolver = StaticResolver.new(@interpreter, error_reporter: self)
+    resolver.resolve(statements)
+
+    return if @had_error
+
+    @interpreter.interpret(statements)
   end
 
   def report_scanner_error(line, message)
@@ -64,6 +71,11 @@ class Rlox
       $stderr.puts "parser error. line: #{token.line}, token: #{token.lexeme} - error: #{message}"
     end
 
+    @had_error = true
+  end
+
+  def report_static_analysis_error(token, message)
+    $stderr.puts "static analysis error. line: #{token.line} - error: #{message}"
     @had_error = true
   end
 

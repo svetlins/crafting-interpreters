@@ -3,6 +3,9 @@ require 'scanner'
 module Statement
   def self.define_statement_type(name, *fields)
     Struct.new(*fields) do
+      def expression? = false
+      def statement? = true
+
       define_method :accept do |visitor|
         visitor.public_send(:"visit_#{name}", self)
       end

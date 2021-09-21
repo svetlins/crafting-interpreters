@@ -1,0 +1,42 @@
+fun makeRect(x, y, w, h) {
+  var area = w * h;
+
+  fun rect(field) {
+    if (field == "area") {
+      return area;
+    } else if (field == "circumference") {
+      return 2 * w + 2 * h;
+    } else return -1;
+  }
+
+  return rect;
+}
+
+var aRect = makeRect(0, 20, 10, 20);
+
+print aRect("area") == 200;
+print aRect("circumference") == 60;
+
+var x = 2;
+
+while (x > 0) {
+  print aRect("area") == 200;
+  x = x - 1;
+}
+
+for(var y = 2; y > 0; y = y - 1) print 10 <= 20;
+
+{
+  var a = 10;
+
+  {
+    var a = 20;
+
+    {
+      var a = 30;
+
+      print a == 30;
+    }
+  }
+}
+

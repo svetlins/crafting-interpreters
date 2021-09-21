@@ -46,6 +46,7 @@ class StaticResolver
     @scopes.reverse.each_with_index do |scope, index|
       if scope.has_key? name.lexeme
         @interpreter.resolve(expression, index)
+        break
       end
     end
   end

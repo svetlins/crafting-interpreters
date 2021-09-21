@@ -47,7 +47,7 @@ class Interpreter
   end
 
   def resolve(expression, depth)
-    @static_resolutions[expression] = depth
+    @static_resolutions[expression.object_id] = depth
   end
 
   def execute(statement)
@@ -122,7 +122,7 @@ class Interpreter
   def visit_assign(assign)
     value = evaluate(assign.value)
 
-    depth = @static_resolutions[assign]
+    depth = @static_resolutions[assign.object_id]
 
     if depth
       @environment.assign_at(depth, assign.name, value)
@@ -210,7 +210,7 @@ class Interpreter
   end
 
   def lookup_variable(name, expression)
-    depth = @static_resolutions[expression]
+    depth = @static_resolutions[expression.object_id]
 
     if depth
       @environment.get_at(depth, name)

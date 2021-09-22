@@ -24,6 +24,12 @@ class LoxFunction
     end
   end
 
+  def bind(instance)
+    instance_scope = Environment.new(@closure)
+    instance_scope.define('this', instance)
+    LoxFunction.new(@declaration, instance_scope)
+  end
+
   def to_s
     "<fn #{@declaration.name.lexeme}>"
   end

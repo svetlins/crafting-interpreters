@@ -1,5 +1,7 @@
 require 'environment'
 require 'function'
+require 'lox_instance'
+require 'lox_class'
 require 'scanner'
 
 require 'time'
@@ -87,6 +89,19 @@ class Interpreter
       function_statement.name.lexeme,
       lox_function
     )
+
+    return nil
+  end
+
+  def visit_class_statement(class_statement)
+    @environment.define(class_statement.name.lexeme, nil)
+
+    methods = class_statement.methods.map do |method|
+      [method.name.lexeme, LoxFunction.new(method, @environment)]
+    end.to_h
+
+    klass = LoxClass.new(class_statement.name.lexeme, methods)
+    @environment.assign(class_statement.name, klass)
 
     return nil
   end
@@ -209,6 +224,10 @@ class Interpreter
     lookup_variable(variable.name, variable)
   end
 
+  def visit_this_expression(this_expression)
+    lookup_variable(this_expression.keyword, this_expression)
+  end
+
   def lookup_variable(name, expression)
     depth = @static_resolutions[expression.object_id]
 
@@ -239,6 +258,26 @@ class Interpreter
     end
 
     callee.lox_call(self, evaluated_arguments)
+  end
+
+  def visit_get_expression(get_expression)
+    object = evaluate(get_expression.object)
+
+    if object.is_a? LoxInstance
+      object.get(get_expression.name)
+    else
+      raise LoxRuntimeError.new(get_expression.name, "Can't access property of non-object vlaue")
+    end
+  end
+
+  def visit_set_expression(set_expression)
+    object = evaluate(set_expression.object)
+
+    if object.is_a? LoxInstance
+      object.set(set_expression.name, evaluate(set_expression.value))
+    else
+      raise LoxRuntimeError.new(get_expression.name, "Can't access property of non-object vlaue")
+    end
   end
 
   def execute_block(statements, environment)

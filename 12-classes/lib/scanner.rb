@@ -103,6 +103,7 @@ class Scanner
     when '{' then add_token(LEFT_BRACE)
     when '}' then add_token(RIGHT_BRACE)
     when ',' then add_token(COMMA)
+    when '.' then add_token(DOT)
     when '-' then add_token(MINUS)
     when '+' then add_token(PLUS)
     when ';' then add_token(SEMICOLON)

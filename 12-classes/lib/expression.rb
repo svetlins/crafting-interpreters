@@ -20,4 +20,7 @@ module Expression
   Unary = define_expression_type('unary', :operator, :right)
   Variable = define_expression_type('variable', :name)
   Call = define_expression_type('call', :callee, :paren, :arguments)
+  GetExpression = define_expression_type('get_expression', :object, :name)
+  SetExpression = define_expression_type('set_expression', :object, :name, :value)
+  ThisExpression = define_expression_type('this_expression', :keyword)
 end

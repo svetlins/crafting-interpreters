@@ -40,3 +40,42 @@ for(var y = 2; y > 0; y = y - 1) print 10 <= 20;
   }
 }
 
+class Dog {
+  bark(loudness) {
+    if (loudness > 5) {
+      print "BARK";
+    } else {
+      print "Bark";
+    }
+  }
+}
+
+print Dog == Dog;
+print Dog() == Dog();
+
+var aDog = Dog();
+
+aDog.color = "golden";
+aDog.friend = Dog();
+aDog.friend.color = "black";
+
+print aDog.color == "golden";
+print aDog.friend.color == "black";
+
+aDog.bark(1);
+aDog.bark(10);
+aDog.friend.bark(1);
+aDog.friend.bark(10);
+
+class SelfAwareDog {
+  beautyFactor() {
+    if (this.color == "golden") return "very beautiful";
+    else return "so so";
+  }
+}
+
+var aSelfAwareDog = SelfAwareDog();
+aSelfAwareDog.color = "golden";
+print aSelfAwareDog.beautyFactor() == "very beautiful";
+aSelfAwareDog.color = "purple";
+print aSelfAwareDog.beautyFactor() == "so so";

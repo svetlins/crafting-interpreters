@@ -27,6 +27,8 @@ class Parser
       parse_variable_declaration
     elsif match_any?(FUN)
       parse_function_declaration(:function)
+    elsif match_any?(CLASS)
+      parse_class_declaration
     else
       parse_statement
     end
@@ -70,6 +72,21 @@ class Parser
     body = parse_block_statement
 
     FunctionStatement.new(name, parameters, body)
+  end
+
+  def parse_class_declaration
+    name = consume(IDENTIFIER, "Expected class name")
+    consume(LEFT_BRACE, "Expected { before class body")
+
+    methods = []
+
+    while !check(RIGHT_BRACE) && has_more?
+      methods << parse_function_declaration(:method)
+    end
+
+    consume(RIGHT_BRACE, "Expected } after class body")
+
+    ClassStatement.new(name, methods)
   end
 
   def parse_statement
@@ -194,9 +211,13 @@ class Parser
     if match_any?(EQUAL)
       equal = previous
 
-      if name = l_value(expression)
+      if expression.is_a? Variable
+        name = expression.name
         value = parse_expression
         return Assign.new(name, value)
+      elsif expression.is_a? GetExpression
+        value = parse_expression
+        return SetExpression.new(expression.object, expression.name, value)
       else
         error(equal, "Expected variable name on left side of assignment")
       end
@@ -315,6 +336,9 @@ class Parser
       if match_any?(LEFT_PAREN)
         paren = previous
         expression = parse_finish_call(expression)
+      elsif match_any?(DOT)
+        name = consume(IDENTIFIER, "Expected identifier after .")
+        expression = GetExpression.new(expression, name)
       else
         break
       end
@@ -348,6 +372,7 @@ class Parser
     if match_any?(FALSE)          then return Literal.new(false) end
     if match_any?(TRUE)           then return Literal.new(true) end
     if match_any?(NIL)            then return Literal.new(nil) end
+    if match_any?(THIS)           then return ThisExpression.new(previous) end
     if match_any?(IDENTIFIER)     then return Variable.new(previous) end
 
     if match_any?(LEFT_PAREN)
@@ -410,12 +435,6 @@ class Parser
 
       advance
     end
-  end
-
-  def l_value(expression)
-    return expression.name if expression.is_a? Variable
-
-    return nil
   end
 
   def at_end?

@@ -2,6 +2,7 @@ class StaticResolver
   module FunctionTypes
     NONE = "NONE"
     FUNCTION = "FUNCTION"
+    METHOD = "METHOD"
   end
 
   def initialize(interpreter, error_reporter: nil)
@@ -121,6 +122,22 @@ class StaticResolver
 
   # rest
 
+  def visit_class_statement(class_statement)
+    declare(class_statement.name)
+    define(class_statement.name)
+
+    begin_scope
+    @scopes.last['this'] = true
+
+    class_statement.methods.each do |method|
+      resolve_function(method, FunctionTypes::METHOD)
+    end
+
+    end_scope
+
+    return nil
+  end
+
   def visit_expression_statement(expression_statement)
     resolve(expression_statement.expression)
 
@@ -174,6 +191,19 @@ class StaticResolver
     return nil
   end
 
+  def visit_get_expression(get_expression)
+    resolve(get_expression.object)
+
+    return nil
+  end
+
+  def visit_set_expression(set_expression)
+    resolve(set_expression.value)
+    resolve(set_expression.object)
+
+    return nil
+  end
+
   def visit_grouping(grouping_expression)
     resolve(grouping_expression.expression)
 
@@ -181,6 +211,10 @@ class StaticResolver
   end
 
   def visit_literal(literal_expression)
+  end
+
+  def visit_this_expression(this_expression)
+    resolve_local(this_expression, this_expression.keyword)
   end
 
   def visit_logical(logical_expression)

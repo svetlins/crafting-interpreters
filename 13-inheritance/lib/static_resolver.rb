@@ -9,6 +9,7 @@ class StaticResolver
   module ClassType
     NONE = "CLASS-TYPE-NONE"
     CLASS = "CLASS-TYPE-CLASS"
+    SUBCLASS = "CLASS-TYPE-SUBCLASS"
   end
 
   def initialize(interpreter, error_reporter: nil)
@@ -137,6 +138,7 @@ class StaticResolver
     define(class_statement.name)
 
     if class_statement.superclass
+      @current_class = ClassType::SUBCLASS
       resolve(class_statement.superclass)
     end
 
@@ -248,6 +250,12 @@ class StaticResolver
   end
 
   def visit_super_expression(super_expression)
+    if @current_class == ClassType::NONE
+      error(super_expression.keyword, "Can't use 'super' outside of class (with a superclass)")
+    elsif @current_class == ClassType::CLASS
+      error(super_expression.keyword, "Can't use 'super' in a class without a superclass")
+    end
+
     resolve_local(super_expression, super_expression.keyword)
   end
 

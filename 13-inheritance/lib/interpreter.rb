@@ -104,8 +104,15 @@ class Interpreter
 
     @environment.define(class_statement.name.lexeme, nil)
 
+    if superclass
+      method_environment = Environment.new(@environment)
+      method_environment.define('super', superclass)
+    else
+      method_environment = @environment
+    end
+
     methods = class_statement.methods.map do |method|
-      [method.name.lexeme, LoxFunction.new(method, @environment, method.name.lexeme == 'init')]
+      [method.name.lexeme, LoxFunction.new(method, method_environment, method.name.lexeme == 'init')]
     end.to_h
 
     klass = LoxClass.new(class_statement.name.lexeme, superclass, methods)
@@ -286,6 +293,22 @@ class Interpreter
     else
       raise LoxRuntimeError.new(set_expression.name, "Can't access property of non-object vlaue")
     end
+  end
+
+  def visit_super_expression(super_expression)
+    depth = @static_resolutions[super_expression.object_id]
+    superclass = @environment.get_at(depth, super_expression.keyword)
+
+    method = superclass.find_method(super_expression.method_name.lexeme)
+
+    unless method
+      raise LoxRuntimeError.new(super_expression.method_name, "Undefined property #{super_expression.method_name.lexeme}")
+    end
+
+    require 'ostruct'
+    instance = @environment.get_at(depth - 1, OpenStruct.new(lexeme: 'this')) #
+
+    method.bind(instance)
   end
 
   def execute_block(statements, environment)

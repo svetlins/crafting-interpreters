@@ -145,6 +145,11 @@ class StaticResolver
       error(class_statement.superclass, "Can't inherit self")
     end
 
+    if class_statement.superclass
+      begin_scope
+      @scopes.last['super'] = true
+    end
+
     begin_scope
     @scopes.last['this'] = true
 
@@ -160,6 +165,10 @@ class StaticResolver
     end
 
     end_scope
+
+    if class_statement.superclass
+      end_scope
+    end
 
     @current_class = enclosing_class
 
@@ -236,6 +245,10 @@ class StaticResolver
     resolve(set_expression.object)
 
     return nil
+  end
+
+  def visit_super_expression(super_expression)
+    resolve_local(super_expression, super_expression.keyword)
   end
 
   def visit_grouping(grouping_expression)

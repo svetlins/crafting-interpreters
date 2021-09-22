@@ -1,14 +1,20 @@
 class StaticResolver
   module FunctionTypes
-    NONE = "NONE"
-    FUNCTION = "FUNCTION"
-    METHOD = "METHOD"
+    NONE = "FUNCTION-TYPE-NONE"
+    FUNCTION = "FUNCTION-TYPE-FUNCTION"
+    METHOD = "FUNCTION-TYPE-METHOD"
+  end
+
+  module ClassType
+    NONE = "CLASS-TYPE-NONE"
+    CLASS = "CLASS-TYPE-CLASS"
   end
 
   def initialize(interpreter, error_reporter: nil)
     @interpreter = interpreter
     @scopes = []
     @current_function = FunctionTypes::NONE
+    @current_class = ClassType::NONE
     @error_reporter = error_reporter
   end
 
@@ -123,6 +129,9 @@ class StaticResolver
   # rest
 
   def visit_class_statement(class_statement)
+    enclosing_class = @current_class
+    @current_class = ClassType::CLASS
+
     declare(class_statement.name)
     define(class_statement.name)
 
@@ -134,6 +143,8 @@ class StaticResolver
     end
 
     end_scope
+
+    @current_class = enclosing_class
 
     return nil
   end
@@ -214,6 +225,10 @@ class StaticResolver
   end
 
   def visit_this_expression(this_expression)
+    if @current_class == ClassType::NONE
+      error(this_expression.keyword, "this not allowed outside of a class")
+    end
+
     resolve_local(this_expression, this_expression.keyword)
   end
 

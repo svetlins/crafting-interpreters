@@ -79,3 +79,19 @@ aSelfAwareDog.color = "golden";
 print aSelfAwareDog.beautyFactor() == "very beautiful";
 aSelfAwareDog.color = "purple";
 print aSelfAwareDog.beautyFactor() == "so so";
+
+
+class Cat {
+  init(size) {
+    this.size = size;
+  }
+
+  introduce() {
+    return "Hi, I'm cat and I have size " + this.size;
+  }
+}
+
+var aCat = Cat("big");
+
+print aCat.introduce();
+print aCat.init("big") == aCat;

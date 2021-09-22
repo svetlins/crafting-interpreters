@@ -7,10 +7,22 @@ class LoxClass
   end
 
   def lox_call(interpreter, arguments)
-    LoxInstance.new(self)
+    instance = LoxInstance.new(self)
+
+    if initializer = find_method('init')
+      initializer.bind(instance).lox_call(interpreter, arguments)
+    end
+
+    instance
   end
 
-  def arity = 0
+  def arity
+    if initializer = find_method('init')
+      initializer.arity
+    else
+      0
+    end
+  end
 
   def find_method(name)
     @methods[name]

@@ -2,6 +2,7 @@ class StaticResolver
   module FunctionTypes
     NONE = "FUNCTION-TYPE-NONE"
     FUNCTION = "FUNCTION-TYPE-FUNCTION"
+    INITIALIZER = "FUNCTION-TYPE-INITIALIZER"
     METHOD = "FUNCTION-TYPE-METHOD"
   end
 
@@ -139,7 +140,14 @@ class StaticResolver
     @scopes.last['this'] = true
 
     class_statement.methods.each do |method|
-      resolve_function(method, FunctionTypes::METHOD)
+      declaration_type =
+        if method.name.lexeme == 'init'
+          FunctionTypes::INITIALIZER
+        else
+          FunctionTypes::METHOD
+        end
+
+      resolve_function(method, declaration_type)
     end
 
     end_scope
@@ -174,7 +182,13 @@ class StaticResolver
       error(return_statement.keyword, "Can't return outside of function")
     end
 
-    resolve(return_statement.value)
+    if return_statement.value
+      if @current_function == FunctionTypes::INITIALIZER
+        error(return_statement.keyword, "Can't return value from initializer")
+      end
+
+      resolve(return_statement.value)
+    end
 
     return nil
   end

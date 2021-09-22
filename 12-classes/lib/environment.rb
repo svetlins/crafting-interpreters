@@ -19,12 +19,19 @@ class Environment
   end
 
   def get(name)
-    value = @binding[name.lexeme]
-    value or raise Interpreter::LoxRuntimeError.new(name, "Undefined name #{name.lexeme}.")
+    if @binding.has_key? name.lexeme
+      @binding[name.lexeme]
+    else
+      raise Interpreter::LoxRuntimeError.new(name, "Undefined name #{name.lexeme}.")
+    end
   end
 
   def get_at(depth, name)
     ancestor(depth).get(name)
+  end
+
+  def unsafe_get!(name)
+    @binding.fetch(name)
   end
 
   def assign_at(depth, name, value)

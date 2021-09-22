@@ -1,5 +1,5 @@
 require 'environment'
-require 'function'
+require 'lox_function'
 require 'lox_instance'
 require 'lox_class'
 require 'scanner'
@@ -84,7 +84,7 @@ class Interpreter
   end
 
   def visit_function_statement(function_statement)
-    lox_function = LoxFunction.new(function_statement, @environment)
+    lox_function = LoxFunction.new(function_statement, @environment, false)
     @environment.define(
       function_statement.name.lexeme,
       lox_function
@@ -97,7 +97,7 @@ class Interpreter
     @environment.define(class_statement.name.lexeme, nil)
 
     methods = class_statement.methods.map do |method|
-      [method.name.lexeme, LoxFunction.new(method, @environment)]
+      [method.name.lexeme, LoxFunction.new(method, @environment, method.name.lexeme == 'init')]
     end.to_h
 
     klass = LoxClass.new(class_statement.name.lexeme, methods)
@@ -276,7 +276,7 @@ class Interpreter
     if object.is_a? LoxInstance
       object.set(set_expression.name, evaluate(set_expression.value))
     else
-      raise LoxRuntimeError.new(get_expression.name, "Can't access property of non-object vlaue")
+      raise LoxRuntimeError.new(set_expression.name, "Can't access property of non-object vlaue")
     end
   end
 

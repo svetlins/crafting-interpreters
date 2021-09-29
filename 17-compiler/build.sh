@@ -1,1 +1,1 @@
-clang *.c -o bin/clox
+clang *.c -O0 -g -o bin/debug_clox

@@ -47,7 +47,13 @@ int disassembleInstruction(Chunk *chunk, int offset)
   case OP_NEGATE:
     return simpleInstruction("OP_NEGATE", offset);
   case OP_NOT:
-    return simpleInstruction("OP_NEGATE", offset);
+    return simpleInstruction("OP_NOT", offset);
+  case OP_EQUAL:
+    return simpleInstruction("OP_EQUAL", offset);
+  case OP_GREATER:
+    return simpleInstruction("OP_GREATER", offset);
+  case OP_LESS:
+    return simpleInstruction("OP_LESS", offset);
   case OP_RETURN:
     return simpleInstruction("OP_RETURN", offset);
   default:

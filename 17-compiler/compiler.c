@@ -5,6 +5,7 @@
 #include "compiler.h"
 #include "scanner.h"
 #include "chunk.h"
+#include "debug.h"
 
 typedef struct
 {
@@ -142,6 +143,13 @@ static void emitConstant(Value value)
 static void endCompiler()
 {
   emitReturn();
+
+#ifdef DEBUG_PRINT_CODE
+  if (!parser.hadError)
+  {
+    disassembleChunk(currentChunk(), "code");
+  }
+#endif
 }
 
 static void expression();

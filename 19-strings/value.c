@@ -48,10 +48,21 @@ bool valuesEqual(Value a, Value b)
 
 void printValue(Value value)
 {
-  if (value.type == VAL_NUMBER)
+  switch (value.type)
+  {
+  case VAL_NUMBER:
     printf("%g", AS_NUMBER(value));
-  else if (value.type == VAL_BOOL)
+    break;
+  case VAL_BOOL:
     printf(AS_BOOL(value) ? "true" : "false");
-  else if (value.type == VAL_NIL)
+    break;
+  case VAL_NIL:
     printf("nil");
+    break;
+  case VAL_OBJ:
+    printf("obj");
+    break;
+  default:
+    printf("unknown");
+  }
 }

@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <string.h>
 
+#include "object.h"
 #include "memory.h"
 #include "value.h"
 
@@ -41,6 +43,13 @@ bool valuesEqual(Value a, Value b)
     return AS_NUMBER(a) == AS_NUMBER(b);
   case VAL_BOOL:
     return AS_BOOL(a) == AS_BOOL(b);
+  case VAL_OBJ:
+  {
+    ObjString *aString = AS_STRING(a);
+    ObjString *bString = AS_STRING(b);
+    return aString->length == bString->length && memcmp(aString->chars, bString->chars, aString->length) == 0;
+    break;
+  }
   default:
     return false;
   }
@@ -60,7 +69,7 @@ void printValue(Value value)
     printf("nil");
     break;
   case VAL_OBJ:
-    printf("obj");
+    printObject(value);
     break;
   default:
     printf("unknown");

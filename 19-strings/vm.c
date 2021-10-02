@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "vm.h"
 #include "value.h"
 #include "compiler.h"
 #include "debug.h"
+#include "memory.h"
+#include "object.h"
 
 VM vm;
 
@@ -48,6 +51,28 @@ Value pop()
 Value peek(int distance)
 {
   return *(vm.stackTop - distance - 1);
+}
+
+static ObjString *takeString(char *chars, int length)
+{
+  return allocateString(chars, length);
+}
+
+static void concatenate()
+{
+  ObjString *b = AS_STRING(pop());
+  ObjString *a = AS_STRING(pop());
+
+  int length = a->length + b->length;
+
+  char *chars = ALLOCATE(char, length + 1);
+
+  memcpy(chars, a->chars, a->length);
+  memcpy(chars + a->length, b->chars, b->length);
+
+  ObjString *result = takeString(chars, length);
+
+  push(OBJ_VAL(result));
 }
 
 bool isFalsey(Value value)
@@ -102,8 +127,26 @@ static InterpretResult run()
       break;
     }
     case OP_ADD:
-      BINARY_OP(NUMBER_VAL, +);
+    {
+      printf("here1\n");
+      if (IS_STRING(peek(0)) && IS_STRING(peek(1)))
+      {
+        printf("here2\n");
+        concatenate();
+      }
+      else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1)))
+      {
+        printf("here3\n");
+        BINARY_OP(NUMBER_VAL, +);
+      }
+      else
+      {
+        runtimeError("Operands must be two numbers or two strings");
+        return INTERPRET_RUNTIME_ERROR;
+      }
+
       break;
+    }
     case OP_SUBTRACT:
       BINARY_OP(NUMBER_VAL, -);
       break;

@@ -14,7 +14,7 @@ static Obj *allocateObject(int size, ObjType type)
   return obj;
 }
 
-static ObjString *allocateString(char *chars, int length)
+ObjString *allocateString(char *chars, int length)
 {
   ObjString *objString = ALLOCATE_OBJ(ObjString, OBJ_STRING);
   objString->obj.type = OBJ_STRING;

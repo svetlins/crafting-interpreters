@@ -57,11 +57,6 @@ Value peek(int distance)
   return *(vm.stackTop - distance - 1);
 }
 
-static ObjString *takeString(char *chars, int length)
-{
-  return allocateString(chars, length);
-}
-
 static void concatenate()
 {
   ObjString *b = AS_STRING(pop());

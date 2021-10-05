@@ -24,10 +24,12 @@ static void freeObject(Obj *obj)
   switch (obj->type)
   {
   case OBJ_STRING:
-    ObjString *string = (ObjString *obj;
+  {
+    ObjString *string = (ObjString *)obj;
     FREE_ARRAY(char, string->chars, string->length + 1);
     FREE(ObjString, obj);
     break;
+  }
   }
 }
 

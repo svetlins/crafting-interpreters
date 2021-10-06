@@ -175,6 +175,8 @@ static void statement();
 static void declaration();
 static ParseRule *getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
+static uint8_t parseVariable(const char *message);
+static void defineVariable(uint8_t global);
 
 static void string()
 {
@@ -232,6 +234,24 @@ static void expression()
   parsePrecedence(PREC_ASSIGNMENT);
 }
 
+static void variableDeclaration()
+{
+  uint8_t global = parseVariable("Expected variable name");
+
+  if (match(TOKEN_EQUAL))
+  {
+    expression();
+  }
+  else
+  {
+    emitByte(OP_NIL);
+  }
+
+  consume(TOKEN_SEMICOLON, "Expected ; after variable declaration");
+
+  defineVariable(global);
+}
+
 static void expressionStatement()
 {
   expression();
@@ -239,16 +259,45 @@ static void expressionStatement()
   emitByte(OP_POP);
 }
 
+static void synchronize()
+{
+  parser.panicMode = false;
+
+  while (parser.current.type != TOKEN_EOF)
+  {
+    if (parser.previous.type == TOKEN_SEMICOLON)
+      return;
+    switch (parser.current.type)
+    {
+    case TOKEN_CLASS:
+    case TOKEN_FUN:
+    case TOKEN_VAR:
+    case TOKEN_FOR:
+    case TOKEN_IF:
+    case TOKEN_WHILE:
+    case TOKEN_PRINT:
+    case TOKEN_RETURN:
+      return;
+    default:
+      break;
+    }
+    advance();
+  }
+}
+
 static void declaration()
 {
   if (match(TOKEN_VAR))
   {
-    // variableDeclaration();
+    variableDeclaration();
   }
   else
   {
     statement();
   }
+
+  if (parser.panicMode)
+    synchronize();
 }
 
 static void printStatement()
@@ -379,6 +428,22 @@ static void parsePrecedence(Precedence precedence)
     ParseFn infixRule = getRule(parser.previous.type)->infix;
     infixRule();
   }
+}
+
+static uint8_t identifierConstant(Token *token)
+{
+  return makeConstant(OBJ_VAL(copyString(token->start, token->length)));
+}
+
+static uint8_t parseVariable(const char *message)
+{
+  consume(TOKEN_IDENTIFIER, message);
+  return identifierConstant(&parser.previous);
+}
+
+static void defineVariable(uint8_t global)
+{
+  emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
 static ParseRule *getRule(TokenType type)

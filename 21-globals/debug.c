@@ -30,6 +30,8 @@ int disassembleInstruction(Chunk *chunk, int offset)
   {
   case OP_CONSTANT:
     return constantIntruction("OP_CONSTANT", chunk, offset);
+  case OP_DEFINE_GLOBAL:
+    return constantIntruction("OP_DEFINE_GLOBAL", chunk, offset);
   case OP_POP:
     return simpleInstruction("OP_POP", offset);
   case OP_NIL:
@@ -75,7 +77,7 @@ int simpleInstruction(const char *name, int offset)
 int constantIntruction(const char *name, Chunk *chunk, int offset)
 {
   uint8_t constant = chunk->code[offset + 1];
-  printf("%-16s %4d", name, constant);
+  printf("%-20s %4d", name, constant);
   printValue(chunk->constants.values[constant]);
   printf("\n");
 

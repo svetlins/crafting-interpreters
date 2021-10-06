@@ -191,6 +191,18 @@ static InterpretResult run()
       pop();
       break;
     }
+    case OP_GLOBAL:
+    {
+      ObjString *constant = READ_STRING();
+      Value value;
+      if (!tableGet(&vm.globals, constant, &value))
+      {
+        runtimeError("Undefined variable %s", constant->chars);
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      push(value);
+      break;
+    }
     case OP_POP:
       pop();
       break;

@@ -32,6 +32,8 @@ int disassembleInstruction(Chunk *chunk, int offset)
     return constantIntruction("OP_CONSTANT", chunk, offset);
   case OP_DEFINE_GLOBAL:
     return constantIntruction("OP_DEFINE_GLOBAL", chunk, offset);
+  case OP_SET_GLOBAL:
+    return constantIntruction("OP_SET_GLOBAL", chunk, offset);
   case OP_GLOBAL:
     return constantIntruction("OP_GLOBAL", chunk, offset);
   case OP_POP:

@@ -191,6 +191,17 @@ static InterpretResult run()
       pop();
       break;
     }
+    case OP_SET_GLOBAL:
+    {
+      ObjString *constant = READ_STRING();
+      if (tableSet(&vm.globals, constant, peek(0)))
+      {
+        tableDelete(&vm.globals, constant);
+        runtimeError("Cannot set undeclared variable %s", constant->chars);
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      break;
+    }
     case OP_GLOBAL:
     {
       ObjString *constant = READ_STRING();

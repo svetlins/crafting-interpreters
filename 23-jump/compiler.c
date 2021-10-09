@@ -495,6 +495,53 @@ static void whileStatement()
   emitByte(OP_POP);
 }
 
+static void forStatement()
+{
+  consume(TOKEN_LEFT_PAREN, "Expected ( after for");
+  beginScope();
+  if (!match(TOKEN_SEMICOLON))
+  {
+    if (match(TOKEN_VAR))
+      variableDeclaration();
+    else
+      expressionStatement();
+  }
+
+  int loopStart = currentChunk()->count;
+
+  if (!match(TOKEN_SEMICOLON))
+  {
+    expression();
+    consume(TOKEN_SEMICOLON, "Expected ; after for condition");
+  }
+  else
+  {
+    emitByte(OP_TRUE);
+  }
+  int exitJump = emitJump(OP_JUMP_IF_FALSE);
+  emitByte(OP_POP);
+
+  int incrementJump = emitJump(OP_JUMP);
+  int incrementLoc = currentChunk()->count;
+  if (!match(TOKEN_RIGHT_PAREN))
+  {
+    expression();
+    emitByte(OP_POP);
+    consume(TOKEN_RIGHT_PAREN, "Expected ) after for clauses");
+  }
+  emitLoop(loopStart);
+
+  patchJump(incrementJump);
+
+  statement();
+  emitLoop(incrementLoc);
+
+  patchJump(exitJump);
+  emitByte(OP_POP);
+
+  endScope();
+}
+
 static void statement()
 {
   if (match(TOKEN_PRINT))
@@ -514,6 +561,10 @@ static void statement()
   else if (match(TOKEN_WHILE))
   {
     whileStatement();
+  }
+  else if (match(TOKEN_FOR))
+  {
+    forStatement();
   }
   else
   {

@@ -40,6 +40,10 @@ int disassembleInstruction(Chunk *chunk, int offset)
     return byteInstruction("OP_SET_LOCAL", chunk, offset);
   case OP_GET_LOCAL:
     return byteInstruction("OP_GET_LOCAL", chunk, offset);
+  case OP_JUMP_IF_FALSE:
+    return jumpInstruction("OP_JUMP_IF_FALSE", 1, chunk, offset);
+  case OP_JUMP:
+    return jumpInstruction("OP_JUMP", 1, chunk, offset);
   case OP_POP:
     return simpleInstruction("OP_POP", offset);
   case OP_NIL:
@@ -97,4 +101,12 @@ int byteInstruction(const char *name, Chunk *chunk, int offset)
   uint8_t byte = chunk->code[offset + 1];
   printf("%-20s %4d\n", name, byte);
   return offset + 2;
+}
+
+int jumpInstruction(const char *name, int sign, Chunk *chunk, int offset)
+{
+  uint16_t jumpOffset = (uint16_t)((chunk->code[offset + 1] << 8) | chunk->code[offset + 2]);
+  printf("%-16s %4d -> %d\n", name, offset,
+         offset + 3 + sign * jumpOffset);
+  return offset + 3;
 }

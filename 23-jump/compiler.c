@@ -471,6 +471,30 @@ static void ifStatement()
   patchJump(elseJump);
 }
 
+static void emitLoop(int loopStart)
+{
+  emitByte(OP_LOOP);
+  int offset = currentChunk()->count - loopStart + 2;
+  if (offset > UINT16_MAX)
+    error("Loop body too large.");
+  emitByte((offset >> 8) & 0xff);
+  emitByte(offset & 0xff);
+}
+
+static void whileStatement()
+{
+  int loopStart = currentChunk()->count;
+  consume(TOKEN_LEFT_PAREN, "Expected ( before while condition");
+  expression();
+  consume(TOKEN_RIGHT_PAREN, "Expected ) after while condition");
+  int endJump = emitJump(OP_JUMP_IF_FALSE);
+  emitByte(OP_POP);
+  statement();
+  emitLoop(loopStart);
+  patchJump(endJump);
+  emitByte(OP_POP);
+}
+
 static void statement()
 {
   if (match(TOKEN_PRINT))
@@ -486,6 +510,10 @@ static void statement()
   else if (match(TOKEN_IF))
   {
     ifStatement();
+  }
+  else if (match(TOKEN_WHILE))
+  {
+    whileStatement();
   }
   else
   {

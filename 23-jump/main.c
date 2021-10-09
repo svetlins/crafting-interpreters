@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <readline/readline.h>
+#include <readline/history.h>
+
 #include "common.h"
 #include "chunk.h"
 #include "debug.h"
@@ -9,19 +12,21 @@
 
 static void repl()
 {
-  char line[1024];
+  char *line;
 
   for (;;)
   {
-    printf("> ");
-
-    if (!fgets(line, sizeof(line), stdin))
+    line = readline("> ");
+    if (line != NULL)
     {
-      printf("\n");
-      break;
+      add_history(line);
+      interpret(line);
+      free(line);
     }
-
-    interpret(line);
+    else
+    {
+      exit(0);
+    }
   }
 }
 
@@ -82,9 +87,8 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Usage: clox [script]\n");
     exit(64);
   }
-  // interpret(&chunk);
+
   freeVM();
-  // freeChunk(&chunk);
 
   return 0;
 }

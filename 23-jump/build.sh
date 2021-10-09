@@ -1,1 +1,1 @@
-clang *.c -O0 -g -o bin/clox
+clang *.c -O3 -g -o bin/clox -lreadline

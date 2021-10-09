@@ -34,8 +34,12 @@ int disassembleInstruction(Chunk *chunk, int offset)
     return constantIntruction("OP_DEFINE_GLOBAL", chunk, offset);
   case OP_SET_GLOBAL:
     return constantIntruction("OP_SET_GLOBAL", chunk, offset);
-  case OP_GLOBAL:
-    return constantIntruction("OP_GLOBAL", chunk, offset);
+  case OP_GET_GLOBAL:
+    return constantIntruction("OP_GET_GLOBAL", chunk, offset);
+  case OP_SET_LOCAL:
+    return byteInstruction("OP_SET_LOCAL", chunk, offset);
+  case OP_GET_LOCAL:
+    return byteInstruction("OP_GET_LOCAL", chunk, offset);
   case OP_POP:
     return simpleInstruction("OP_POP", offset);
   case OP_NIL:
@@ -85,5 +89,12 @@ int constantIntruction(const char *name, Chunk *chunk, int offset)
   printValue(chunk->constants.values[constant]);
   printf("\n");
 
+  return offset + 2;
+}
+
+int byteInstruction(const char *name, Chunk *chunk, int offset)
+{
+  uint8_t byte = chunk->code[offset + 1];
+  printf("%-20s %4d\n", name, byte);
   return offset + 2;
 }

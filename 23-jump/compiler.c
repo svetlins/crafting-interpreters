@@ -79,7 +79,7 @@ static void errorAt(Token *token, const char *message)
   }
   else
   {
-    fprintf(stderr, " at' %.*s", token->length, token->start);
+    fprintf(stderr, " at %.*s", token->length, token->start);
   }
 
   fprintf(stderr, ": %s\n", message);
@@ -118,7 +118,7 @@ static void consume(TokenType type, const char *message)
     return;
   }
 
-  errorAtCurrent(message);
+  error(message);
 }
 
 static bool check(TokenType type)

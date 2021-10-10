@@ -31,10 +31,12 @@ static void freeObject(Obj *obj)
     break;
   }
   case OBJ_FUNCTION:
+  {
     ObjFunction *function = (ObjFunction *)obj;
     freeChunk(&function->chunk);
     FREE(ObjFunction, function);
     break;
+  }
   }
 }
 

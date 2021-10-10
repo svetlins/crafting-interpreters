@@ -162,6 +162,7 @@ static void emitBytes(uint8_t byte1, uint8_t byte2)
 
 static void emitReturn()
 {
+  emitByte(OP_NIL);
   emitByte(OP_RETURN);
 }
 

@@ -300,6 +300,7 @@ static InterpretResult run()
     {
       Value result = pop();
       vm.frameCount--;
+      printf("%d", vm.frameCount);
 
       if (vm.frameCount == 0)
       {

@@ -1,0 +1,14 @@
+var x = 42;
+
+{
+  var y = x + 1;
+  var x = 30;
+
+  print x;
+  print y;
+}
+
+print x;
+
+
+if (false) print "da"; else print "ne";

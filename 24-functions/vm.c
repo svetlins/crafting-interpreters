@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "vm.h"
 #include "value.h"
@@ -11,6 +13,25 @@
 #include "table.h"
 
 VM vm;
+
+time_t beginningOfTime;
+
+static Value clockNative(int argCount, Value *args)
+{
+  return NUMBER_VAL((double)(time(NULL) - beginningOfTime));
+}
+
+static Value clearScreen(int argCount, Value *args)
+{
+  printf("\e[1;1H\e[2J");
+  return NIL_VAL;
+}
+
+static Value sleepNative(int argCount, Value *args)
+{
+  sleep((int)AS_NUMBER(*args));
+  return NIL_VAL;
+}
 
 static void resetStack()
 {
@@ -44,12 +65,30 @@ static void runtimeError(const char *format, ...)
   resetStack();
 }
 
+static void defineNative(const char *name, NativeFn function)
+{
+  // The stack gymnastic is due to GC
+  push(OBJ_VAL(copyString(name, strlen(name))));
+  push(OBJ_VAL(newNative(function)));
+
+  tableSet(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
+
+  pop();
+  pop();
+}
+
 void initVM()
 {
+  beginningOfTime = time(NULL);
+
   resetStack();
   vm.objects = NULL;
   initTable(&vm.strings);
   initTable(&vm.globals);
+
+  defineNative("clock", clockNative);
+  defineNative("cls", clearScreen);
+  defineNative("sleep", sleepNative);
 }
 
 void freeVM()
@@ -115,19 +154,33 @@ static bool call(ObjFunction *function, int argCount)
 
   CallFrame *newFrame = &vm.frames[vm.frameCount++];
   newFrame->function = function;
-  newFrame->ip = newFrame->function->chunk.code;
+  newFrame->ip = function->chunk.code;
   newFrame->slots = vm.stackTop - argCount - 1;
 
   return true;
 }
 static bool callValue(Value value, int argCount)
 {
-  if (IS_OBJ(value) && IS_FUNCTION(value))
+  if (IS_OBJ(value))
   {
-    return call(AS_FUNCTION(value), argCount);
+    Obj *obj = AS_OBJ(value);
+    switch (obj->type)
+    {
+    case OBJ_FUNCTION:
+      return call(AS_FUNCTION(value), argCount);
+    case OBJ_NATIVE_FUNCTION:
+    {
+      NativeFn native = AS_NATIVE_FUNCTION(value);
+      Value result = native(argCount, vm.stackTop - argCount);
+      vm.stackTop -= argCount + 1;
+      push(result);
+      return true;
+    }
+    default:
+      runtimeError("Can only call functions and classes");
+    }
   }
 
-  runtimeError("Can only call functions and classes");
   return false;
 }
 

@@ -61,6 +61,14 @@ ObjFunction *newFunction()
   return function;
 }
 
+ObjNative *newNative(NativeFn nativeFn)
+{
+  ObjNative *objNativeFn = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE_FUNCTION);
+  objNativeFn->nativeFn = nativeFn;
+
+  return objNativeFn;
+}
+
 ObjString *copyString(const char *chars, int length)
 {
   uint32_t hash = hashString(chars, length);
@@ -101,6 +109,9 @@ void printObject(Value value)
     break;
   case OBJ_FUNCTION:
     printFunction(AS_FUNCTION(value));
+    break;
+  case OBJ_NATIVE_FUNCTION:
+    printf("<native fn>");
     break;
   }
 }

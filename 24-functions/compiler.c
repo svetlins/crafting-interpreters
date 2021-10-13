@@ -352,7 +352,7 @@ static uint8_t argumentList()
 
       if (argCount == 255)
         error("Can't have more than 255 arguments");
-    } while (check(TOKEN_COMMA));
+    } while (match(TOKEN_COMMA));
   }
 
   consume(TOKEN_RIGHT_PAREN, "Expected ) after argument list");
@@ -482,13 +482,15 @@ static void function(FunctionType type)
   {
     do
     {
+      printf("%s | %s\n", parser.previous.start, parser.current.start);
+
       current->function->arity++;
       if (current->function->arity > 255)
         errorAtCurrent("Exceeded maximum number of parameters");
 
       uint8_t constant = parseVariable("Expected parameter name");
       defineVariable(constant);
-    } while (check(TOKEN_COMMA));
+    } while (match(TOKEN_COMMA));
   }
 
   consume(TOKEN_RIGHT_PAREN, "Expected ) after parameter list");

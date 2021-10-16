@@ -1,0 +1,2 @@
+ fun outer(x) { fun middle() { fun inner() { print x; } return inner; } return middle; }
+outer(666)()();

@@ -17,6 +17,8 @@
     "optional": "c",
     "tuple": "c",
     "complex": "c",
-    "__threading_support": "c"
+    "__threading_support": "c",
+    "memory.h": "c",
+    "object.h": "c"
   }
 }

@@ -1,0 +1,18 @@
+fun fn(p) {
+  var v1 = 42;
+
+  fun cl1() {
+    var v2 = 666;
+    fun cl2() {
+      print p;
+      print v1;
+      print v2;
+    }
+
+    return cl2();
+  }
+
+  return cl1;
+}
+
+fn(69)()();

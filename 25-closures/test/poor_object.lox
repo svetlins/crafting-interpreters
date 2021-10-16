@@ -1,0 +1,17 @@
+fun newPoint() {
+  var x;
+  var y;
+
+  fun methods(operationName, value) {
+    if (operationName == "getX") return x;
+    else if (operationName == "getY") return y;
+    else if (operationName == "setX") { x = value; return x; }
+    else if (operationName == "setY") { y = value; return y; }
+  }
+
+  return methods;
+}
+
+var point = newPoint();
+point("setX", 42);
+print point("getX", nil);

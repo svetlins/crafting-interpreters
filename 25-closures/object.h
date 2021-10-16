@@ -24,6 +24,7 @@
 
 typedef enum
 {
+  OBJ_UPVALUE,
   OBJ_CLOSURE,
   OBJ_NATIVE_FUNCTION,
   OBJ_FUNCTION,
@@ -61,15 +62,24 @@ struct ObjString
   uint32_t hash;
 };
 
+typedef struct ObjUpvalue
+{
+  Obj obj;
+  Value *location;
+} ObjUpvalue;
+
 typedef struct
 {
   Obj obj;
   ObjFunction *function;
+  ObjUpvalue **upvalues;
+  int upvalueCount;
 } ObjClosure;
 
 ObjFunction *newFunction();
 ObjNative *newNative(NativeFn nativeFn);
 ObjClosure *newClosure(ObjFunction *function);
+ObjUpvalue *newUpvalue(Value *slot);
 
 ObjString *copyString(const char *chars, int length);
 ObjString *takeString(char *chars, int length);

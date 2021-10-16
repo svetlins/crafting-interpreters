@@ -307,6 +307,7 @@ static int resolveUpvalue(Compiler *compiler, Token *name)
 
   if (upvalue != -1)
   {
+    printf("UPVALUE INDEX %d\n", upvalue);
     return addUpvalue(compiler, (uint8_t)upvalue, false);
   }
 

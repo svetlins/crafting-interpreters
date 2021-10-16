@@ -16,6 +16,7 @@
     "functional": "c",
     "optional": "c",
     "tuple": "c",
-    "complex": "c"
+    "complex": "c",
+    "__threading_support": "c"
   }
 }

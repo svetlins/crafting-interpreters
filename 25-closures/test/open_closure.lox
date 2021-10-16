@@ -1,0 +1,19 @@
+fun fn(p) {
+  var filler1;
+  var filler2 = 1;
+  var x = 42;
+  var filler3;
+  var filler4 = 1;
+  fun cl1() {
+    fun cl2() {
+      print x;
+      print p;
+    }
+
+    cl2();
+  }
+
+  cl1();
+}
+
+fn(69);

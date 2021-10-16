@@ -303,7 +303,7 @@ static InterpretResult run()
 
         if (isLocal)
         {
-          closure->upvalues[i] = captureUpvalue(frame->slots + index + 1); // + 1 is made up during debugging
+          closure->upvalues[i] = captureUpvalue(frame->slots + index);
         }
         else
         {

@@ -12,7 +12,15 @@ static Obj *allocateObject(int size, ObjType type)
   Obj *obj = reallocate(NULL, 0, size);
   obj->type = type;
   obj->next = vm.objects;
+  printf("NEXT (ALLOC) %p -> %p\n\n", obj, obj->next);
+  obj->isMarked = false;
   vm.objects = obj;
+
+#ifdef DEBUG_LOG_GC
+  printf("%p allocate %d for %d\n", (void *)obj, size, type);
+#endif
+
+  printf("%p %p\n", obj, obj->next);
 
   return obj;
 }
@@ -25,7 +33,9 @@ static ObjString *allocateString(char *chars, int length, uint32_t hash)
   objString->chars = chars;
   objString->hash = hash;
 
+  push(OBJ_VAL(objString));
   tableSet(&vm.strings, objString, NIL_VAL);
+  pop();
 
   return objString;
 }

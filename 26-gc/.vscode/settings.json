@@ -19,6 +19,10 @@
     "complex": "c",
     "__threading_support": "c",
     "memory.h": "c",
-    "object.h": "c"
+    "object.h": "c",
+    "array": "c",
+    "iterator": "c",
+    "string_view": "c",
+    "unordered_map": "c"
   }
 }

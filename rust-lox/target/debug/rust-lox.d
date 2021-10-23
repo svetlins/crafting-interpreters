@@ -1,0 +1,1 @@
+/Users/svetlins/Code/crafting_interpreters/rust-lox/target/debug/rust-lox: /Users/svetlins/Code/crafting_interpreters/rust-lox/src/main.rs /Users/svetlins/Code/crafting_interpreters/rust-lox/src/scanner.rs

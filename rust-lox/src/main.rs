@@ -6,6 +6,4 @@ fn main() {
     let mut scan = scanner::Scan::new(source);
 
     scan.scan_token();
-
-    scan.print();
 }

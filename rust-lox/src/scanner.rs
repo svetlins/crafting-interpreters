@@ -1,15 +1,21 @@
+use std::str;
+
 pub struct Scan<'a> {
-  token_start: &'a str,
-  current: &'a str,
+  current_token: String,
+  chars: str::Chars<'a>,
+  next_char: Option<char>,
+  current_char: Option<char>,
   line: u32,
 }
 
-pub struct Token<'a> {
+#[derive(Debug, PartialEq)]
+pub struct Token {
   token_type: TokenType,
-  text: &'a str,
+  text: String,
   line: u32,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum TokenType {
   // Single-character tokens.
   LeftParen,
@@ -57,45 +63,154 @@ pub enum TokenType {
   Eof,
 }
 
-impl<'a> Scan<'a> {
-  pub fn new(source: &str) -> Scan {
-    Scan {
-      token_start: source,
-      current: source,
-      line: 1,
-    }
-  }
+impl<'a> Iterator for Scan<'a> {
+  type Item = Token;
 
-  pub fn advance(&mut self) -> Option<char> {
+  fn next(&mut self) -> Option<Self::Item> {
     if self.at_end() {
       return None;
     }
 
-    self.current = &self.current[1..];
+    Some(self.scan_token())
+  }
+}
 
-    self.current[0];
+impl<'a> Scan<'a> {
+  pub fn new(source: &str) -> Scan {
+    let mut chars = source.chars();
+
+    let current_char = chars.next();
+    let next_char = chars.next();
+
+    Scan {
+      current_token: String::from(""),
+      chars: chars,
+      next_char: next_char,
+      current_char: current_char,
+      line: 1,
+    }
+  }
+
+  pub fn advance(&mut self) -> char {
+    if self.at_end() {
+      panic!("Can't advance beyond end");
+    }
+
+    let current_char = self.current_char.unwrap();
+
+    self.current_char = self.next_char;
+    self.next_char = self.chars.next();
+
+    self.current_token.push(current_char);
+
+    current_char
+  }
+
+  fn matches(&mut self, c: char) -> bool {
+    if self.peek(c) {
+      self.advance();
+      true
+    } else {
+      false
+    }
+  }
+
+  fn peek(&self, c: char) -> bool {
+    if let Some(current_char) = self.current_char {
+      current_char == c
+    } else {
+      false
+    }
+  }
+
+  fn peek_next(&self, c: char) -> bool {
+    if let Some(next_char) = self.next_char {
+      next_char == c
+    } else {
+      false
+    }
   }
 
   pub fn scan_token(&mut self) -> Token {
-    self.eat_whitespace();
-
-    self.token_start = self.current;
-
     if self.at_end() {
       return self.make_token(TokenType::Eof);
     }
 
-    if self.cu
+    self.current_token = String::from("");
 
-    return self.make_token(TokenType::Eof);
-  }
+    self.eat_whitespace();
 
-  pub fn print(&self) {
-    if self.at_end() {
-      println!("current is at end");
+    let c = self.advance();
+
+    if c.is_alphabetic() {
+      return self.scan_identifier();
     }
 
-    println!("current is {}", self.current);
+    if c.is_ascii_digit() {
+      return self.scan_number();
+    }
+
+    match c {
+      '+' => self.make_token(TokenType::Plus),
+      '(' => self.make_token(TokenType::LeftParen),
+      ')' => self.make_token(TokenType::RightParen),
+      '{' => self.make_token(TokenType::LeftBrace),
+      '}' => self.make_token(TokenType::RightBrace),
+      ';' => self.make_token(TokenType::Semicolon),
+      '-' => self.make_token(TokenType::Minus),
+      '*' => self.make_token(TokenType::Star),
+      '/' => self.make_token(TokenType::Slash),
+      ',' => self.make_token(TokenType::Comma),
+      '!' => {
+        if self.matches('=') {
+          self.make_token(TokenType::BangEqual)
+        } else {
+          self.make_token(TokenType::Bang)
+        }
+      }
+      '=' => {
+        if self.matches('=') {
+          self.make_token(TokenType::EqualEqual)
+        } else {
+          self.make_token(TokenType::Equal)
+        }
+      }
+      '>' => {
+        if self.matches('=') {
+          self.make_token(TokenType::GreaterEqual)
+        } else {
+          self.make_token(TokenType::Greater)
+        }
+      }
+      '<' => {
+        if self.matches('=') {
+          self.make_token(TokenType::LessEqual)
+        } else {
+          self.make_token(TokenType::Less)
+        }
+      }
+      '"' => self.scan_string(),
+      _ => self.make_token(TokenType::Error),
+    }
+  }
+
+  fn scan_identifier(&mut self) -> Token {
+    self.advance();
+    self.make_token(TokenType::Error)
+  }
+
+  fn scan_number(&mut self) -> Token {
+    panic!("ko 6i praim");
+  }
+
+  fn scan_string(&mut self) -> Token {
+    while !self.peek('"') {
+      self.advance();
+    }
+
+    self.advance();
+
+    self.make_token(TokenType::String)
   }
 
   fn eat_whitespace(&mut self) {
@@ -103,20 +218,115 @@ impl<'a> Scan<'a> {
       return;
     }
 
-    while self.current.chars().nth(0).unwrap() == ' ' {
+    while self.peek(' ') {
       self.advance();
     }
   }
 
   fn at_end(&self) -> bool {
-    self.current.len() == 0
+    self.current_char == None
   }
 
   fn make_token(&self, token_type: TokenType) -> Token {
     Token {
       token_type: token_type,
-      text: &self.token_start[..self.current.len()],
+      text: self.current_token.clone(),
       line: self.line,
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_construct() {
+    Scan::new("print 200;");
+  }
+
+  #[test]
+  fn test_single_char_op() {
+    let mut scan = Scan::new("+");
+    assert_eq!(scan.scan_token().token_type, TokenType::Plus);
+  }
+
+  #[test]
+  fn test_multiple_single_char_op() {
+    let mut scan = Scan::new("+-*");
+    assert_eq!(scan.scan_token().token_type, TokenType::Plus);
+    assert_eq!(scan.scan_token().token_type, TokenType::Minus);
+    assert_eq!(scan.scan_token().token_type, TokenType::Star);
+  }
+
+  #[test]
+  fn test_whitespace() {
+    let mut scan = Scan::new("       +         ");
+    assert_eq!(scan.scan_token().token_type, TokenType::Plus);
+  }
+
+  #[test]
+  fn test_double_char_op() {
+    let mut scan = Scan::new("!=");
+    assert_eq!(scan.scan_token().token_type, TokenType::BangEqual);
+  }
+
+  #[test]
+  fn test_double_char_confusion_op() {
+    let mut scan = Scan::new("!");
+    assert_eq!(scan.scan_token().token_type, TokenType::Bang);
+  }
+
+  #[test]
+  fn test_greater() {
+    let mut scan = Scan::new(">");
+    assert_eq!(scan.scan_token().token_type, TokenType::Greater);
+  }
+
+  #[test]
+  fn test_greater_equal() {
+    let mut scan = Scan::new(">=");
+    assert_eq!(scan.scan_token().token_type, TokenType::GreaterEqual);
+  }
+
+  #[test]
+  fn test_string() {
+    let mut scan = Scan::new("\"some string\"");
+    assert_eq!(scan.scan_token().token_type, TokenType::String);
+  }
+
+  #[test]
+  fn test_string_and_after() {
+    let mut scan = Scan::new("\"some string\"+");
+    scan.scan_token();
+    assert_eq!(scan.scan_token().token_type, TokenType::Plus);
+  }
+
+  #[test]
+  fn test_iterable() {
+    let scan = Scan::new("\"some string\"+");
+    let tokens: Vec<Token> = scan.collect();
+
+    assert_eq!(
+      tokens,
+      Vec::from([
+        Token {
+          token_type: TokenType::String,
+          text: String::from("\"some string\""),
+          line: 1
+        },
+        Token {
+          token_type: TokenType::Plus,
+          text: String::from("+"),
+          line: 1
+        }
+      ])
+    );
+  }
+
+  #[test]
+  fn test_integer() {
+    let mut scan = Scan::new("42");
+    assert_eq!(scan.scan_token().token_type, TokenType::Number);
   }
 }

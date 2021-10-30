@@ -1,0 +1,17 @@
+{
+  "folders": [
+	{
+		"path": "."
+	},
+	{
+		"path": "../26-gc"
+	}
+],
+  "settings": {
+    "files.associations": {
+      "algorithm": "c",
+      "iterator": "c",
+      "vector": "c"
+    }
+  }
+}

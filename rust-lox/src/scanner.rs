@@ -2,9 +2,7 @@ use std::str;
 
 pub struct Scan<'a> {
   current_token: String,
-  chars: str::Chars<'a>,
-  next_char: Option<char>,
-  current_char: Option<char>,
+  chars: DoublePeeker<std::str::Chars<'a>>,
   line: u32,
 }
 
@@ -77,16 +75,9 @@ impl<'a> Iterator for Scan<'a> {
 
 impl<'a> Scan<'a> {
   pub fn new(source: &str) -> Scan {
-    let mut chars = source.chars();
-
-    let current_char = chars.next();
-    let next_char = chars.next();
-
     Scan {
       current_token: String::from(""),
-      chars: chars,
-      next_char: next_char,
-      current_char: current_char,
+      chars: DoublePeeker::new(source.chars()),
       line: 1,
     }
   }
@@ -96,10 +87,7 @@ impl<'a> Scan<'a> {
       panic!("Can't advance beyond end");
     }
 
-    let consumed_char = self.current_char.unwrap();
-
-    self.current_char = self.next_char;
-    self.next_char = self.chars.next();
+    let consumed_char = self.chars.next().unwrap();
 
     self.current_token.push(consumed_char);
 
@@ -116,12 +104,12 @@ impl<'a> Scan<'a> {
     }
   }
 
-  fn peek(&self) -> Option<char> {
-    self.current_char
+  fn peek(&mut self) -> Option<char> {
+    self.chars.peek()
   }
 
-  fn peek_next(&self) -> Option<char> {
-    self.next_char
+  fn peek_next(&mut self) -> Option<char> {
+    self.chars.peek_next()
   }
 
   pub fn scan_token(&mut self) -> Option<Token> {
@@ -233,8 +221,8 @@ impl<'a> Scan<'a> {
     }
   }
 
-  fn at_end(&self) -> bool {
-    self.current_char == None
+  fn at_end(&mut self) -> bool {
+    self.peek() == None
   }
 
   fn make_token(&self, token_type: TokenType) -> Option<Token> {
@@ -370,70 +358,116 @@ mod tests {
 
 // ---------------------------------
 
-struct DoublePeekable<I: Iterator> {
-  iter: I,
+struct DoublePeeker<I: Iterator> {
   first_peeked: Option<Option<I::Item>>,
   second_peeked: Option<Option<I::Item>>,
+  iter: I,
 }
 
-impl<I: Iterator> DoublePeekable<I> {
-  pub fn new(iter: I) -> DoublePeekable<I> {
-    DoublePeekable {
+impl<I: Iterator> DoublePeeker<I>
+where
+  I::Item: std::fmt::Debug + Copy,
+{
+  fn new(iter: I) -> Self {
+    DoublePeeker {
       iter,
       first_peeked: None,
       second_peeked: None,
     }
   }
+
+  fn peek(&mut self) -> Option<I::Item> {
+    self.first_peeked.get_or_insert_with(|| self.iter.next());
+    self.first_peeked.unwrap()
+  }
+
+  fn peek_next(&mut self) -> Option<I::Item> {
+    self.first_peeked.get_or_insert_with(|| self.iter.next());
+    self.second_peeked.get_or_insert_with(|| self.iter.next());
+
+    self.second_peeked.unwrap()
+  }
 }
 
-impl<I: Iterator> Iterator for DoublePeekable<I> {
+impl<I: Iterator> Iterator for DoublePeeker<I> {
   type Item = I::Item;
 
-  fn next(&mut self) -> Option<I::Item> {
-    match self.first_peeked.take() {
-      Some(v) => {
-        self.first_peeked = self.second_peeked.take();
-        self.second_peeked = None;
-        v
-      }
+  fn next(&mut self) -> Option<Self::Item> {
+    let next_value = match self.first_peeked.take() {
+      Some(value) => value,
       None => self.iter.next(),
-    }
-  }
-}
+    };
 
-impl<I: Iterator> DoublePeekable<I> {
-  pub fn peek(&mut self) -> Option<&I::Item> {
-    let iter = &mut self.iter;
-    self
-      .first_peeked
-      .get_or_insert_with(|| iter.next())
-      .as_ref()
-  }
+    self.first_peeked = self.second_peeked.take();
 
-  pub fn peek_next(&mut self) -> Option<&I::Item> {
-    let iter = &mut self.iter;
-
-    self.first_peeked.get_or_insert_with(|| iter.next());
-
-    self
-      .second_peeked
-      .get_or_insert_with(|| iter.next())
-      .as_ref()
+    next_value
   }
 }
 
 #[cfg(test)]
-mod tests2 {
+mod tests_double_peekable {
   use super::*;
 
   #[test]
-  fn test_double_peekable() {
-    let vec: Vec<u32> = Vec::from([1, 2, 3, 4, 5]);
-    let mut double_peekable = DoublePeekable::new(vec.iter());
+  fn test_next() {
+    let vec = Vec::from([1, 2, 3, 4, 5]);
+    let mut double_peeker = DoublePeeker::new(vec.iter());
 
-    println!("HIIiiiiiiiiii {:?}", double_peekable.next());
-    println!("HIIiiiiiiiiii {:?}", double_peekable.peek());
-    println!("HIIiiiiiiiiii {:?}", double_peekable.peek_next());
-    println!("HIIiiiiiiiiii {:?}", double_peekable.next());
+    assert_eq!(Some(&1), double_peeker.next());
+    assert_eq!(Some(&2), double_peeker.next());
+    assert_eq!(Some(&3), double_peeker.next());
+    assert_eq!(Some(&4), double_peeker.next());
+    assert_eq!(Some(&5), double_peeker.next());
+    assert_eq!(None, double_peeker.next());
+  }
+
+  #[test]
+  fn test_peek() {
+    let vec = Vec::from([1, 2, 3, 4, 5]);
+    let mut double_peeker = DoublePeeker::new(vec.iter());
+
+    assert_eq!(Some(&1), double_peeker.next());
+    assert_eq!(Some(&2), double_peeker.next());
+    assert_eq!(Some(&3), double_peeker.next());
+    assert_eq!(Some(&4), double_peeker.peek());
+    assert_eq!(Some(&4), double_peeker.next());
+    assert_eq!(Some(&5), double_peeker.next());
+    assert_eq!(None, double_peeker.next());
+    println!("{:?}", vec);
+  }
+
+  #[test]
+  fn test_peek_next() {
+    let vec = Vec::from([1, 2, 3, 4, 5]);
+
+    let mut double_peeker = DoublePeeker::new(vec.iter());
+
+    assert_eq!(Some(&1), double_peeker.next());
+    assert_eq!(Some(&2), double_peeker.next());
+    assert_eq!(Some(&3), double_peeker.next());
+    assert_eq!(Some(&4), double_peeker.peek());
+    assert_eq!(Some(&5), double_peeker.peek_next());
+    assert_eq!(Some(&4), double_peeker.next());
+    assert_eq!(Some(&5), double_peeker.next());
+    assert_eq!(None, double_peeker.next());
+    println!("{:?}", vec);
+  }
+
+  #[test]
+  fn test_peek_strings() {
+    let vec = Vec::from(["a", "b", "c", "d", "e"]);
+
+    let mut double_peeker = DoublePeeker::new(vec.iter());
+
+    assert_eq!(Some(&"a"), double_peeker.next());
+    assert_eq!(Some(&"b"), double_peeker.next());
+    assert_eq!(Some(&"c"), double_peeker.next());
+    assert_eq!(Some(&"d"), double_peeker.peek());
+    assert_eq!(Some(&"e"), double_peeker.peek_next());
+    assert_eq!(Some(&"d"), double_peeker.next());
+    assert_eq!(None, double_peeker.peek_next());
+    assert_eq!(Some(&"e"), double_peeker.next());
+    assert_eq!(None, double_peeker.next());
+    println!("{:?}", vec);
   }
 }

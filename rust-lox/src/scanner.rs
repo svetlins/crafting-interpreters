@@ -1,9 +1,9 @@
-use super::util::DoublePeeker;
+use super::util;
 use std::str;
 
 pub struct Scan<'a> {
   current_token: String,
-  chars: DoublePeeker<std::str::Chars<'a>>,
+  chars: util::DoublePeeker<std::str::Chars<'a>>,
   line: u32,
 }
 
@@ -66,11 +66,11 @@ impl<'a> Iterator for Scan<'a> {
   type Item = Token;
 
   fn next(&mut self) -> Option<Self::Item> {
-    if self.at_end() {
-      return None;
+    match self.scan_token() {
+      Some(token) if token.token_type == TokenType::Eof => None,
+      Some(token) => Some(token),
+      None => None,
     }
-
-    self.scan_token()
   }
 }
 
@@ -78,7 +78,7 @@ impl<'a> Scan<'a> {
   pub fn new(source: &str) -> Scan {
     Scan {
       current_token: String::from(""),
-      chars: DoublePeeker::new(source.chars()),
+      chars: util::DoublePeeker::new(source.chars()),
       line: 1,
     }
   }
@@ -114,17 +114,17 @@ impl<'a> Scan<'a> {
   }
 
   pub fn scan_token(&mut self) -> Option<Token> {
+    self.eat_whitespace();
+
+    self.current_token = String::from("");
+
     if self.at_end() {
       return self.make_token(TokenType::Eof);
     }
 
-    self.current_token = String::from("");
-
-    self.eat_whitespace();
-
     let c = self.advance();
 
-    if c.is_alphabetic() {
+    if c.is_alphabetic() || c == '_' {
       return self.scan_identifier();
     }
 
@@ -143,6 +143,7 @@ impl<'a> Scan<'a> {
       '*' => self.make_token(TokenType::Star),
       '/' => self.make_token(TokenType::Slash),
       ',' => self.make_token(TokenType::Comma),
+      '.' => self.make_token(TokenType::Dot),
       '!' => {
         if self.matches('=') {
           self.make_token(TokenType::BangEqual)
@@ -177,8 +178,39 @@ impl<'a> Scan<'a> {
   }
 
   fn scan_identifier(&mut self) -> Option<Token> {
-    self.advance();
-    self.make_token(TokenType::Error)
+    while !self.at_end()
+      && self
+        .peek()
+        .map(|c| c.is_alphabetic() || c == '_' || c.is_ascii_digit())
+        == Some(true)
+    {
+      self.advance();
+    }
+
+    self.make_token(self.current_identifier_type())
+  }
+
+  fn current_identifier_type(&self) -> TokenType {
+    // Book implementation is with hard-coded trie but I'm lazy
+    match self.current_token.as_str() {
+      "and" => TokenType::And,
+      "class" => TokenType::Class,
+      "else" => TokenType::Else,
+      "if" => TokenType::If,
+      "nil" => TokenType::Nil,
+      "or" => TokenType::Or,
+      "print" => TokenType::Print,
+      "return" => TokenType::Return,
+      "super" => TokenType::Super,
+      "var" => TokenType::Var,
+      "while" => TokenType::While,
+      "fn" => TokenType::Fun,
+      "false" => TokenType::False,
+      "for" => TokenType::For,
+      "this" => TokenType::This,
+      "true" => TokenType::True,
+      _ => TokenType::Identifier,
+    }
   }
 
   fn scan_number(&mut self) -> Option<Token> {
@@ -213,12 +245,26 @@ impl<'a> Scan<'a> {
   }
 
   fn eat_whitespace(&mut self) {
-    if self.at_end() {
-      return;
-    }
-
-    while self.peek() == Some(' ') {
-      self.advance();
+    loop {
+      match self.peek() {
+        Some(c) if c == '\n' => {
+          self.line += 1;
+          self.advance();
+        }
+        Some(c) if c == '/' => {
+          if self.peek_next() == Some('/') {
+            while !self.at_end() && self.peek() != Some('\n') {
+              self.advance();
+            }
+          }
+        }
+        Some(c) if c.is_whitespace() => {
+          self.advance();
+        }
+        _ => {
+          break;
+        }
+      }
     }
   }
 
@@ -355,6 +401,167 @@ mod tests {
     let mut scan = Scan::new("");
     assert_eq!(scan.scan_token().unwrap().token_type, TokenType::Eof);
   }
-}
 
-// ---------------------------------
+  #[test]
+  fn test_keywords() {
+    let scan = Scan::new("print 1");
+    let tokens: Vec<Token> = scan.collect();
+
+    assert_eq!(
+      tokens,
+      Vec::from([
+        Token {
+          token_type: TokenType::Print,
+          text: String::from("print"),
+          line: 1
+        },
+        Token {
+          token_type: TokenType::Number,
+          text: String::from("1"),
+          line: 1
+        }
+      ])
+    )
+  }
+
+  #[test]
+  fn test_identifier() {
+    let scan = Scan::new("count + 1");
+    let tokens: Vec<Token> = scan.collect();
+
+    assert_eq!(
+      tokens,
+      Vec::from([
+        Token {
+          token_type: TokenType::Identifier,
+          text: String::from("count"),
+          line: 1
+        },
+        Token {
+          token_type: TokenType::Plus,
+          text: String::from("+"),
+          line: 1
+        },
+        Token {
+          token_type: TokenType::Number,
+          text: String::from("1"),
+          line: 1
+        }
+      ])
+    )
+  }
+
+  #[test]
+  fn test_newlines() {
+    let source = r#"
+      fn a_fun(p) {
+        var l = p + 1;
+        return v + 1;
+      }
+      "#;
+
+    let scan = Scan::new(source);
+    let tokens: Vec<Token> = scan.collect();
+
+    assert_eq!(
+      tokens,
+      Vec::from([
+        Token {
+          token_type: TokenType::Fun,
+          text: String::from("fn"),
+          line: 2
+        },
+        Token {
+          token_type: TokenType::Identifier,
+          text: String::from("a_fun"),
+          line: 2
+        },
+        Token {
+          token_type: TokenType::LeftParen,
+          text: String::from("("),
+          line: 2
+        },
+        Token {
+          token_type: TokenType::Identifier,
+          text: String::from("p"),
+          line: 2
+        },
+        Token {
+          token_type: TokenType::RightParen,
+          text: String::from(")"),
+          line: 2
+        },
+        Token {
+          token_type: TokenType::LeftBrace,
+          text: String::from("{"),
+          line: 2
+        },
+        Token {
+          token_type: TokenType::Var,
+          text: String::from("var"),
+          line: 3
+        },
+        Token {
+          token_type: TokenType::Identifier,
+          text: String::from("l"),
+          line: 3
+        },
+        Token {
+          token_type: TokenType::Equal,
+          text: String::from("="),
+          line: 3
+        },
+        Token {
+          token_type: TokenType::Identifier,
+          text: String::from("p"),
+          line: 3
+        },
+        Token {
+          token_type: TokenType::Plus,
+          text: String::from("+"),
+          line: 3
+        },
+        Token {
+          token_type: TokenType::Number,
+          text: String::from("1"),
+          line: 3
+        },
+        Token {
+          token_type: TokenType::Semicolon,
+          text: String::from(";"),
+          line: 3
+        },
+        Token {
+          token_type: TokenType::Return,
+          text: String::from("return"),
+          line: 4
+        },
+        Token {
+          token_type: TokenType::Identifier,
+          text: String::from("v"),
+          line: 4
+        },
+        Token {
+          token_type: TokenType::Plus,
+          text: String::from("+"),
+          line: 4
+        },
+        Token {
+          token_type: TokenType::Number,
+          text: String::from("1"),
+          line: 4
+        },
+        Token {
+          token_type: TokenType::Semicolon,
+          text: String::from(";"),
+          line: 4
+        },
+        Token {
+          token_type: TokenType::RightBrace,
+          text: String::from("}"),
+          line: 5
+        },
+      ])
+    )
+  }
+}

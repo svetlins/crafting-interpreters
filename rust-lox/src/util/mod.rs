@@ -73,7 +73,6 @@ mod tests_double_peekable {
     assert_eq!(Some(&4), double_peeker.next());
     assert_eq!(Some(&5), double_peeker.next());
     assert_eq!(None, double_peeker.next());
-    println!("{:?}", vec);
   }
 
   #[test]
@@ -90,7 +89,22 @@ mod tests_double_peekable {
     assert_eq!(Some(&4), double_peeker.next());
     assert_eq!(Some(&5), double_peeker.next());
     assert_eq!(None, double_peeker.next());
-    println!("{:?}", vec);
+  }
+
+  #[test]
+  fn test_peek_none() {
+    let vec = Vec::from([1, 2, 3, 4, 5]);
+
+    let mut double_peeker = DoublePeeker::new(vec.iter());
+
+    assert_eq!(Some(&1), double_peeker.next());
+    assert_eq!(Some(&2), double_peeker.next());
+    assert_eq!(Some(&3), double_peeker.next());
+    assert_eq!(Some(&4), double_peeker.next());
+    assert_eq!(Some(&5), double_peeker.next());
+    assert_eq!(None, double_peeker.peek());
+    assert_eq!(None, double_peeker.peek_next());
+    assert_eq!(None, double_peeker.next());
   }
 
   #[test]
@@ -108,6 +122,5 @@ mod tests_double_peekable {
     assert_eq!(None, double_peeker.peek_next());
     assert_eq!(Some(&"e"), double_peeker.next());
     assert_eq!(None, double_peeker.next());
-    println!("{:?}", vec);
   }
 }

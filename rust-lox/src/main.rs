@@ -1,6 +1,5 @@
-mod compiler;
-
-use compiler::scanner;
+mod scanner;
+mod util;
 
 fn main() {
     let source = "      print 200;";

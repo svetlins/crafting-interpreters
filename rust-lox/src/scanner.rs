@@ -2,15 +2,17 @@ use super::util;
 use std::str;
 
 pub struct Scan<'a> {
-  current_token: String,
+  start: usize,
+  current: usize,
+  source: &'a str,
   chars: util::DoublePeeker<std::str::Chars<'a>>,
   line: u32,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Token {
+pub struct Token<'a> {
   token_type: TokenType,
-  text: String,
+  text: &'a str,
   line: u32,
 }
 
@@ -63,13 +65,12 @@ pub enum TokenType {
 }
 
 impl<'a> Iterator for Scan<'a> {
-  type Item = Token;
+  type Item = Token<'a>;
 
   fn next(&mut self) -> Option<Self::Item> {
     match self.scan_token() {
-      Some(token) if token.token_type == TokenType::Eof => None,
-      Some(token) => Some(token),
-      None => None,
+      token if token.token_type == TokenType::Eof => None,
+      token => Some(token),
     }
   }
 }
@@ -77,7 +78,9 @@ impl<'a> Iterator for Scan<'a> {
 impl<'a> Scan<'a> {
   pub fn new(source: &str) -> Scan {
     Scan {
-      current_token: String::from(""),
+      start: 0,
+      current: 0,
+      source: source,
       chars: util::DoublePeeker::new(source.chars()),
       line: 1,
     }
@@ -90,7 +93,7 @@ impl<'a> Scan<'a> {
 
     let consumed_char = self.chars.next().unwrap();
 
-    self.current_token.push(consumed_char);
+    self.current += 1;
 
     consumed_char
   }
@@ -113,10 +116,10 @@ impl<'a> Scan<'a> {
     self.chars.peek_next()
   }
 
-  pub fn scan_token(&mut self) -> Option<Token> {
+  pub fn scan_token(&mut self) -> Token<'a> {
     self.eat_whitespace();
 
-    self.current_token = String::from("");
+    self.start = self.current;
 
     if self.at_end() {
       return self.make_token(TokenType::Eof);
@@ -177,7 +180,7 @@ impl<'a> Scan<'a> {
     }
   }
 
-  fn scan_identifier(&mut self) -> Option<Token> {
+  fn scan_identifier(&mut self) -> Token<'a> {
     while !self.at_end()
       && self
         .peek()
@@ -190,9 +193,13 @@ impl<'a> Scan<'a> {
     self.make_token(self.current_identifier_type())
   }
 
+  fn current_token(&self) -> &'a str {
+    &self.source[self.start..self.current]
+  }
+
   fn current_identifier_type(&self) -> TokenType {
     // Book implementation is with hard-coded trie but I'm lazy
-    match self.current_token.as_str() {
+    match self.current_token() {
       "and" => TokenType::And,
       "class" => TokenType::Class,
       "else" => TokenType::Else,
@@ -213,7 +220,7 @@ impl<'a> Scan<'a> {
     }
   }
 
-  fn scan_number(&mut self) -> Option<Token> {
+  fn scan_number(&mut self) -> Token<'a> {
     let mut saw_decimal_point = false;
 
     loop {
@@ -234,7 +241,7 @@ impl<'a> Scan<'a> {
     self.make_token(TokenType::Number)
   }
 
-  fn scan_string(&mut self) -> Option<Token> {
+  fn scan_string(&mut self) -> Token<'a> {
     while self.peek() != Some('"') {
       self.advance();
     }
@@ -272,12 +279,12 @@ impl<'a> Scan<'a> {
     self.peek() == None
   }
 
-  fn make_token(&self, token_type: TokenType) -> Option<Token> {
-    Some(Token {
+  fn make_token(&self, token_type: TokenType) -> Token<'a> {
+    Token {
       token_type: token_type,
-      text: self.current_token.clone(),
+      text: self.current_token(),
       line: self.line,
-    })
+    }
   }
 }
 
@@ -293,61 +300,58 @@ mod tests {
   #[test]
   fn test_single_char_op() {
     let mut scan = Scan::new("+");
-    assert_eq!(scan.scan_token().unwrap().token_type, TokenType::Plus);
+    assert_eq!(scan.scan_token().token_type, TokenType::Plus);
   }
 
   #[test]
   fn test_multiple_single_char_op() {
     let mut scan = Scan::new("+-*");
-    assert_eq!(scan.scan_token().unwrap().token_type, TokenType::Plus);
-    assert_eq!(scan.scan_token().unwrap().token_type, TokenType::Minus);
-    assert_eq!(scan.scan_token().unwrap().token_type, TokenType::Star);
+    assert_eq!(scan.scan_token().token_type, TokenType::Plus);
+    assert_eq!(scan.scan_token().token_type, TokenType::Minus);
+    assert_eq!(scan.scan_token().token_type, TokenType::Star);
   }
 
   #[test]
   fn test_whitespace() {
     let mut scan = Scan::new("       +         ");
-    assert_eq!(scan.scan_token().unwrap().token_type, TokenType::Plus);
+    assert_eq!(scan.scan_token().token_type, TokenType::Plus);
   }
 
   #[test]
   fn test_double_char_op() {
     let mut scan = Scan::new("!=");
-    assert_eq!(scan.scan_token().unwrap().token_type, TokenType::BangEqual);
+    assert_eq!(scan.scan_token().token_type, TokenType::BangEqual);
   }
 
   #[test]
   fn test_double_char_confusion_op() {
     let mut scan = Scan::new("!");
-    assert_eq!(scan.scan_token().unwrap().token_type, TokenType::Bang);
+    assert_eq!(scan.scan_token().token_type, TokenType::Bang);
   }
 
   #[test]
   fn test_greater() {
     let mut scan = Scan::new(">");
-    assert_eq!(scan.scan_token().unwrap().token_type, TokenType::Greater);
+    assert_eq!(scan.scan_token().token_type, TokenType::Greater);
   }
 
   #[test]
   fn test_greater_equal() {
     let mut scan = Scan::new(">=");
-    assert_eq!(
-      scan.scan_token().unwrap().token_type,
-      TokenType::GreaterEqual
-    );
+    assert_eq!(scan.scan_token().token_type, TokenType::GreaterEqual);
   }
 
   #[test]
   fn test_string() {
     let mut scan = Scan::new("\"some string\"");
-    assert_eq!(scan.scan_token().unwrap().token_type, TokenType::String);
+    assert_eq!(scan.scan_token().token_type, TokenType::String);
   }
 
   #[test]
   fn test_string_and_after() {
     let mut scan = Scan::new("\"some string\"+");
     scan.scan_token();
-    assert_eq!(scan.scan_token().unwrap().token_type, TokenType::Plus);
+    assert_eq!(scan.scan_token().token_type, TokenType::Plus);
   }
 
   #[test]
@@ -360,12 +364,12 @@ mod tests {
       Vec::from([
         Token {
           token_type: TokenType::String,
-          text: String::from("\"some string\""),
+          text: "\"some string\"",
           line: 1
         },
         Token {
           token_type: TokenType::Plus,
-          text: String::from("+"),
+          text: "+",
           line: 1
         }
       ])
@@ -375,7 +379,7 @@ mod tests {
   #[test]
   fn test_integer() {
     let mut scan = Scan::new("42");
-    let token = scan.scan_token().unwrap();
+    let token = scan.scan_token();
     assert_eq!(token.token_type, TokenType::Number);
     assert_eq!(token.text, String::from("42"));
   }
@@ -383,7 +387,7 @@ mod tests {
   #[test]
   fn test_decimal() {
     let mut scan = Scan::new("42.69");
-    let token = scan.scan_token().unwrap();
+    let token = scan.scan_token();
     assert_eq!(token.token_type, TokenType::Number);
     assert_eq!(token.text, String::from("42.69"));
   }
@@ -391,7 +395,7 @@ mod tests {
   #[test]
   fn test_malformed_decimal() {
     let mut scan = Scan::new("42.69.666");
-    let token = scan.scan_token().unwrap();
+    let token = scan.scan_token();
     assert_eq!(token.token_type, TokenType::Number);
     assert_eq!(token.text, String::from("42.69"));
   }
@@ -399,7 +403,7 @@ mod tests {
   #[test]
   fn test_empty() {
     let mut scan = Scan::new("");
-    assert_eq!(scan.scan_token().unwrap().token_type, TokenType::Eof);
+    assert_eq!(scan.scan_token().token_type, TokenType::Eof);
   }
 
   #[test]
@@ -412,12 +416,12 @@ mod tests {
       Vec::from([
         Token {
           token_type: TokenType::Print,
-          text: String::from("print"),
+          text: "print",
           line: 1
         },
         Token {
           token_type: TokenType::Number,
-          text: String::from("1"),
+          text: "1",
           line: 1
         }
       ])
@@ -434,17 +438,17 @@ mod tests {
       Vec::from([
         Token {
           token_type: TokenType::Identifier,
-          text: String::from("count"),
+          text: "count",
           line: 1
         },
         Token {
           token_type: TokenType::Plus,
-          text: String::from("+"),
+          text: "+",
           line: 1
         },
         Token {
           token_type: TokenType::Number,
-          text: String::from("1"),
+          text: "1",
           line: 1
         }
       ])
@@ -468,97 +472,97 @@ mod tests {
       Vec::from([
         Token {
           token_type: TokenType::Fun,
-          text: String::from("fn"),
+          text: "fn",
           line: 2
         },
         Token {
           token_type: TokenType::Identifier,
-          text: String::from("a_fun"),
+          text: "a_fun",
           line: 2
         },
         Token {
           token_type: TokenType::LeftParen,
-          text: String::from("("),
+          text: "(",
           line: 2
         },
         Token {
           token_type: TokenType::Identifier,
-          text: String::from("p"),
+          text: "p",
           line: 2
         },
         Token {
           token_type: TokenType::RightParen,
-          text: String::from(")"),
+          text: ")",
           line: 2
         },
         Token {
           token_type: TokenType::LeftBrace,
-          text: String::from("{"),
+          text: "{",
           line: 2
         },
         Token {
           token_type: TokenType::Var,
-          text: String::from("var"),
+          text: "var",
           line: 3
         },
         Token {
           token_type: TokenType::Identifier,
-          text: String::from("l"),
+          text: "l",
           line: 3
         },
         Token {
           token_type: TokenType::Equal,
-          text: String::from("="),
+          text: "=",
           line: 3
         },
         Token {
           token_type: TokenType::Identifier,
-          text: String::from("p"),
+          text: "p",
           line: 3
         },
         Token {
           token_type: TokenType::Plus,
-          text: String::from("+"),
+          text: "+",
           line: 3
         },
         Token {
           token_type: TokenType::Number,
-          text: String::from("1"),
+          text: "1",
           line: 3
         },
         Token {
           token_type: TokenType::Semicolon,
-          text: String::from(";"),
+          text: ";",
           line: 3
         },
         Token {
           token_type: TokenType::Return,
-          text: String::from("return"),
+          text: "return",
           line: 4
         },
         Token {
           token_type: TokenType::Identifier,
-          text: String::from("v"),
+          text: "v",
           line: 4
         },
         Token {
           token_type: TokenType::Plus,
-          text: String::from("+"),
+          text: "+",
           line: 4
         },
         Token {
           token_type: TokenType::Number,
-          text: String::from("1"),
+          text: "1",
           line: 4
         },
         Token {
           token_type: TokenType::Semicolon,
-          text: String::from(";"),
+          text: ";",
           line: 4
         },
         Token {
           token_type: TokenType::RightBrace,
-          text: String::from("}"),
+          text: "}",
           line: 5
         },
       ])

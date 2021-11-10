@@ -1,3 +1,5 @@
+mod expression;
+mod parser;
 mod scanner;
 mod util;
 

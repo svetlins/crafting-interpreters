@@ -1,4 +1,5 @@
 use super::util;
+use serde::Serialize;
 use std::str;
 
 pub struct Scan<'a> {
@@ -9,14 +10,14 @@ pub struct Scan<'a> {
   line: u32,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Clone, Copy)]
 pub struct Token<'a> {
-  token_type: TokenType,
-  text: &'a str,
-  line: u32,
+  pub token_type: TokenType,
+  pub text: &'a str,
+  pub line: u32,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Clone, Copy)]
 pub enum TokenType {
   // Single-character tokens.
   LeftParen,

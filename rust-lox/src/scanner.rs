@@ -1,4 +1,3 @@
-use super::util;
 use serde::Serialize;
 use std::str;
 
@@ -6,7 +5,9 @@ pub struct Scan<'a> {
   start: usize,
   current: usize,
   source: &'a str,
-  chars: util::DoublePeeker<std::str::Chars<'a>>,
+  peek: Option<char>,
+  peek_next: Option<char>,
+  chars: std::str::Chars<'a>,
   line: u32,
 }
 
@@ -78,43 +79,41 @@ impl<'a> Iterator for Scan<'a> {
 
 impl<'a> Scan<'a> {
   pub fn new(source: &str) -> Scan {
+    let mut chars = source.chars();
+
     Scan {
       start: 0,
       current: 0,
       source: source,
-      chars: util::DoublePeeker::new(source.chars()),
+      peek: chars.next(),
+      peek_next: chars.next(),
+      chars: chars,
       line: 1,
     }
   }
 
-  pub fn advance(&mut self) -> char {
+  pub fn advance(&mut self) -> Option<char> {
     if self.at_end() {
       panic!("Can't advance beyond end");
     }
 
-    let consumed_char = self.chars.next().unwrap();
+    let current_char = self.peek;
+    self.peek = self.peek_next;
+    self.peek_next = self.chars.next();
 
     self.current += 1;
 
-    consumed_char
+    current_char
   }
 
   fn matches(&mut self, other: char) -> bool {
-    match self.peek() {
+    match self.peek {
       Some(c) if c == other => {
         self.advance();
         true
       }
       _ => false,
     }
-  }
-
-  fn peek(&mut self) -> Option<char> {
-    self.chars.peek()
-  }
-
-  fn peek_next(&mut self) -> Option<char> {
-    self.chars.peek_next()
   }
 
   pub fn scan_token(&mut self) -> Token<'a> {
@@ -126,7 +125,7 @@ impl<'a> Scan<'a> {
       return self.make_token(TokenType::Eof);
     }
 
-    let c = self.advance();
+    let c = self.advance().unwrap();
 
     if c.is_alphabetic() || c == '_' {
       return self.scan_identifier();
@@ -184,7 +183,7 @@ impl<'a> Scan<'a> {
   fn scan_identifier(&mut self) -> Token<'a> {
     while !self.at_end()
       && self
-        .peek()
+        .peek
         .map(|c| c.is_alphabetic() || c == '_' || c.is_ascii_digit())
         == Some(true)
     {
@@ -225,7 +224,7 @@ impl<'a> Scan<'a> {
     let mut saw_decimal_point = false;
 
     loop {
-      match self.peek() {
+      match self.peek {
         Some(c) if c.is_ascii_digit() => {
           self.advance();
           ()
@@ -243,7 +242,7 @@ impl<'a> Scan<'a> {
   }
 
   fn scan_string(&mut self) -> Token<'a> {
-    while self.peek() != Some('"') {
+    while self.peek != Some('"') {
       self.advance();
     }
 
@@ -254,14 +253,14 @@ impl<'a> Scan<'a> {
 
   fn eat_whitespace(&mut self) {
     loop {
-      match self.peek() {
+      match self.peek {
         Some(c) if c == '\n' => {
           self.line += 1;
           self.advance();
         }
         Some(c) if c == '/' => {
-          if self.peek_next() == Some('/') {
-            while !self.at_end() && self.peek() != Some('\n') {
+          if self.peek_next == Some('/') {
+            while !self.at_end() && self.peek != Some('\n') {
               self.advance();
             }
           }
@@ -277,7 +276,7 @@ impl<'a> Scan<'a> {
   }
 
   fn at_end(&mut self) -> bool {
-    self.peek() == None
+    self.peek.is_none()
   }
 
   fn make_token(&self, token_type: TokenType) -> Token<'a> {
@@ -314,8 +313,9 @@ mod tests {
 
   #[test]
   fn test_whitespace() {
-    let mut scan = Scan::new("       +         ");
+    let mut scan = Scan::new("       +         -  ");
     assert_eq!(scan.scan_token().token_type, TokenType::Plus);
+    assert_eq!(scan.scan_token().token_type, TokenType::Minus);
   }
 
   #[test]
@@ -328,6 +328,13 @@ mod tests {
   fn test_double_char_confusion_op() {
     let mut scan = Scan::new("!");
     assert_eq!(scan.scan_token().token_type, TokenType::Bang);
+  }
+
+  #[test]
+  fn test_double_char_op_space() {
+    let mut scan = Scan::new("! =");
+    assert_eq!(scan.scan_token().token_type, TokenType::Bang);
+    assert_eq!(scan.scan_token().token_type, TokenType::Equal);
   }
 
   #[test]
@@ -408,6 +415,19 @@ mod tests {
   }
 
   #[test]
+  fn test_non_ascii() {
+    let mut scan = Scan::new("\"🤪\"");
+    assert_eq!(
+      scan.scan_token(),
+      Token {
+        token_type: TokenType::String,
+        text: "🤪",
+        line: 1,
+      }
+    );
+  }
+
+  #[test]
   fn test_keywords() {
     let scan = Scan::new("print 1");
     let tokens: Vec<Token> = scan.collect();
@@ -452,6 +472,121 @@ mod tests {
           text: "1",
           line: 1
         }
+      ])
+    )
+  }
+
+  #[test]
+  fn test_comments() {
+    let source = r#"
+      fn a_fun(p) {
+        // just some stuff
+        var l = p + 1; // some other stuff
+        return v + 1;
+      }
+      "#;
+
+    let scan = Scan::new(source);
+    let tokens: Vec<Token> = scan.collect();
+
+    assert_eq!(
+      tokens,
+      Vec::from([
+        Token {
+          token_type: TokenType::Fun,
+          text: "fn",
+          line: 2
+        },
+        Token {
+          token_type: TokenType::Identifier,
+          text: "a_fun",
+          line: 2
+        },
+        Token {
+          token_type: TokenType::LeftParen,
+          text: "(",
+          line: 2
+        },
+        Token {
+          token_type: TokenType::Identifier,
+          text: "p",
+          line: 2
+        },
+        Token {
+          token_type: TokenType::RightParen,
+          text: ")",
+          line: 2
+        },
+        Token {
+          token_type: TokenType::LeftBrace,
+          text: "{",
+          line: 2
+        },
+        Token {
+          token_type: TokenType::Var,
+          text: "var",
+          line: 4
+        },
+        Token {
+          token_type: TokenType::Identifier,
+          text: "l",
+          line: 4
+        },
+        Token {
+          token_type: TokenType::Equal,
+          text: "=",
+          line: 4
+        },
+        Token {
+          token_type: TokenType::Identifier,
+          text: "p",
+          line: 4
+        },
+        Token {
+          token_type: TokenType::Plus,
+          text: "+",
+          line: 4
+        },
+        Token {
+          token_type: TokenType::Number,
+          text: "1",
+          line: 4
+        },
+        Token {
+          token_type: TokenType::Semicolon,
+          text: ";",
+          line: 4
+        },
+        Token {
+          token_type: TokenType::Return,
+          text: "return",
+          line: 5
+        },
+        Token {
+          token_type: TokenType::Identifier,
+          text: "v",
+          line: 5
+        },
+        Token {
+          token_type: TokenType::Plus,
+          text: "+",
+          line: 5
+        },
+        Token {
+          token_type: TokenType::Number,
+          text: "1",
+          line: 5
+        },
+        Token {
+          token_type: TokenType::Semicolon,
+          text: ";",
+          line: 5
+        },
+        Token {
+          token_type: TokenType::RightBrace,
+          text: "}",
+          line: 6
+        },
       ])
     )
   }

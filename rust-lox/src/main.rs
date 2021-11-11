@@ -4,14 +4,15 @@ mod scanner;
 mod util;
 
 fn main() {
-    let source = "      print 200;";
+    let token: scanner::Token;
 
-    let mut scan = scanner::Scan::new(source);
+    {
+        let source = String::from("      print 200;");
 
-    scan.scan_token();
+        let scan = scanner::Scan::new(source.as_str());
 
-    let mut c = source.chars().peekable();
+        println!("{:?}", scan.collect::<Vec<scanner::Token>>());
+    }
 
-    let n = c.next();
-    let p = c.peek();
+    // println!("{:?}", token);
 }

@@ -1,0 +1,11 @@
+var a = 20;
+
+{
+  fun fn() {
+    print a;
+  }
+
+  var a = 30;
+
+  print fn();
+}

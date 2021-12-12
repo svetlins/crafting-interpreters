@@ -47,7 +47,9 @@ module TokenTypes
 end
 
 Token = Struct.new(:type, :lexeme, :literal, :line) do
-  alias_method :as_json, :to_h
+  def as_json
+    to_h.merge(name: "TOKEN")
+  end
 end
 
 class Scanner

@@ -1,7 +1,11 @@
 require 'scanner'
 
 module Statement
+  @names = []
+
   def self.define_statement_type(name, *fields)
+    @names << name
+
     Struct.new(*fields) do
       def expression? = false
       def statement? = true
@@ -17,17 +21,23 @@ module Statement
             if field_value.respond_to?(:as_json)
               field_value = field_value.as_json
             elsif field_value.is_a? Array
-              field_value = field_value.map(&:as_json)
+              field_value = {children: field_value.map(&:as_json)}
             else
               field_value = field_value.inspect
             end
 
-            [field, field_value]
+            field_value
           end
 
-        {type: name}.merge(hash.to_h)
+        {name: name, children: hash}
       end
     end
+  end
+
+  def self.generate_visitors
+    @names.map do |name|
+      "def visit_#{name}; end"
+    end.join("\n\n")
   end
 
   ExpressionStatement = define_statement_type('expression_statement', :expression)

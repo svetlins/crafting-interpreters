@@ -5,6 +5,7 @@ $LOAD_PATH.unshift File.join(__dir__, 'lib')
 
 require 'scanner'
 require 'parser'
+require 'printers/tree_printer'
 
 set :allow_origin, "*"
 set :allow_methods, "GET,HEAD,POST"
@@ -21,9 +22,7 @@ post '/tokens' do
   source = request.params["source"]
 
   tokens = Scanner.new(source).scan
-  tree = Parser.new(tokens).parse
+  tree = TreePrinter.print(Parser.new(tokens).parse)
 
-  sleep 1
-
-  {tokens: tokens.map(&:as_json), tree: tree.map(&:as_json)}.to_json
+  {tokens: tokens.map(&:as_json), tree: tree}.to_json
 end

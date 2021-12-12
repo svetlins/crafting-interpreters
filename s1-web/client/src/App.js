@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { MenuAlt2Icon, DotsHorizontalIcon } from "@heroicons/react/outline";
-import { SearchIcon } from "@heroicons/react/solid";
 import axios from "axios";
-
-function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+import Tree from "react-d3-tree";
+import classNames from "classnames";
 
 export default function App() {
   const [source, setSource] = useState("");
   const [tokens, setTokens] = useState([]);
+  const [tree, setTree] = useState({
+    name: "Svetlin",
+    children: [{ name: "Eliza" }],
+  });
   const [loading, setLoading] = useState(false);
 
   function submitSource(event) {
@@ -18,6 +19,7 @@ export default function App() {
       .post("http://localhost:4567/tokens", { source })
       .then((response) => {
         setTokens(response.data.tokens);
+        setTree(response.data.tree);
       })
       .finally(() => setLoading(false));
     event.preventDefault();
@@ -57,7 +59,7 @@ export default function App() {
 
           {/* Main content */}
           <div className="flex-1 flex items-stretch overflow-hidden">
-            <main className="flex-1 overflow-y-auto">
+            <main className="overflow-y-auto resize-x w-8/12">
               {/* Primary column */}
               <section
                 aria-labelledby="primary-heading"
@@ -85,15 +87,26 @@ export default function App() {
             </main>
 
             {/* Secondary column (hidden on smaller screens) */}
-            <aside className="hidden w-96 bg-white border-l border-gray-200 overflow-y-auto lg:block relative">
+            <aside className=" flex-1 min-w-[200px] bg-white border-l border-gray-200 overflow-y-auto relative flex flex-col">
               {loading && (
                 <div className="w-full h-full opacity-50 bg-gray-300 absolute flex items-center justify-center">
                   <DotsHorizontalIcon className="h-12" />
                 </div>
               )}
-              {tokens.map((token) => (
-                <Token tokenData={token} />
-              ))}
+              <div>
+                {tokens.map((token) => (
+                  <TokenView tokenData={token} />
+                ))}
+              </div>
+
+              <div className="w-full flex-1 mt-2 border-8">
+                <Tree
+                  data={tree}
+                  initialDepth={100}
+                  orientation="vertical"
+                  pathFunc="straight"
+                />
+              </div>
             </aside>
           </div>
         </div>
@@ -102,10 +115,14 @@ export default function App() {
   );
 }
 
-function Token({ tokenData }) {
+function TokenView({ tokenData }) {
   let Component;
 
-  if (tokenData.type === "STRING" || tokenData.type === "NUMBER") {
+  if (
+    tokenData.type === "STRING" ||
+    tokenData.type === "NUMBER" ||
+    tokenData.type === "IDENTIFIER"
+  ) {
     Component = ValueToken;
   } else {
     Component = SimpleToken;
@@ -116,16 +133,36 @@ function Token({ tokenData }) {
 
 function ValueToken({ tokenData }) {
   return (
-    <span className="inline-flex items-center px-2 py-0.5 m-2 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-      {tokenData.type} ({tokenData.literal})
-    </span>
+    <Token
+      text={`${tokenData.type} (${tokenData.literal || tokenData.lexeme})`}
+      color="green"
+    />
   );
 }
 
 function SimpleToken({ tokenData }) {
+  return <Token text={tokenData.type} color="yellow" />;
+}
+
+function Token({ text, color }) {
+  let colorClasses;
+
+  if (color === "yellow") {
+    colorClasses = [`bg-yellow-100`, `text-yellow-800`];
+  } else if (color === "green") {
+    colorClasses = [`bg-green-100`, `text-green-800`];
+  } else {
+    throw "uknown color";
+  }
+
   return (
-    <span className="inline-flex items-center px-2 py-0.5 m-2 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-      {tokenData.type}
+    <span
+      className={classNames(
+        "inline-flex items-center px-2 py-0.5 m-2 rounded text-xs font-medium",
+        colorClasses
+      )}
+    >
+      {text}
     </span>
   );
 }

@@ -6,7 +6,7 @@ require 'parser'
 require 'printers/printer'
 require 'printers/sexp_printer'
 require 'printers/rpn_printer'
-require 'printers/json_printer'
+require 'printers/tree_printer'
 require 'interpreter'
 
 module Lab
@@ -53,15 +53,23 @@ module Lab
   end
 
   def sample_source1
-    "1 + 2 * 3"
+    "1 + 2 * 3;"
   end
 
   def sample_source2
-    "(1 + 2) * 3"
+    "(1 + 2) * 3;"
+  end
+
+  def sample_source3
+    <<~CODE
+      fun fn (a, b, c) {
+        return a + b + c;
+      }
+    CODE
   end
 
   def malformed_source1
-    "1 * (1 + 3"
+    "1 * (1 + 3;"
   end
 
   def sample_expression1

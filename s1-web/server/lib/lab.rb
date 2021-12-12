@@ -6,6 +6,7 @@ require 'parser'
 require 'printers/printer'
 require 'printers/sexp_printer'
 require 'printers/rpn_printer'
+require 'printers/json_printer'
 require 'interpreter'
 
 module Lab

@@ -9,6 +9,24 @@ module Expression
       define_method :accept do |visitor|
         visitor.public_send(:"visit_#{name}", self)
       end
+
+      define_method :as_json do
+        hash =
+          fields.map do |field|
+            field_value = self.public_send(field)
+            if field_value.respond_to?(:as_json)
+              field_value = field_value.as_json
+            elsif field_value.is_a? Array
+              field_value = field_value.map(&:as_json)
+            else
+              field_value = field_value.inspect
+            end
+
+            [field, field_value]
+          end
+
+        {type: name}.merge(hash.to_h)
+      end
     end
   end
 

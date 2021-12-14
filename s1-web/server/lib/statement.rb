@@ -7,8 +7,8 @@ module Statement
     @names << name
 
     Struct.new(*fields) do
-      def expression? = false
-      def statement? = true
+      def expression?; true; end
+      def statement?; false; end
 
       define_method :accept do |visitor|
         visitor.public_send(:"visit_#{name}", self)

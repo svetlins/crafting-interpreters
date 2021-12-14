@@ -21,10 +21,11 @@ GEM
     tilt (2.0.10)
 
 PLATFORMS
-  arm64-darwin-20
+  ruby
   x86_64-linux
 
 DEPENDENCIES
+  bundler (= 2.1.4)
   puma
   rack-contrib
   sinatra
@@ -34,4 +35,4 @@ RUBY VERSION
    ruby 3.0.2p107
 
 BUNDLED WITH
-   2.2.26
+   2.1.4

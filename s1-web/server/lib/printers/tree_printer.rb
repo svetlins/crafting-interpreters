@@ -2,15 +2,18 @@ module TreePrinter
   extend self
 
   def print(tree)
-    if tree.is_a? Array
-      tree.map { |resolvable_element| print(resolvable_element) }
-    elsif tree.statement?
-      tree.accept(self)
-    elsif tree.expression?
-      tree.accept(self)
-    else
-      raise "Malformed tree"
-    end
+    regular_tree =
+      if tree.is_a? Array
+        tree.map { |resolvable_element| resolvable_element.accept(self) }
+      elsif tree.statement?
+        tree.accept(self)
+      elsif tree.expression?
+        tree.accept(self)
+      else
+        raise "Malformed tree"
+      end
+
+    {name: "Program", children: regular_tree}
   end
 
   def visit_expression_statement(expression_statement)
@@ -37,7 +40,12 @@ module TreePrinter
     }
   end
 
-  def visit_print_statement(statement); {name: "print_statement"} end
+  def visit_print_statement(print_statement)
+    {
+      name: "print_statement",
+      children: [print_statement.expression.accept(self)],
+    }
+  end
 
   def visit_var_statement(variable_statement)
     {
@@ -108,7 +116,15 @@ module TreePrinter
 
   def visit_logical(expression); {name: "expression"} end
 
-  def visit_unary(expression); {name: "expression"} end
+  def visit_unary(unary_expression)
+    {
+      name: "unary",
+      attributes: {
+        operator: unary_expression.operator.lexeme
+      },
+      children: [unary_expression.right.accept(self)]
+    }
+  end
 
   def visit_variable(variable_expression)
     {
@@ -119,7 +135,12 @@ module TreePrinter
     }
   end
 
-  def visit_call(expression); {name: "expression"} end
+  def visit_call(call_expression)
+    {
+      name: "call_expression",
+      children: [call_expression.callee.accept(self)] + call_expression.arguments.map { |argument| argument.accept(self) },
+    }
+  end
 
   def visit_get_expression(expression); {name: "expression"} end
 
@@ -128,7 +149,4 @@ module TreePrinter
   def visit_super_expression(expression); {name: "expression"} end
 
   def visit_this_expression(expression); {name: "expression"} end
-
-
-
 end

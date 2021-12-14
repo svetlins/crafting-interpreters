@@ -1,28 +1,64 @@
 import { useState } from "react";
 import { MenuAlt2Icon, DotsHorizontalIcon } from "@heroicons/react/outline";
+import { CubeIcon, DotsVerticalIcon, CogIcon } from "@heroicons/react/solid";
 import axios from "axios";
 import Tree from "react-d3-tree";
 import classNames from "classnames";
 
+const tabs = [
+  { name: "Tokens", href: "#", icon: CubeIcon },
+  { name: "AST", href: "#", icon: DotsVerticalIcon },
+  { name: "Bytecode", href: "#", icon: CogIcon },
+];
+
 export default function App() {
-  const [source, setSource] = useState("");
+  const [source, setSource] = useState(`fun doStuff (a, b, c) {
+  var x = a + b + c;
+  if (x > 2) {
+    x = x + 1;
+    return x;
+  } else {
+    return -1;
+  }
+}
+
+print "123" + "456";
+
+print doStuff(1,2,3);`);
   const [tokens, setTokens] = useState([]);
-  const [tree, setTree] = useState({
-    name: "Svetlin",
-    children: [{ name: "Eliza" }],
-  });
+  const [currentTab, setCurrentTab] = useState("Tokens");
+  const [tree, setTree] = useState(null);
   const [loading, setLoading] = useState(false);
 
   function submitSource(event) {
+    prettifySource();
     setLoading(true);
-    axios
-      .post("http://localhost:4567/tokens", { source })
-      .then((response) => {
+    const startedAt = new Date();
+    axios.post("http://localhost:4567/tokens", { source }).then((response) => {
+      setTimeout(() => {
+        setLoading(false);
         setTokens(response.data.tokens);
         setTree(response.data.tree);
-      })
-      .finally(() => setLoading(false));
+      }, Math.max(1500, new Date() - startedAt));
+    });
     event.preventDefault();
+  }
+
+  function prettifySource() {
+    const lines = source.split("\n").map((line) => line.trim());
+    let nest = 0;
+
+    for (let i = 0; i < lines.length - 1; i++) {
+      const line = lines[i];
+
+      if (line.includes("}")) nest -= 1;
+
+      lines[i] = " ".repeat(nest * 2) + line;
+
+      if (line.includes("{")) nest += 1;
+    }
+
+    setSource(lines.join("\n"));
   }
 
   return (
@@ -59,7 +95,7 @@ export default function App() {
 
           {/* Main content */}
           <div className="flex-1 flex items-stretch overflow-hidden">
-            <main className="overflow-y-auto resize-x w-8/12">
+            <main className="overflow-y-auto resize-x w-4/12">
               {/* Primary column */}
               <section
                 aria-labelledby="primary-heading"
@@ -81,32 +117,79 @@ export default function App() {
                     >
                       Analyze
                     </button>
+                    <button
+                      type="submit"
+                      className="absolute bottom-4 left-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                      onClick={prettifySource}
+                    >
+                      Pretify
+                    </button>
                   </form>
                 </div>
               </section>
             </main>
 
             {/* Secondary column (hidden on smaller screens) */}
-            <aside className=" flex-1 min-w-[200px] bg-white border-l border-gray-200 overflow-y-auto relative flex flex-col">
+            <aside className="flex-1 min-w-[200px] bg-white border-l border-gray-200 overflow-y-auto relative flex flex-col">
+              <div className="border-b border-gray-200 px-2">
+                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                  {tabs.map((tab) => (
+                    <a
+                      key={tab.name}
+                      href={tab.href}
+                      className={classNames(
+                        tab.name === currentTab
+                          ? "border-indigo-500 text-indigo-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300",
+                        "group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm"
+                      )}
+                      onClick={() => setCurrentTab(tab.name)}
+                    >
+                      <tab.icon
+                        className={classNames(
+                          tab.current
+                            ? "text-indigo-500"
+                            : "text-gray-400 group-hover:text-gray-500",
+                          "-ml-0.5 mr-2 h-5 w-5"
+                        )}
+                        aria-hidden="true"
+                      />
+                      <span>{tab.name}</span>
+                    </a>
+                  ))}
+                </nav>
+              </div>
               {loading && (
                 <div className="w-full h-full opacity-50 bg-gray-300 absolute flex items-center justify-center">
                   <DotsHorizontalIcon className="h-12" />
                 </div>
               )}
-              <div>
-                {tokens.map((token) => (
-                  <TokenView tokenData={token} />
-                ))}
-              </div>
+              {currentTab === "Tokens" && (
+                <div>
+                  {tokens.map((token) => (
+                    <TokenView tokenData={token} />
+                  ))}
+                </div>
+              )}
 
-              <div className="w-full flex-1 mt-2 border-8">
-                <Tree
-                  data={tree}
-                  initialDepth={100}
-                  orientation="vertical"
-                  pathFunc="straight"
-                />
-              </div>
+              {currentTab === "AST" && (
+                <div className="w-full flex-1">
+                  <div className="h-full">
+                    {tree ? (
+                      <Tree
+                        data={tree}
+                        initialDepth={1}
+                        orientation="horizontal"
+                        pathFunc="step"
+                        zoom={0.5}
+                        translate={{ x: 250, y: 350 }}
+                      />
+                    ) : (
+                      <span className="">Empty</span>
+                    )}
+                  </div>
+                </div>
+              )}
             </aside>
           </div>
         </div>

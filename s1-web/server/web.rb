@@ -1,3 +1,6 @@
+require 'rubygems'
+require 'bundler'
+
 Bundler.require
 
 $LOAD_PATH.unshift File.join(__dir__, 'lib')

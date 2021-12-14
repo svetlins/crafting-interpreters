@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 ruby "3.0.2"
 
-gem "bundler", "2.1.4"
+gem "bundler"
 gem "sinatra"
 gem "sinatra-cors"
 gem "puma"

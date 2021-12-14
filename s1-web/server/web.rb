@@ -19,7 +19,7 @@ before do
   content_type :json
 end
 
-post '/tokens' do
+post '/api/analyze' do
   source = request.params["source"]
 
   tokens = Scanner.new(source).scan

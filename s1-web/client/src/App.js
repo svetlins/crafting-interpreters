@@ -34,7 +34,7 @@ print doStuff(1,2,3);`);
     prettifySource();
     setLoading(true);
     const startedAt = new Date();
-    axios.post("http://localhost:4567/tokens", { source }).then((response) => {
+    axios.post("/api/analyze", { source }).then((response) => {
       setTimeout(() => {
         setLoading(false);
         setTokens(response.data.tokens);

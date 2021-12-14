@@ -25,6 +25,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  bundler
   puma
   rack-contrib
   sinatra

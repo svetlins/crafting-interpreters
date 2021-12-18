@@ -11,6 +11,8 @@ const tabs = [
   { name: "Bytecode", href: "#", icon: CogIcon },
 ];
 
+const analyzeUrl = process.env.REACT_APP_ANALYZE_ENDPOINT_URL || "/api/analyze";
+
 export default function App() {
   const [source, setSource] = useState(`fun doStuff (a, b, c) {
   var x = a + b + c;
@@ -34,7 +36,7 @@ print doStuff(1,2,3);`);
     prettifySource();
     setLoading(true);
     const startedAt = new Date();
-    axios.post("/api/analyze", { source }).then((response) => {
+    axios.post(analyzeUrl, { source }).then((response) => {
       setTimeout(() => {
         setLoading(false);
         setTokens(response.data.tokens);

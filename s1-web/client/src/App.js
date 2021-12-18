@@ -161,41 +161,56 @@ print doStuff(1,2,3);`);
                   ))}
                 </nav>
               </div>
-              {loading && (
-                <div className="w-full h-full opacity-50 bg-gray-300 absolute flex items-center justify-center">
-                  <DotsHorizontalIcon className="h-12" />
-                </div>
-              )}
-              {currentTab === "Tokens" && (
-                <div>
-                  {tokens.map((token) => (
-                    <TokenView tokenData={token} />
-                  ))}
+
+              {tokens.length > 0 ? (
+                <Content tokens={tokens} tree={tree} currentTab={currentTab} />
+              ) : (
+                <div className="self-center my-auto text-4xl text-gray-400 font-light italic">
+                  Hit analyze to populate
                 </div>
               )}
 
-              {currentTab === "AST" && (
-                <div className="w-full flex-1">
-                  <div className="h-full">
-                    {tree ? (
-                      <Tree
-                        data={tree}
-                        initialDepth={1}
-                        orientation="horizontal"
-                        pathFunc="step"
-                        zoom={0.5}
-                        translate={{ x: 250, y: 350 }}
-                      />
-                    ) : (
-                      <span className="">Empty</span>
-                    )}
-                  </div>
+              {loading && (
+                <div className="w-full h-full opacity-50 bg-gray-300 absolute flex items-center justify-center">
+                  <DotsHorizontalIcon className="h-12" />
                 </div>
               )}
             </aside>
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+function Content({ tokens, tree, currentTab }) {
+  return (
+    <>
+      {currentTab === "Tokens" && (
+        <div>
+          {tokens.map((token) => (
+            <TokenView tokenData={token} />
+          ))}
+        </div>
+      )}
+
+      {currentTab === "AST" && (
+        <div className="w-full flex-1">
+          <div className="h-full">
+            {tree ? (
+              <Tree
+                data={tree}
+                initialDepth={1}
+                orientation="horizontal"
+                pathFunc="step"
+                translate={{ x: 200, y: 350 }}
+              />
+            ) : (
+              <span className="">Empty</span>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -12,8 +12,10 @@ class StaticResolver
     SUBCLASS = "CLASS-TYPE-SUBCLASS"
   end
 
-  def initialize(interpreter, error_reporter: nil)
-    @interpreter = interpreter
+  attr_reader :resolutions
+
+  def initialize(error_reporter: nil)
+    @resolutions = {}
     @scopes = []
     @current_function = FunctionTypes::NONE
     @current_class = ClassType::NONE
@@ -53,8 +55,10 @@ class StaticResolver
 
   def resolve_local(expression, name)
     @scopes.reverse.each_with_index do |scope, index|
+      depth = index
+
       if scope.has_key? name.lexeme
-        @interpreter.resolve(expression, index)
+        @resolutions[expression.object_id] = depth
         break
       end
     end

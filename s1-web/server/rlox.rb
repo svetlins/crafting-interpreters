@@ -51,12 +51,13 @@ class Rlox
 
     return if @had_error
 
-    resolver = StaticResolver.new(@interpreter, error_reporter: self)
+    resolver = StaticResolver.new(error_reporter: self)
     resolver.resolve(statements)
+    static_resolutions = resolver.resolutions
 
     return if @had_error
 
-    @interpreter.interpret(statements)
+    @interpreter.interpret(statements, static_resolutions)
   end
 
   def report_scanner_error(line, message)

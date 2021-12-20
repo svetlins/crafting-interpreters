@@ -24,7 +24,6 @@ class Interpreter
   def initialize(error_reporter: nil)
     @globals = Environment.new
     @environment = @globals
-    @static_resolutions = {}
     define_globals
     @error_reporter = error_reporter
   end
@@ -40,16 +39,14 @@ class Interpreter
     )
   end
 
-  def interpret(statements)
+  def interpret(statements, static_resolutions)
+    @static_resolutions = static_resolutions
+
     statements.each do |statement|
       execute(statement)
     end
   rescue LoxRuntimeError => error
     @error_reporter.report_runtime_error(error.token, error.message) if @error_reporter
-  end
-
-  def resolve(expression, depth)
-    @static_resolutions[expression.object_id] = depth
   end
 
   def execute(statement)

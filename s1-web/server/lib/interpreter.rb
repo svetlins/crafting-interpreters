@@ -37,6 +37,29 @@ class Interpreter
         def to_s = "<native fn>"
       end.new
     )
+
+    @globals.define(
+      "assert",
+      Struct.new(:_dummy) do
+        def arity = 2;
+
+        def lox_call(_interpreter, arguments)
+          assertion = arguments.first
+          message = arguments.last
+
+          print message
+
+          unless assertion
+            puts "\t\tFAIL"
+            exit(1)
+          end
+
+          puts "\t\tOK"
+        end
+
+        def to_s = "<native fn>"
+      end.new
+    )
   end
 
   def interpret(statements, static_resolutions)

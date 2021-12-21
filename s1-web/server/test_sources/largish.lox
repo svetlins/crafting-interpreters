@@ -14,17 +14,23 @@ fun makeRect(x, y, w, h) {
 
 var aRect = makeRect(0, 20, 10, 20);
 
-print aRect("area") == 200;
-print aRect("circumference") == 60;
+assert(aRect("area") == 200, "Closure method 1");
+assert(aRect("circumference") == 60, "Closure method 2");
 
 var x = 2;
+var whileAcc = 1;
 
 while (x > 0) {
-  print aRect("area") == 200;
+  whileAcc = whileAcc * 2;
   x = x - 1;
 }
 
-for(var y = 2; y > 0; y = y - 1) print 10 <= 20;
+assert(whileAcc == 4, "While");
+
+var forAcc = 1;
+
+for(var y = 2; y > 0; y = y - 1) forAcc = forAcc * 2;
+assert(whileAcc == 4, "For");
 
 {
   var a = 10;
@@ -34,24 +40,25 @@ for(var y = 2; y > 0; y = y - 1) print 10 <= 20;
 
     {
       var a = 30;
-
-      print a == 30;
+      assert(a == 30, "Var shadowing 1");
     }
+    assert(a == 20, "Var shadowing 2");
   }
+  assert(a == 10, "Var shadowing 3");
 }
 
 class Dog {
   bark(loudness) {
     if (loudness > 5) {
-      print "BARK";
+      return "BARK";
     } else {
-      print "Bark";
+      return "Bark";
     }
   }
 }
 
-print Dog == Dog;
-print Dog() == Dog();
+assert(Dog == Dog, "Class identity");
+assert(Dog() != Dog(), "Instance identity");
 
 var aDog = Dog();
 
@@ -59,13 +66,12 @@ aDog.color = "golden";
 aDog.friend = Dog();
 aDog.friend.color = "black";
 
-print aDog.color == "golden";
-print aDog.friend.color == "black";
+assert(aDog.color = "golden", "Setter");
+assert(aDog.friend.color = "black", "Nested setter");
 
-aDog.bark(1);
-aDog.bark(10);
-aDog.friend.bark(1);
-aDog.friend.bark(10);
+assert(aDog.bark(1) == "Bark", "Method 1");
+assert(aDog.friend.bark(1) == "Bark", "Nested method 2");
+assert(aDog.friend.bark(10) == "BARK", "Nested method 2");
 
 class SelfAwareDog {
   beautyFactor() {
@@ -76,9 +82,9 @@ class SelfAwareDog {
 
 var aSelfAwareDog = SelfAwareDog();
 aSelfAwareDog.color = "golden";
-print aSelfAwareDog.beautyFactor() == "very beautiful";
+assert(aSelfAwareDog.beautyFactor() == "very beautiful", "Method this 1");
 aSelfAwareDog.color = "purple";
-print aSelfAwareDog.beautyFactor() == "so so";
+assert(aSelfAwareDog.beautyFactor() == "so so", "Method this 2");
 
 
 class Cat {
@@ -93,5 +99,5 @@ class Cat {
 
 var aCat = Cat("big");
 
-print aCat.introduce();
-print aCat.init("big") == aCat;
+assert(aCat.size == "big", "Initializer");
+assert(aCat.init("big") == aCat, "Initializer reentrant");

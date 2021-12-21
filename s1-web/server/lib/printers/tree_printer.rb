@@ -1,14 +1,16 @@
-module TreePrinter
-  extend self
+class TreePrinter
+  def initialize(tree, static_resolutions)
+    @tree, @static_resolutions = tree, static_resolutions
+  end
 
-  def print(tree)
+  def print
     regular_tree =
-      if tree.is_a? Array
-        tree.map { |resolvable_element| resolvable_element.accept(self) }
-      elsif tree.statement?
-        tree.accept(self)
-      elsif tree.expression?
-        tree.accept(self)
+      if @tree.is_a? Array
+        @tree.map { |resolvable_element| resolvable_element.accept(self) }
+      elsif @tree.statement?
+        @tree.accept(self)
+      elsif @tree.expression?
+        @tree.accept(self)
       else
         raise "Malformed tree"
       end
@@ -135,6 +137,7 @@ module TreePrinter
     {
       name: "VAR-LOOKUP",
       attributes: {
+        depth: @static_resolutions[variable_expression.object_id] || 'Global',
         name: variable_expression.name.lexeme
       }
     }

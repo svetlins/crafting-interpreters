@@ -6,6 +6,7 @@ $LOAD_PATH.unshift File.join(__dir__, 'lib')
 
 require 'scanner'
 require 'parser'
+require 'static_resolver'
 require 'printers/tree_printer'
 
 set :allow_origin, "*"
@@ -23,7 +24,12 @@ post '/analyze' do
   source = request.params["source"]
 
   tokens = Scanner.new(source).scan
-  tree = TreePrinter.print(Parser.new(tokens).parse)
+  ast = Parser.new(tokens).parse
+
+  resolver = StaticResolver.new(error_reporter: self)
+  resolver.resolve(ast)
+
+  tree = TreePrinter.new(ast, resolver.resolutions).print
 
   {tokens: tokens.map(&:as_json), tree: tree}.to_json
 end

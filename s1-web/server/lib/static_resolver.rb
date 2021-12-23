@@ -16,6 +16,7 @@ class StaticResolver
 
   def initialize(error_reporter: nil)
     @scopes = []
+    @scope_names = []
     @current_function = FunctionTypes::NONE
     @current_class = ClassType::NONE
     @error_reporter = error_reporter
@@ -33,12 +34,14 @@ class StaticResolver
     end
   end
 
-  def begin_scope
+  def begin_scope(name)
     @scopes << {}
+    @scope_names << [@scope_names.last, name].compact.join(':')
   end
 
   def end_scope
     @scopes.pop
+    @scope_names.pop
   end
 
   def declare(name)
@@ -58,6 +61,7 @@ class StaticResolver
 
       if scope.has_key? name.lexeme
         expression.depth = depth
+        expression.location = @scope_names.reverse[index]
         break
       end
     end
@@ -66,7 +70,7 @@ class StaticResolver
   def resolve_function(function, type)
     enclosing_function = @current_function
     @current_function = type
-    begin_scope
+    begin_scope(function.name.lexeme)
 
     function.parameters.each do |parameter|
       declare(parameter)
@@ -87,7 +91,7 @@ class StaticResolver
   end
 
   def visit_block_statement(block_statement)
-    begin_scope
+    begin_scope('block')
     resolve(block_statement.statements)
     end_scope
 
@@ -151,11 +155,11 @@ class StaticResolver
     end
 
     if class_statement.superclass
-      begin_scope
+      begin_scope('superclass')
       @scopes.last['super'] = true
     end
 
-    begin_scope
+    begin_scope('class')
     @scopes.last['this'] = true
 
     class_statement.methods.each do |method|

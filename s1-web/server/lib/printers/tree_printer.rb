@@ -93,7 +93,7 @@ class TreePrinter
       name: "ASSIGN",
       attributes: {
         name: assign_expression.name.lexeme,
-      },
+      }.merge(scope_attributes(assign_expression)),
       children: [
         assign_expression.value.accept(self),
       ]
@@ -137,9 +137,8 @@ class TreePrinter
     {
       name: "VAR-LOOKUP",
       attributes: {
-        depth: variable_expression.depth || 'Global',
         name: variable_expression.name.lexeme
-      }
+      }.merge(scope_attributes(variable_expression))
     }
   end
 
@@ -153,11 +152,25 @@ class TreePrinter
     }
   end
 
-  def visit_get_expression(expression); {name: "GET", attributes: {}} end
+  def visit_get_expression(expression); {name: "GET", attributes: {}}; end
 
-  def visit_set_expression(expression); {name: "SET", attributes: {}} end
+  def visit_set_expression(expression); {name: "SET", attributes: {}}; end
 
-  def visit_super_expression(expression); {name: "SUPER", attributes: {}} end
+  def visit_super_expression(expression); {name: "SUPER", attributes: {}}; end
 
-  def visit_this_expression(expression); {name: "THIS", attributes: {}} end
+  def visit_this_expression(expression); {name: "THIS", attributes: {}}; end
+
+
+  def scope_attributes(expression)
+    if expression.depth.nil?
+      {scope: "GLOBAL"}
+    elsif expression.depth.zero?
+      {scope: "LOCAL"}
+    elsif expression.depth.nonzero?
+      {
+        scope: "CLOSURE",
+        closure: expression.location,
+      }
+    end
+  end
 end

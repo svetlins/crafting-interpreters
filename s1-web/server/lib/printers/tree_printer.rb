@@ -1,16 +1,16 @@
 class TreePrinter
-  def initialize(tree)
-    @tree = tree
+  def initialize(statements)
+    @statements = statements
   end
 
   def print
     regular_tree =
-      if @tree.is_a? Array
-        @tree.map { |resolvable_element| resolvable_element.accept(self) }
-      elsif @tree.statement?
-        @tree.accept(self)
-      elsif @tree.expression?
-        @tree.accept(self)
+      if @statements.is_a? Array
+        @statements.map { |resolvable_element| resolvable_element.accept(self) }
+      elsif @statements.statement?
+        @statements.accept(self)
+      elsif @statements.expression?
+        @statements.accept(self)
       else
         raise "Malformed tree"
       end

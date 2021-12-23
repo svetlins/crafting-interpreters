@@ -7,6 +7,7 @@ $LOAD_PATH.unshift File.join(__dir__, 'lib')
 require 'scanner'
 require 'parser'
 require 'static_resolver'
+require 'compiler'
 require 'printers/tree_printer'
 
 set :allow_origin, "*"
@@ -31,5 +32,7 @@ post '/analyze' do
 
   tree = TreePrinter.new(ast).print
 
-  {tokens: tokens.map(&:as_json), tree: tree}.to_json
+  bytecode = Compiler.new(ast).compile
+
+  {tokens: tokens.map(&:as_json), tree: tree, bytecode: bytecode.as_json}.to_json
 end

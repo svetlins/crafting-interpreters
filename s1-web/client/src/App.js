@@ -6,9 +6,9 @@ import Tree from "react-d3-tree";
 import classNames from "classnames";
 
 const tabs = [
-  { name: "Tokens", href: "#", icon: CubeIcon },
-  { name: "AST", href: "#", icon: DotsVerticalIcon },
-  { name: "Bytecode", href: "#", icon: CogIcon },
+  { name: "Tokens", icon: CubeIcon },
+  { name: "AST", icon: DotsVerticalIcon },
+  { name: "Bytecode", icon: CogIcon },
 ];
 
 const analyzeUrl = process.env.REACT_APP_ANALYZE_ENDPOINT_URL || "/api/analyze";
@@ -159,9 +159,9 @@ export default function App() {
               <div className="border-b border-gray-200 px-2">
                 <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                   {tabs.map((tab) => (
-                    <a
+                    <button
+                      type="button"
                       key={tab.name}
-                      href={tab.href}
                       className={classNames(
                         tab.name === currentTab
                           ? "border-indigo-500 text-indigo-600"
@@ -180,7 +180,7 @@ export default function App() {
                         aria-hidden="true"
                       />
                       <span>{tab.name}</span>
-                    </a>
+                    </button>
                   ))}
                 </nav>
               </div>

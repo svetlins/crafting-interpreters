@@ -45,7 +45,7 @@ export default function App() {
       fun outer() {
         var z = 666;
 
-          fun doStuff (a, b, c) {
+          fun doStuff(a, b, c) {
             var x = a + b + c;
             if (x + y + z > 2) {
               x = x + 1;
@@ -142,7 +142,7 @@ export default function App() {
                       Analyze
                     </button>
                     <button
-                      type="submit"
+                      type="button"
                       className="absolute bottom-4 left-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                       onClick={prettifySource}
                     >

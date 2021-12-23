@@ -15,7 +15,6 @@ class StaticResolver
   attr_reader :resolutions
 
   def initialize(error_reporter: nil)
-    @resolutions = {}
     @scopes = []
     @current_function = FunctionTypes::NONE
     @current_class = ClassType::NONE
@@ -58,7 +57,7 @@ class StaticResolver
       depth = index
 
       if scope.has_key? name.lexeme
-        @resolutions[expression.object_id] = depth
+        expression.depth = depth
         break
       end
     end

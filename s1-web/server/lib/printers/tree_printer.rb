@@ -1,6 +1,6 @@
 class TreePrinter
-  def initialize(tree, static_resolutions)
-    @tree, @static_resolutions = tree, static_resolutions
+  def initialize(tree)
+    @tree = tree
   end
 
   def print
@@ -137,7 +137,7 @@ class TreePrinter
     {
       name: "VAR-LOOKUP",
       attributes: {
-        depth: @static_resolutions[variable_expression.object_id] || 'Global',
+        depth: variable_expression.depth || 'Global',
         name: variable_expression.name.lexeme
       }
     }

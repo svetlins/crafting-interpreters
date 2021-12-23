@@ -29,7 +29,7 @@ post '/analyze' do
   resolver = StaticResolver.new(error_reporter: self)
   resolver.resolve(ast)
 
-  tree = TreePrinter.new(ast, resolver.resolutions).print
+  tree = TreePrinter.new(ast).print
 
   {tokens: tokens.map(&:as_json), tree: tree}.to_json
 end

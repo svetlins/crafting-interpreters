@@ -5,7 +5,7 @@ require 'lox_class'
 require 'scanner'
 
 require 'time'
-
+require 'ostruct'
 
 class Interpreter
   include TokenTypes
@@ -62,9 +62,7 @@ class Interpreter
     )
   end
 
-  def interpret(statements, static_resolutions)
-    @static_resolutions = static_resolutions
-
+  def interpret(statements)
     statements.each do |statement|
       execute(statement)
     end
@@ -172,7 +170,7 @@ class Interpreter
   def visit_assign(assign)
     value = evaluate(assign.value)
 
-    depth = @static_resolutions[assign.object_id]
+    depth = assign.depth
 
     if depth
       @environment.assign_at(depth, assign.name, value)
@@ -264,7 +262,7 @@ class Interpreter
   end
 
   def lookup_variable(name, expression)
-    depth = @static_resolutions[expression.object_id]
+    depth = expression.depth
 
     if depth
       @environment.get_at(depth, name)
@@ -316,7 +314,7 @@ class Interpreter
   end
 
   def visit_super_expression(super_expression)
-    depth = @static_resolutions[super_expression.object_id]
+    depth = super_expression.depth
     superclass = @environment.get_at(depth, super_expression.keyword)
 
     method = superclass.find_method(super_expression.method_name.lexeme)
@@ -325,7 +323,6 @@ class Interpreter
       raise LoxRuntimeError.new(super_expression.method_name, "Undefined property #{super_expression.method_name.lexeme}")
     end
 
-    require 'ostruct'
     instance = @environment.get_at(depth - 1, OpenStruct.new(lexeme: 'this')) #
 
     method.bind(instance)

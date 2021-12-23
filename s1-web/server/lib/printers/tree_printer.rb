@@ -75,9 +75,9 @@ class TreePrinter
       name: "IF",
       attributes: {},
       children: [
-        if_statement.condition.accept(self).tap { |cond| cond[:attributes][:role] = "condition" },
-        if_statement.then_branch.accept(self).tap { |then_branch| then_branch[:attributes][:role] = "then_branch" },
-        if_statement.else_branch.accept(self).tap { |else_branch| else_branch[:attributes][:role] = "else_branch" },
+        adorn(if_statement.condition.accept(self), "CONDITION"),
+        adorn(if_statement.then_branch.accept(self), "THEN"),
+        adorn(if_statement.else_branch.accept(self), "ELSE"),
       ],
     }
   end
@@ -116,7 +116,7 @@ class TreePrinter
     {
       name: "LITERAL",
       attributes: {
-        value: literal_expression.value,
+        value: literal_expression.value.inspect,
       }
     }
   end
@@ -147,7 +147,7 @@ class TreePrinter
       name: "CALL",
       attributes: {},
       children: [
-        call_expression.callee.accept(self).tap { |callee| callee[:attributes][:role] = "callee" },
+        adorn(call_expression.callee.accept(self), "CALLEE"),
       ] + call_expression.arguments.map { |argument| argument.accept(self) },
     }
   end
@@ -160,6 +160,13 @@ class TreePrinter
 
   def visit_this_expression(expression); {name: "THIS", attributes: {}}; end
 
+  private
+
+  def adorn(node, role)
+    node.tap do
+      node[:attributes][:role] = role
+    end
+  end
 
   def scope_attributes(expression)
     if expression.depth.nil?

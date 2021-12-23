@@ -129,9 +129,10 @@ export default function App() {
                 <div className="h-full m-3 relative">
                   <form className="h-full" onSubmit={submitSource}>
                     <textarea
+                      spellCheck={false}
                       name="comment"
                       id="comment"
-                      className="h-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-indigo-300 border-4 resize-none rounded-md"
+                      className="h-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-indigo-300 border-4 resize-none rounded-md font-mono"
                       value={source}
                       onChange={(e) => setSource(e.target.value)}
                     />

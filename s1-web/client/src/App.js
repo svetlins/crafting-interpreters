@@ -13,20 +13,55 @@ const tabs = [
 
 const analyzeUrl = process.env.REACT_APP_ANALYZE_ENDPOINT_URL || "/api/analyze";
 
-export default function App() {
-  const [source, setSource] = useState(`fun doStuff (a, b, c) {
-  var x = a + b + c;
-  if (x > 2) {
-    x = x + 1;
-    return x;
-  } else {
-    return -1;
+function pretty(source) {
+  let lines = source.split("\n").map((line) => line.trim());
+
+  lines = lines.filter((line, index) => {
+    const previousLine = lines[index - 1] || "";
+
+    return line === "" ? previousLine !== "" : true;
+  });
+
+  let nest = 0;
+
+  for (let i = 0; i < lines.length - 1; i++) {
+    const line = lines[i];
+
+    if (line.includes("}")) nest -= 1;
+
+    lines[i] = " ".repeat(nest * 2) + line;
+
+    if (line.includes("{")) nest += 1;
   }
+
+  return lines.join("\n");
 }
 
-print "123" + "456";
+export default function App() {
+  const [source, setSource] = useState(
+    pretty(`
+      var y = 69;
 
-print doStuff(1,2,3);`);
+      fun outer() {
+        var z = 666;
+
+          fun doStuff (a, b, c) {
+            var x = a + b + c;
+            if (x + y + z > 2) {
+              x = x + 1;
+              return x;
+            } else {
+              return -1;
+            }
+          }
+
+          print doStuff(1,2,3);
+        }
+
+        print "123" + "456";
+  `)
+  );
+
   const [tokens, setTokens] = useState([]);
   const [currentTab, setCurrentTab] = useState("Tokens");
   const [tree, setTree] = useState(null);
@@ -47,20 +82,7 @@ print doStuff(1,2,3);`);
   }
 
   function prettifySource() {
-    const lines = source.split("\n").map((line) => line.trim());
-    let nest = 0;
-
-    for (let i = 0; i < lines.length - 1; i++) {
-      const line = lines[i];
-
-      if (line.includes("}")) nest -= 1;
-
-      lines[i] = " ".repeat(nest * 2) + line;
-
-      if (line.includes("{")) nest += 1;
-    }
-
-    setSource(lines.join("\n"));
+    setSource(pretty(source));
   }
 
   return (

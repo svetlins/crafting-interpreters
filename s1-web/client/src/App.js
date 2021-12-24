@@ -5,6 +5,9 @@ import axios from "axios";
 import Tree from "react-d3-tree";
 import classNames from "classnames";
 
+import { pretty } from "./utils";
+import { PresetDropdown, presetSources } from "./components/PresetDropdown";
+
 const tabs = [
   { name: "Tokens", icon: CubeIcon },
   { name: "AST", icon: DotsVerticalIcon },
@@ -13,58 +16,13 @@ const tabs = [
 
 const analyzeUrl = process.env.REACT_APP_ANALYZE_ENDPOINT_URL || "/api/analyze";
 
-function pretty(source) {
-  let lines = source.split("\n").map((line) => line.trim());
-
-  lines = lines.filter((line, index) => {
-    const previousLine = lines[index - 1] || "";
-
-    return line === "" ? previousLine !== "" : true;
-  });
-
-  let nest = 0;
-
-  for (let i = 0; i < lines.length - 1; i++) {
-    const line = lines[i];
-
-    if (line.includes("}")) nest -= 1;
-
-    lines[i] = " ".repeat(nest * 2) + line;
-
-    if (line.includes("{")) nest += 1;
-  }
-
-  return lines.join("\n");
-}
-
 export default function App() {
-  const [source, setSource] = useState(
-    pretty(`
-      var y = 69;
+  const [source, setSource] = useState(presetSources[0].source);
 
-      fun outer() {
-        var z = 666;
-
-          fun doStuff(a, b, c) {
-            var x = a + b + c;
-            if (x + y + z > 2) {
-              x = x + 1;
-              return x;
-            } else {
-              return -1;
-            }
-          }
-
-          print doStuff(1,2,3);
-        }
-
-        print "123" + "456";
-  `)
-  );
-
-  const [tokens, setTokens] = useState([]);
   const [currentTab, setCurrentTab] = useState("Tokens");
+  const [tokens, setTokens] = useState([]);
   const [tree, setTree] = useState(null);
+  const [bytecode, setBytecode] = useState(null);
   const [loading, setLoading] = useState(false);
 
   function submitSource(event) {
@@ -76,6 +34,7 @@ export default function App() {
         setLoading(false);
         setTokens(response.data.tokens);
         setTree(response.data.tree);
+        setBytecode(response.data.bytecode);
       }, Math.max(1500, new Date() - startedAt));
     });
     event.preventDefault();
@@ -125,9 +84,17 @@ export default function App() {
                 aria-labelledby="primary-heading"
                 className="min-w-0 flex-1 h-full flex flex-col lg:order-last"
               >
-                {/* Your content */}
+                {/* Content */}
                 <div className="h-full m-3 relative">
                   <form className="h-full" onSubmit={submitSource}>
+                    <div className="mb-2">
+                      <PresetDropdown
+                        onChange={(presetSource) => {
+                          setTokens([]);
+                          setSource(pretty(presetSource));
+                        }}
+                      />
+                    </div>
                     <textarea
                       spellCheck={false}
                       name="comment"
@@ -186,7 +153,12 @@ export default function App() {
               </div>
 
               {tokens.length > 0 ? (
-                <Content tokens={tokens} tree={tree} currentTab={currentTab} />
+                <Content
+                  tokens={tokens}
+                  tree={tree}
+                  currentTab={currentTab}
+                  bytecode={bytecode}
+                />
               ) : (
                 <div className="self-center my-auto text-4xl text-gray-400 font-light italic">
                   Hit analyze to populate
@@ -206,7 +178,7 @@ export default function App() {
   );
 }
 
-function Content({ tokens, tree, currentTab }) {
+function Content({ tokens, tree, bytecode, currentTab }) {
   return (
     <>
       {currentTab === "Tokens" && (
@@ -234,6 +206,8 @@ function Content({ tokens, tree, currentTab }) {
           </div>
         </div>
       )}
+
+      {currentTab === "Bytecode" && bytecode && renderOpcodes(bytecode.code)}
     </>
   );
 }
@@ -256,7 +230,7 @@ function TokenView({ tokenData }) {
 
 function ValueToken({ tokenData }) {
   return (
-    <Token
+    <Badge
       text={`${tokenData.type} (${tokenData.literal || tokenData.lexeme})`}
       color="green"
     />
@@ -264,10 +238,10 @@ function ValueToken({ tokenData }) {
 }
 
 function SimpleToken({ tokenData }) {
-  return <Token text={tokenData.type} color="yellow" />;
+  return <Badge text={tokenData.type} color="yellow" />;
 }
 
-function Token({ text, color }) {
+function Badge({ text, color }) {
   let colorClasses;
 
   if (color === "yellow") {
@@ -288,4 +262,25 @@ function Token({ text, color }) {
       {text}
     </span>
   );
+}
+
+const opcodeSizes = {
+  "LOAD-CONSTANT": 2,
+};
+function renderOpcodes(code) {
+  let elements = [];
+
+  for (let i = 0; i < code.length; i++) {
+    const opcode = code[i];
+    const opcodeSize = opcodeSizes[opcode] || 1;
+    i += opcodeSize - 1;
+
+    elements.push(
+      <div>
+        <Badge text={opcode} color="yellow" />
+      </div>
+    );
+  }
+
+  return elements;
 }

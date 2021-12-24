@@ -1,4 +1,5 @@
 require 'sinatra'
+require "sinatra/reloader" if development?
 require 'sinatra/cors'
 require 'rack/contrib'
 
@@ -32,7 +33,7 @@ post '/analyze' do
 
   tree = TreePrinter.new(ast).print
 
-  bytecode = Compiler.new(ast).compile
+  bytecode = Compiler.new(ast).compile rescue nil
 
-  {tokens: tokens.map(&:as_json), tree: tree, bytecode: bytecode.as_json}.to_json
+  {tokens: tokens.map(&:as_json), tree: tree, bytecode: bytecode&.as_json}.to_json
 end

@@ -8,8 +8,12 @@ module Opcodes
   DIVIDE = "DIVIDE"
 
   POP = "POP"
+  NIL = "NIL"
 
   PRINT = "PRINT"
+
+  DEFINE_GLOBAL= "DEFINE-GLOBAL"
+  GET_GLOBAL= "GET-GLOBAL"
 end
 
 class Chunk

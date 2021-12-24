@@ -36,7 +36,7 @@ module Lab
   end
 
   def compile_ast(ast)
-    Compiler.new.compile(ast)
+    Compiler.new(ast).compile
   end
 
   def interpret(source)
@@ -58,7 +58,7 @@ module Lab
   end
 
   def sample_source0
-    "1 + 2;"
+    "var x = 1 + 2;"
   end
 
   def sample_source1

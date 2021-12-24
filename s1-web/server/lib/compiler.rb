@@ -28,7 +28,17 @@ class Compiler
     emit(Opcodes::PRINT)
   end
 
-  def visit_var_statement; end
+  def visit_var_statement(var_statement)
+    if var_statement.initializer
+      var_statement.initializer.accept(self)
+    else
+      emit(Opcodes::NIL)
+    end
+
+    constant_index = @chunk.add_constant(var_statement.name.lexeme)
+    emit_two(Opcodes::DEFINE_GLOBAL, constant_index)
+  end
+
   def visit_block_statement; end
   def visit_if_statement; end
   def visit_while_statement; end
@@ -36,7 +46,10 @@ class Compiler
 
   # expressions
   def visit_assign; end
-  def visit_variable; end
+  def visit_variable(variable_expression)
+    constant_index = @chunk.add_constant(variable_expression.name.lexeme)
+    emit_two(Opcodes::GET_GLOBAL, constant_index)
+  end
   def visit_super_expression; end
   def visit_this_expression; end
 
@@ -57,8 +70,7 @@ class Compiler
 
   def visit_literal(literal_expression)
     constant_index = @chunk.add_constant(literal_expression.value)
-    emit(Opcodes::LOAD_CONSTANT)
-    emit(constant_index)
+    emit_two(Opcodes::LOAD_CONSTANT, constant_index)
   end
 
   def visit_logical; end
@@ -69,5 +81,10 @@ class Compiler
 
   def emit(opcode)
     @chunk.write(opcode)
+  end
+
+  def emit_two(opcode, operand)
+    @chunk.write(opcode)
+    @chunk.write(operand)
   end
 end

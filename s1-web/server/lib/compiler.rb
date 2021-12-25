@@ -62,7 +62,18 @@ class Compiler
       @locals.pop
     end
   end
-  def visit_if_statement; end
+
+  def visit_if_statement(if_statement)
+    if_statement.condition.accept(self)
+
+    else_jump_offset = emit_jump(Opcodes::JUMP_ON_FALSE)
+
+    if_statement.then_branch.accept(self)
+    # exit_jump = emit_jump(Opcodes::JUMP)
+
+    @chunk.patch_jump(else_jump_offset)
+  end
+
   def visit_while_statement; end
   def visit_class_statement; end
 
@@ -126,6 +137,14 @@ class Compiler
   def emit_two(opcode, operand)
     emit(opcode)
     emit(operand)
+  end
+
+  def emit_jump(jump_opcode)
+    emit(Opcodes::JUMP_ON_FALSE)
+    emit(Chunk::PLACEHOLDER)
+    emit(Chunk::PLACEHOLDER)
+
+    @chunk.size - 2
   end
 
   def add_local(name)

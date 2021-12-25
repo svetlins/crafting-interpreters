@@ -18,9 +18,14 @@ module Opcodes
 
   GET_LOCAL= "GET-LOCAL"
   SET_LOCAL = "SET-LOCAL"
+
+  JUMP_ON_FALSE = "JUMP-ON-FALSE"
+  JUMP = "JUMP"
 end
 
 class Chunk
+  PLACEHOLDER = "PLACEHOLDER"
+
   def initialize
     @code = []
     @constants = []
@@ -28,6 +33,15 @@ class Chunk
 
   def write(opcode)
     @code << opcode
+
+    @code.size
+  end
+
+  def patch_jump(jump_offset)
+    jump = @code.size - jump_offset - 2
+
+    @code[jump_offset] = jump >> 8 & 0xff
+    @code[jump_offset + 1] = jump & 0xff
   end
 
   def add_constant(constant)
@@ -36,8 +50,8 @@ class Chunk
     @constants.size - 1
   end
 
-  def disassemble
-    @code
+  def size
+    @code.size
   end
 
   def as_json

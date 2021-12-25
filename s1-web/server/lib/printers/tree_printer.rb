@@ -77,8 +77,8 @@ class TreePrinter
       children: [
         adorn(if_statement.condition.accept(self), "CONDITION"),
         adorn(if_statement.then_branch.accept(self), "THEN"),
-        adorn(if_statement.else_branch.accept(self), "ELSE"),
-      ],
+        adorn(if_statement.else_branch&.accept(self), "ELSE"),
+      ].compact,
     }
   end
 
@@ -163,6 +163,8 @@ class TreePrinter
   private
 
   def adorn(node, role)
+    return unless node
+
     node.tap do
       node[:attributes][:role] = role
     end

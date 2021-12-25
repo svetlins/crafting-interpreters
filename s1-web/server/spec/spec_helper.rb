@@ -1,0 +1,5 @@
+require 'scanner'
+require 'parser'
+require 'static_resolver'
+require 'compiler'
+require 'printers/tree_printer'

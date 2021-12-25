@@ -17,7 +17,7 @@ export const presetSources = [
   } else {
     print ":( it's false";
     print "Unfortunately ;(";
-  };
+  }
   `,
   },
   {

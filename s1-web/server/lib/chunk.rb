@@ -26,6 +26,8 @@ end
 class Chunk
   PLACEHOLDER = "PLACEHOLDER"
 
+  attr_reader :code, :constants
+
   def initialize
     @code = []
     @constants = []

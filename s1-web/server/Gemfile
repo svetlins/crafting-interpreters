@@ -8,3 +8,5 @@ gem "sinatra-cors"
 gem "sinatra-contrib"
 gem "puma"
 gem "rack-contrib"
+
+gem "rspec"

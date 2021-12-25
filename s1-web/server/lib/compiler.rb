@@ -45,7 +45,12 @@ class Compiler
   def visit_class_statement; end
 
   # expressions
-  def visit_assign; end
+  def visit_assign(assign_expression)
+    assign_expression.value.accept(self)
+    constant_index = @chunk.add_constant(assign_expression.name.lexeme)
+    emit_two(Opcodes::SET_GLOBAL, constant_index)
+  end
+
   def visit_variable(variable_expression)
     constant_index = @chunk.add_constant(variable_expression.name.lexeme)
     emit_two(Opcodes::GET_GLOBAL, constant_index)

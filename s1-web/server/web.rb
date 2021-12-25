@@ -33,7 +33,7 @@ post '/analyze' do
 
   tree = TreePrinter.new(ast).print
 
-  bytecode = Compiler.new(ast).compile rescue nil
+  bytecode = Compiler.new(ast).compile
 
   {tokens: tokens.map(&:as_json), tree: tree, bytecode: bytecode&.as_json}.to_json
 end

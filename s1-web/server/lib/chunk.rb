@@ -14,6 +14,7 @@ module Opcodes
 
   DEFINE_GLOBAL= "DEFINE-GLOBAL"
   GET_GLOBAL= "GET-GLOBAL"
+  SET_GLOBAL= "SET-GLOBAL"
 end
 
 class Chunk

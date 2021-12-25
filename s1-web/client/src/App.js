@@ -266,6 +266,9 @@ function Badge({ text, color }) {
 
 const opcodeSizes = {
   "LOAD-CONSTANT": 2,
+  "DEFINE-GLOBAL": 2,
+  "SET-GLOBAL": 2,
+  "GET-GLOBAL": 2,
 };
 function renderOpcodes(code) {
   let elements = [];

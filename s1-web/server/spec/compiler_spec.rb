@@ -62,6 +62,37 @@ RSpec.describe Compiler do
     ])
   end
 
+  it "compiles `and` expressions correctly" do
+    chunk = compile <<-LOX
+      1 and 2;
+    LOX
+
+    expect(chunk.code).to eq([
+      "LOAD-CONSTANT", 0,
+      "JUMP-ON-FALSE", 0, 3,
+      "POP",
+      "LOAD-CONSTANT", 1,
+
+      "POP",
+    ])
+  end
+
+  it "compiles `or` expressions correctly" do
+    chunk = compile <<-LOX
+      1 or 2;
+    LOX
+
+    expect(chunk.code).to eq([
+      "LOAD-CONSTANT", 0,
+      "JUMP-ON-FALSE", 0, 3,
+      "JUMP", 0, 3,
+      "POP",
+      "LOAD-CONSTANT", 1,
+
+      "POP",
+    ])
+  end
+
   it "compiles local variables correctly" do
     chunk = compile <<-LOX
       var outer = 100;

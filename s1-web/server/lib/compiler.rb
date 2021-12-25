@@ -131,7 +131,26 @@ class Compiler
     emit_two(Opcodes::LOAD_CONSTANT, constant_index)
   end
 
-  def visit_logical; end
+  def visit_logical(logical_expression)
+    if logical_expression.operator.lexeme == "and"
+      logical_expression.left.accept(self)
+      short_circuit_exit = emit_jump(Opcodes::JUMP_ON_FALSE)
+      emit(Opcodes::POP) # clean up the left since there's no short circuit
+      logical_expression.right.accept(self)
+      @chunk.patch_jump(short_circuit_exit)
+    elsif logical_expression.operator.lexeme == "or"
+      logical_expression.left.accept(self)
+      else_jump = emit_jump(Opcodes::JUMP_ON_FALSE)
+      end_jump = emit_jump(Opcodes::JUMP)
+      @chunk.patch_jump(else_jump)
+      emit(Opcodes::POP) # clean up the left since there's no short circuit
+      logical_expression.right.accept(self)
+      @chunk.patch_jump(end_jump)
+    else
+      fail
+    end
+  end
+
   def visit_unary; end
   def visit_call; end
   def visit_get_expression; end

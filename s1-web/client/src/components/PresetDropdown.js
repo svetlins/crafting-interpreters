@@ -9,6 +9,18 @@ function classNames(...classes) {
 
 export const presetSources = [
   {
+    title: "If",
+    source: `
+  if (1 + 2) {
+    print "Oh, yes";
+    print "It's true!";
+  } else {
+    print ":( it's false";
+    print "Unfortunately ;(";
+  };
+  `,
+  },
+  {
     title: "Scope",
     source: `var outer = 100;
 

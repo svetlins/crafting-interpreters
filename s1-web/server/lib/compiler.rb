@@ -68,10 +68,17 @@ class Compiler
 
     else_jump_offset = emit_jump(Opcodes::JUMP_ON_FALSE)
 
+    emit(Opcodes::POP) # pop condition when condition is truthy
     if_statement.then_branch.accept(self)
-    # exit_jump = emit_jump(Opcodes::JUMP)
+
+    exit_jump = emit_jump(Opcodes::JUMP)
 
     @chunk.patch_jump(else_jump_offset)
+
+    emit(Opcodes::POP) # pop condition when condition is falsy
+    if_statement.else_branch&.accept(self)
+
+    @chunk.patch_jump(exit_jump)
   end
 
   def visit_while_statement; end
@@ -140,7 +147,7 @@ class Compiler
   end
 
   def emit_jump(jump_opcode)
-    emit(Opcodes::JUMP_ON_FALSE)
+    emit(jump_opcode)
     emit(Chunk::PLACEHOLDER)
     emit(Chunk::PLACEHOLDER)
 

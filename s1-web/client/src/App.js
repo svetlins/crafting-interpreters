@@ -17,7 +17,7 @@ const tabs = [
 const analyzeUrl = process.env.REACT_APP_ANALYZE_ENDPOINT_URL || "/api/analyze";
 
 export default function App() {
-  const [source, setSource] = useState(presetSources[0].source);
+  const [source, setSource] = useState(pretty(presetSources[0].source));
 
   const [currentTab, setCurrentTab] = useState("Tokens");
   const [tokens, setTokens] = useState([]);
@@ -271,6 +271,8 @@ const opcodeSizes = {
   "GET-GLOBAL": 2,
   "SET-LOCAL": 2,
   "GET-LOCAL": 2,
+  "JUMP-ON-FALSE": 3,
+  JUMP: 3,
 };
 function renderOpcodes(code) {
   let elements = [];
@@ -278,11 +280,20 @@ function renderOpcodes(code) {
   for (let i = 0; i < code.length; i++) {
     const opcode = code[i];
     const opcodeSize = opcodeSizes[opcode] || 1;
+    let text;
+
+    if (opcodeSize > 1) {
+      const args = code.slice(i + 1, i + opcodeSize);
+      text = `${i}: ${opcode} (${args.join(", ")})`;
+    } else {
+      text = `${i}: ${opcode}`;
+    }
+
     i += opcodeSize - 1;
 
     elements.push(
       <div>
-        <Badge text={opcode} color="yellow" />
+        <Badge text={text} color="yellow" />
       </div>
     );
   }

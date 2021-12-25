@@ -8,6 +8,20 @@ function classNames(...classes) {
 }
 
 export const presetSources = [
+  {
+    title: "Scope",
+    source: `var outer = 100;
+
+  {
+    var dummy = "dummy";
+    var x = 32 + 42;
+    var y = 200;
+    print x + y;
+
+    outer = 100;
+    x = 100;
+  }`,
+  },
   { title: "Arithmetic", source: "print 1 + 2 * 3;" },
   {
     title: "Closure",

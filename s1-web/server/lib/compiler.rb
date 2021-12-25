@@ -1,9 +1,13 @@
 require 'chunk'
 
 class Compiler
+  Local = Struct.new(:name, :depth)
+
   def initialize(statements)
     @statements = statements
     @chunk = Chunk.new
+    @locals = []
+    @scope_depth = 0
   end
 
   def compile
@@ -35,11 +39,29 @@ class Compiler
       emit(Opcodes::NIL)
     end
 
-    constant_index = @chunk.add_constant(var_statement.name.lexeme)
-    emit_two(Opcodes::DEFINE_GLOBAL, constant_index)
+    if @scope_depth > 0
+      add_local(var_statement.name.lexeme)
+    else # global
+      constant_index = @chunk.add_constant(var_statement.name.lexeme)
+      emit_two(Opcodes::DEFINE_GLOBAL, constant_index)
+    end
   end
 
-  def visit_block_statement; end
+  def visit_block_statement(block_statement)
+    @scope_depth += 1
+
+    block_statement.statements.each do |statement|
+      statement.accept(self)
+    end
+
+    # Cleanup
+    @scope_depth -= 1
+
+    while @locals.any? && @locals.last.depth > @scope_depth
+      emit(Opcodes::POP)
+      @locals.pop
+    end
+  end
   def visit_if_statement; end
   def visit_while_statement; end
   def visit_class_statement; end
@@ -47,13 +69,26 @@ class Compiler
   # expressions
   def visit_assign(assign_expression)
     assign_expression.value.accept(self)
-    constant_index = @chunk.add_constant(assign_expression.name.lexeme)
-    emit_two(Opcodes::SET_GLOBAL, constant_index)
+
+    stack_slot = resolve_local(assign_expression.name.lexeme)
+
+    if stack_slot
+      emit_two(Opcodes::SET_LOCAL, stack_slot)
+    else
+      constant_index = @chunk.add_constant(assign_expression.name.lexeme)
+      emit_two(Opcodes::SET_GLOBAL, constant_index)
+    end
   end
 
   def visit_variable(variable_expression)
-    constant_index = @chunk.add_constant(variable_expression.name.lexeme)
-    emit_two(Opcodes::GET_GLOBAL, constant_index)
+    stack_slot = resolve_local(variable_expression.name.lexeme)
+
+    if stack_slot
+      emit_two(Opcodes::GET_LOCAL, stack_slot)
+    else
+      constant_index = @chunk.add_constant(variable_expression.name.lexeme)
+      emit_two(Opcodes::GET_GLOBAL, constant_index)
+    end
   end
   def visit_super_expression; end
   def visit_this_expression; end
@@ -89,7 +124,17 @@ class Compiler
   end
 
   def emit_two(opcode, operand)
-    @chunk.write(opcode)
-    @chunk.write(operand)
+    emit(opcode)
+    emit(operand)
+  end
+
+  def add_local(name)
+    @locals << Local.new(name, @scope_depth)
+  end
+
+  def resolve_local(name)
+    _local, stack_slot = @locals.each_with_index.to_a.reverse.detect { |local, i| local.name == name }
+
+    stack_slot
   end
 end

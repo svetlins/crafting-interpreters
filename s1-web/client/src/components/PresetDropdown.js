@@ -9,15 +9,23 @@ function classNames(...classes) {
 
 export const presetSources = [
   {
+    title: "Function",
+    source: `
+    fun fn() {
+      print "Hi!";
+    }
+  `,
+  },
+  {
     title: "If",
     source: `
-  if (1 + 2) {
-    print "Oh, yes";
-    print "It's true!";
-  } else {
-    print ":( it's false";
-    print "Unfortunately ;(";
-  }
+    if (1 + 2) {
+      print "Oh, yes";
+      print "It's true!";
+    } else {
+      print ":( it's false";
+      print "Unfortunately ;(";
+    }
   `,
   },
   {

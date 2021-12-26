@@ -21,6 +21,8 @@ module Opcodes
 
   JUMP_ON_FALSE = "JUMP-ON-FALSE"
   JUMP = "JUMP"
+
+  CALL = "CALL"
 end
 
 class Chunk
@@ -57,6 +59,10 @@ class Chunk
   end
 
   def as_json
-    {code: @code, constants: @constants}
+    constants = @constants.map do |constant|
+      constant.respond_to?(:as_json) ? constant.as_json : constant
+    end
+
+    {code: @code, constants: constants}
   end
 end

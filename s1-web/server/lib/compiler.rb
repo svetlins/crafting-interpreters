@@ -1,13 +1,49 @@
 require 'chunk'
 
+module FunctionType
+  SCRIPT = "SCRIPT"
+  FUNCTION = "FUNCTION"
+end
+
+class Function
+  attr_reader :arity, :name, :chunk
+
+  def initialize(arity, name, type)
+    @arity = arity
+    @name = name
+    @type = type
+    @chunk = Chunk.new
+  end
+
+  def as_json
+    {
+      arity: @arity,
+      name: @name,
+      chunk: @chunk.as_json,
+    }
+  end
+end
+
 class Compiler
   Local = Struct.new(:name, :depth)
 
-  def initialize(statements)
+  attr_reader :locals
+
+  def initialize(statements, type = FunctionType::SCRIPT, parameters = [], enclosing = nil)
     @statements = statements
-    @chunk = Chunk.new
-    @locals = []
+    @type = type
+    @enclosing = enclosing
+    @function = Function.new(0, type, type)
+    @locals = [Local.new('', 0)]
     @scope_depth = 0
+
+    if type == FunctionType::FUNCTION
+      begin_scope
+
+      parameters.each do |parameter|
+        add_local(parameter)
+      end
+    end
   end
 
   def compile
@@ -15,7 +51,9 @@ class Compiler
       statement.accept(self)
     end
 
-    @chunk
+    emit_return
+
+    @function
   end
 
   # statements
@@ -24,8 +62,35 @@ class Compiler
     emit(Opcodes::POP)
   end
 
-  def visit_function_statement; end
-  def visit_return_statement; end
+  def visit_function_statement(function_statement)
+    if @scope_depth > 0
+      add_local(function_statement.name.lexeme)
+    end
+
+    function = Compiler.new(
+      function_statement.body,
+      FunctionType::FUNCTION,
+      function_statement.parameters.map(&:lexeme),
+      self
+    ).compile
+
+    emit_two(Opcodes::LOAD_CONSTANT, @function.chunk.add_constant(function))
+
+    if @scope_depth == 0
+      constant_index = @function.chunk.add_constant(function_statement.name.lexeme)
+      emit_two(Opcodes::DEFINE_GLOBAL, constant_index)
+    end
+  end
+
+  def visit_return_statement(return_statement)
+    if return_statement.value
+      return_statement.value.accept(self)
+    else
+      emit(Opcodes::NIL)
+    end
+
+    emit(Opcodes::RETURN)
+  end
 
   def visit_print_statement(print_statement)
     print_statement.expression.accept(self)
@@ -42,20 +107,20 @@ class Compiler
     if @scope_depth > 0
       add_local(var_statement.name.lexeme)
     else # global
-      constant_index = @chunk.add_constant(var_statement.name.lexeme)
+      constant_index = @function.chunk.add_constant(var_statement.name.lexeme)
       emit_two(Opcodes::DEFINE_GLOBAL, constant_index)
     end
   end
 
   def visit_block_statement(block_statement)
-    @scope_depth += 1
+    begin_scope
 
     block_statement.statements.each do |statement|
       statement.accept(self)
     end
 
     # Cleanup
-    @scope_depth -= 1
+    end_scope
 
     while @locals.any? && @locals.last.depth > @scope_depth
       emit(Opcodes::POP)
@@ -73,12 +138,12 @@ class Compiler
 
     exit_jump = emit_jump(Opcodes::JUMP)
 
-    @chunk.patch_jump(else_jump_offset)
+    @function.chunk.patch_jump(else_jump_offset)
 
     emit(Opcodes::POP) # pop condition when condition is falsy
     if_statement.else_branch&.accept(self)
 
-    @chunk.patch_jump(exit_jump)
+    @function.chunk.patch_jump(exit_jump)
   end
 
   def visit_while_statement; end
@@ -93,7 +158,7 @@ class Compiler
     if stack_slot
       emit_two(Opcodes::SET_LOCAL, stack_slot)
     else
-      constant_index = @chunk.add_constant(assign_expression.name.lexeme)
+      constant_index = @function.chunk.add_constant(assign_expression.name.lexeme)
       emit_two(Opcodes::SET_GLOBAL, constant_index)
     end
   end
@@ -104,7 +169,7 @@ class Compiler
     if stack_slot
       emit_two(Opcodes::GET_LOCAL, stack_slot)
     else
-      constant_index = @chunk.add_constant(variable_expression.name.lexeme)
+      constant_index = @function.chunk.add_constant(variable_expression.name.lexeme)
       emit_two(Opcodes::GET_GLOBAL, constant_index)
     end
   end
@@ -127,7 +192,7 @@ class Compiler
   def visit_grouping; end
 
   def visit_literal(literal_expression)
-    constant_index = @chunk.add_constant(literal_expression.value)
+    constant_index = @function.chunk.add_constant(literal_expression.value)
     emit_two(Opcodes::LOAD_CONSTANT, constant_index)
   end
 
@@ -137,27 +202,42 @@ class Compiler
       short_circuit_exit = emit_jump(Opcodes::JUMP_ON_FALSE)
       emit(Opcodes::POP) # clean up the left since there's no short circuit
       logical_expression.right.accept(self)
-      @chunk.patch_jump(short_circuit_exit)
+      @function.chunk.patch_jump(short_circuit_exit)
     elsif logical_expression.operator.lexeme == "or"
       logical_expression.left.accept(self)
       else_jump = emit_jump(Opcodes::JUMP_ON_FALSE)
       end_jump = emit_jump(Opcodes::JUMP)
-      @chunk.patch_jump(else_jump)
+      @function.chunk.patch_jump(else_jump)
       emit(Opcodes::POP) # clean up the left since there's no short circuit
       logical_expression.right.accept(self)
-      @chunk.patch_jump(end_jump)
+      @function.chunk.patch_jump(end_jump)
     else
       fail
     end
   end
 
   def visit_unary; end
-  def visit_call; end
+
+  def visit_call(call_expression)
+    call_expression.callee.accept(self)
+    call_expression.arguments.each { |arg| arg.accept(self) }
+
+    emit_two(Opcodes::CALL, call_expression.arguments.count)
+  end
+
   def visit_get_expression; end
   def visit_set_expression; end
 
+  def begin_scope
+    @scope_depth += 1
+  end
+
+  def end_scope
+    @scope_depth -= 1
+  end
+
   def emit(opcode)
-    @chunk.write(opcode)
+    @function.chunk.write(opcode)
   end
 
   def emit_two(opcode, operand)
@@ -170,7 +250,12 @@ class Compiler
     emit(Chunk::PLACEHOLDER)
     emit(Chunk::PLACEHOLDER)
 
-    @chunk.size - 2
+    @function.chunk.size - 2
+  end
+
+  def emit_return
+    emit(Opcodes::NIL)
+    emit(Opcodes::RETURN)
   end
 
   def add_local(name)

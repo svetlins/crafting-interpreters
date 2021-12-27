@@ -12,11 +12,46 @@ class StaticResolver
     SUBCLASS = "CLASS-TYPE-SUBCLASS"
   end
 
-  attr_reader :resolutions
+  class LexicalFunction
+    def initialize(enclosing)
+      @enclosing = enclosing
+      @scopes = [{}]
+    end
+
+    def begin_block
+      @scopes << {}
+    end
+
+    def end_block(block_statement)
+      block_statement.locals = @scopes.pop
+    end
+
+    def add_local(var_statement)
+      name = var_statement.name.lexeme
+      stack_slot = @scopes.map(&:size).sum
+
+      @scopes.last[name] = {
+        stack_slot: stack_slot
+      }
+
+      var_statement.kind = :local
+      var_statement.stack_slot = stack_slot
+    end
+
+    def find_local(variable_expression)
+      name = variable_expression.name.lexeme
+      @scopes.reverse.each do |scope|
+        index = scope.has_key?(name)
+
+        if index
+          return scope[name][:stack_slot]
+        end
+      end
+    end
+  end
 
   def initialize(error_reporter: nil)
-    @scopes = []
-    @scope_names = []
+    @function_stack = []
     @current_function = FunctionTypes::NONE
     @current_class = ClassType::NONE
     @error_reporter = error_reporter
@@ -68,20 +103,22 @@ class StaticResolver
   end
 
   def resolve_function(function, type)
-    enclosing_function = @current_function
-    @current_function = type
-    begin_scope(function.name.lexeme)
+    # enclosing_function = @current_function
+    # @current_function = type
+    # begin_scope(function.name.lexeme)
 
-    function.parameters.each do |parameter|
-      declare(parameter)
-      define(parameter)
-    end
+    # function.parameters.each do |parameter|
+    #   declare(parameter)
+    #   define(parameter)
+    # end
+
+    # resolve(function.body)
+
+    # end_scope
+
+    # @current_function = enclosing_function
 
     resolve(function.body)
-
-    end_scope
-
-    @current_function = enclosing_function
   end
 
   def error(token, message)
@@ -91,31 +128,41 @@ class StaticResolver
   end
 
   def visit_block_statement(block_statement)
-    begin_scope('block')
+    @function_stack.last.begin_block
     resolve(block_statement.statements)
-    end_scope
+    @function_stack.last.end_block(block_statement)
 
     return nil
   end
 
   def visit_var_statement(var_statement)
-    declare(var_statement.name)
-
-    if var_statement.initializer
-      resolve(var_statement.initializer)
+    if @function_stack.any?
+      @function_stack.last.add_local(var_statement)
+    else
+      var_statement.kind = :global
     end
 
-    define(var_statement.name)
+    # declare(var_statement.name)
+
+    # if var_statement.initializer
+    #   resolve(var_statement.initializer)
+    # end
+
+    # define(var_statement.name)
 
     return nil
   end
 
   def visit_variable(variable_expression)
-    if !@scopes.empty? && @scopes.last[variable_expression.name.lexeme] == false
-      error(variable_expression.name, "Can't read local variable in its own initializer")
-    end
+    # if !@scopes.empty? && @scopes.last[variable_expression.name.lexeme] == false
+    #   error(variable_expression.name, "Can't read local variable in its own initializer")
+    # end
 
-    resolve_local(variable_expression, variable_expression.name)
+    # resolve_local(variable_expression, variable_expression.name)
+
+    # return nil
+
+    variable_expression.stack_slot = @function_stack.last.find_local(variable_expression)
 
     return nil
   end
@@ -128,9 +175,13 @@ class StaticResolver
   end
 
   def visit_function_statement(function_statement)
-    declare(function_statement.name)
-    define(function_statement.name)
-    resolve_function(function_statement, FunctionTypes::FUNCTION)
+    # declare(function_statement.name)
+    # define(function_statement.name)
+
+    @function_stack << LexicalFunction.new(@function_stack.last)
+    resolve(function_statement.body)
+    # resolve_function(function_statement, FunctionTypes::FUNCTION)
+    @function_stack.pop
 
     return nil
   end

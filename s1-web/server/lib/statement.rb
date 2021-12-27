@@ -19,7 +19,7 @@ module Statement
   def self.generate_visitors
     @names.map do |name|
       "def visit_#{name}; end"
-    end.join("\n\n")
+    end.join("\n")
   end
 
   ExpressionStatement = define_statement_type('expression_statement', :expression)

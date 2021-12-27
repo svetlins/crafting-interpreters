@@ -23,6 +23,21 @@ module Lab
     IRB.irb nil, self
   end
 
+  def generate_visitor(name)
+    code =
+      <<~RUBY.strip
+class #{name}Visitor
+### Statements
+#{Statement.generate_visitors}
+
+### Expressions
+#{Expression.generate_visitors}
+end
+      RUBY
+
+    puts code
+  end
+
   def scan(source)
     Scanner.new(source, error_reporter: self).scan
   end

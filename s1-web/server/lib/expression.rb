@@ -23,7 +23,7 @@ module Expression
   def self.generate_visitors
     @expression_kinds.map do |name|
       "def visit_#{name}; end"
-    end.join("\n\n")
+    end.join("\n")
   end
 
   Assign = define_expression_type('assign', :name, :value, has_static_resolution: true)

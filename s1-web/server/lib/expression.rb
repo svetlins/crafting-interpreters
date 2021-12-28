@@ -26,8 +26,8 @@ module Expression
     end.join("\n")
   end
 
-  Assign = define_expression_type('assign', :name, :value, additional: %i[kind stack_slot])
-  Variable = define_expression_type('variable', :name, additional: %i[kind stack_slot])
+  Assign = define_expression_type('assign', :name, :value, additional: %i[allocation])
+  Variable = define_expression_type('variable', :name, additional: %i[allocation])
   SuperExpression = define_expression_type('super_expression', :keyword, :method_name)
   ThisExpression = define_expression_type('this_expression', :keyword)
 

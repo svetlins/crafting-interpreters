@@ -1,349 +1,293 @@
-class StaticResolver
-  module FunctionTypes
-    NONE = "FUNCTION-TYPE-NONE"
-    FUNCTION = "FUNCTION-TYPE-FUNCTION"
-    INITIALIZER = "FUNCTION-TYPE-INITIALIZER"
-    METHOD = "FUNCTION-TYPE-METHOD"
+module StaticResolver
+  class Allocation
+    def self.global
+      @_global ||= new(:global)
+    end
+
+    def initialize(kind)
+      self.kind = kind
+    end
+
+    def kind=(kind)
+      fail unless %i[global local heap_allocated].include? kind
+      @kind = kind
+    end
+
+    def kind = @kind
+    def slot = @slot || fail
+
+    def global? = kind == :global
+    def local? = kind == :local
+    def heap_allocated? = kind == :heap_allocated
   end
 
-  module ClassType
-    NONE = "CLASS-TYPE-NONE"
-    CLASS = "CLASS-TYPE-CLASS"
-    SUBCLASS = "CLASS-TYPE-SUBCLASS"
-  end
+  class Phase1
+    class FunctionScope
+      def initialize(enclosing, global: false)
+        @global = global
+        @enclosing = enclosing
+        @scopes = [{}]
+        @heap_allocated = {}
+      end
 
-  class LexicalFunction
-    def initialize(enclosing)
-      @enclosing = enclosing
-      @scopes = [{}]
-    end
+      def begin_block
+        @scopes << {}
+      end
 
-    def begin_block
-      @scopes << {}
-    end
+      def end_block
+        @scopes.pop
+      end
 
-    def end_block(block_statement)
-      block_statement.locals = @scopes.pop
-    end
+      def add_local(name)
+        if @global && @scopes.size == 1
+          return Allocation.global
+        end
 
-    def add_local(var_statement)
-      name = var_statement.name.lexeme
-      stack_slot = @scopes.map(&:size).sum
+        allocation = Allocation.new(:local)
+        @scopes.last[name] = allocation
 
-      @scopes.last[name] = {
-        stack_slot: stack_slot
-      }
+        allocation
+      end
 
-      var_statement.kind = :local
-      var_statement.stack_slot = stack_slot
-    end
+      def resolve_variable(name)
+        if @global && @scopes.size == 1
+          return Allocation.global
+        end
 
-    def find_local(variable_expression)
-      name = variable_expression.name.lexeme
-      @scopes.reverse.each do |scope|
-        index = scope.has_key?(name)
+        find_local(name)
+      end
 
-        if index
-          return scope[name][:stack_slot]
+      def find_local(name)
+        @scopes.reverse.each do |scope|
+          if scope.has_key?(name)
+            return scope[name]
+          end
         end
       end
     end
-  end
 
-  def initialize(error_reporter: nil)
-    @function_stack = []
-    @current_function = FunctionTypes::NONE
-    @current_class = ClassType::NONE
-    @error_reporter = error_reporter
-  end
-
-  def resolve(resolvable)
-    if resolvable.is_a? Array
-      resolvable.each { |resolvable_element| resolve(resolvable_element) }
-    elsif resolvable.statement?
-      resolvable.accept(self)
-    elsif resolvable.expression?
-      resolvable.accept(self)
-    else
-      raise
+    def initialize(error_reporter: nil)
+      @function_scopes = [FunctionScope.new(nil, global: true)]
+      @error_reporter = error_reporter
     end
-  end
 
-  def begin_scope(name)
-    @scopes << {}
-    @scope_names << [@scope_names.last, name].compact.join(':')
-  end
-
-  def end_scope
-    @scopes.pop
-    @scope_names.pop
-  end
-
-  def declare(name)
-    return if @scopes.empty?
-    error(name, "Variable `#{name.lexeme}` already declared") if @scopes.last.has_key?(name.lexeme)
-    @scopes.last[name.lexeme] = false
-  end
-
-  def define(name)
-    return if @scopes.empty?
-    @scopes.last[name.lexeme] = true
-  end
-
-  def resolve_local(expression, name)
-    @scopes.reverse.each_with_index do |scope, index|
-      depth = index
-
-      if scope.has_key? name.lexeme
-        expression.depth = depth
-        expression.location = @scope_names.reverse[index]
-        break
+    def resolve(resolvable)
+      if resolvable.is_a? Array
+        resolvable.each { |resolvable_element| resolve(resolvable_element) }
+      elsif resolvable.statement?
+        resolvable.accept(self)
+      elsif resolvable.expression?
+        resolvable.accept(self)
+      else
+        raise
       end
     end
-  end
 
-  def resolve_function(function, type)
-    # enclosing_function = @current_function
-    # @current_function = type
-    # begin_scope(function.name.lexeme)
-
-    # function.parameters.each do |parameter|
-    #   declare(parameter)
-    #   define(parameter)
-    # end
-
-    # resolve(function.body)
-
-    # end_scope
-
-    # @current_function = enclosing_function
-
-    resolve(function.body)
-  end
-
-  def error(token, message)
-    if @error_reporter
-      @error_reporter.report_static_analysis_error(token, message)
-    end
-  end
-
-  def visit_block_statement(block_statement)
-    @function_stack.last.begin_block
-    resolve(block_statement.statements)
-    @function_stack.last.end_block(block_statement)
-
-    return nil
-  end
-
-  def visit_var_statement(var_statement)
-    if @function_stack.any?
-      @function_stack.last.add_local(var_statement)
-    else
-      var_statement.kind = :global
+    def declare(name)
+      return if @scopes.empty?
+      error(name, "Variable `#{name.lexeme}` already declared") if @scopes.last.has_key?(name.lexeme)
+      @scopes.last[name.lexeme] = false
     end
 
-    # declare(var_statement.name)
-
-    # if var_statement.initializer
-    #   resolve(var_statement.initializer)
-    # end
-
-    # define(var_statement.name)
-
-    return nil
-  end
-
-  def visit_variable(variable_expression)
-    # if !@scopes.empty? && @scopes.last[variable_expression.name.lexeme] == false
-    #   error(variable_expression.name, "Can't read local variable in its own initializer")
-    # end
-
-    # resolve_local(variable_expression, variable_expression.name)
-
-    # return nil
-
-    variable_expression.stack_slot = @function_stack.last.find_local(variable_expression)
-
-    return nil
-  end
-
-  def visit_assign(assign_expression)
-    resolve(assign_expression.value)
-    resolve_local(assign_expression, assign_expression.name)
-
-    return nil
-  end
-
-  def visit_function_statement(function_statement)
-    # declare(function_statement.name)
-    # define(function_statement.name)
-
-    @function_stack << LexicalFunction.new(@function_stack.last)
-    resolve(function_statement.body)
-    # resolve_function(function_statement, FunctionTypes::FUNCTION)
-    @function_stack.pop
-
-    return nil
-  end
-
-  # rest
-
-  def visit_class_statement(class_statement)
-    enclosing_class = @current_class
-    @current_class = ClassType::CLASS
-
-    declare(class_statement.name)
-    define(class_statement.name)
-
-    if class_statement.superclass
-      @current_class = ClassType::SUBCLASS
-      resolve(class_statement.superclass)
+    def define(name)
+      return if @scopes.empty?
+      @scopes.last[name.lexeme] = true
     end
 
-    if class_statement.superclass &&
-        class_statement.superclass.name.lexeme == class_statement.name.lexeme
-      error(class_statement.superclass, "Can't inherit self")
+    def resolve_local(expression, name)
+      @scopes.reverse.each_with_index do |scope, index|
+        depth = index
+
+        if scope.has_key? name.lexeme
+          expression.depth = depth
+          expression.location = @scope_names.reverse[index]
+          break
+        end
+      end
     end
 
-    if class_statement.superclass
-      begin_scope('superclass')
-      @scopes.last['super'] = true
+    def resolve_function(function, type)
+      # enclosing_function = @current_function
+      # @current_function = type
+      # begin_scope(function.name.lexeme)
+
+      # function.parameters.each do |parameter|
+      #   declare(parameter)
+      #   define(parameter)
+      # end
+
+      # resolve(function.body)
+
+      # end_scope
+
+      # @current_function = enclosing_function
+
+      resolve(function.body)
     end
 
-    begin_scope('class')
-    @scopes.last['this'] = true
+    def error(token, message)
+      if @error_reporter
+        @error_reporter.report_static_analysis_error(token, message)
+      end
+    end
 
-    class_statement.methods.each do |method|
-      declaration_type =
-        if method.name.lexeme == 'init'
-          FunctionTypes::INITIALIZER
-        else
-          FunctionTypes::METHOD
+    def visit_block_statement(block_statement)
+      @function_scopes.last.begin_block
+      resolve(block_statement.statements)
+      @function_scopes.last.end_block
+
+      return nil
+    end
+
+    def visit_var_statement(var_statement)
+      if @function_scopes.any?
+        var_statement.allocation =
+          @function_scopes.last.add_local(var_statement.name.lexeme)
+      else
+        var_statement.allocation = Allocation.global
+      end
+
+      # declare(var_statement.name)
+
+      if var_statement.initializer
+        resolve(var_statement.initializer)
+      end
+
+      # define(var_statement.name)
+
+      return nil
+    end
+
+    def visit_variable(variable_expression)
+      # if !@scopes.empty? && @scopes.last[variable_expression.name.lexeme] == false
+      #   error(variable_expression.name, "Can't read local variable in its own initializer")
+      # end
+
+      # resolve_local(variable_expression, variable_expression.name)
+
+      # return nil
+
+      variable_expression.allocation =
+        @function_scopes.last.resolve_variable(variable_expression.name.lexeme)
+
+      return nil
+    end
+
+    def visit_assign(assign_expression)
+      resolve(assign_expression.value)
+      resolve_local(assign_expression, assign_expression.name)
+
+      return nil
+    end
+
+    def visit_function_statement(function_statement)
+      # declare(function_statement.name)
+      # define(function_statement.name)
+
+      @function_scopes << FunctionScope.new(@function_scopes.last)
+      resolve(function_statement.body)
+      # resolve_function(function_statement, FunctionTypes::FUNCTION)
+      @function_scopes.pop
+
+      return nil
+    end
+
+    def visit_expression_statement(expression_statement)
+      resolve(expression_statement.expression)
+
+      return nil
+    end
+
+    def visit_if_statement(if_statement)
+      resolve(if_statement.condition)
+      resolve(if_statement.then_branch)
+      resolve(if_statement.else_branch) if if_statement.else_branch
+
+      return nil
+    end
+
+    def visit_print_statement(print_statement)
+      resolve(print_statement.expression)
+
+      return nil
+    end
+
+    def visit_return_statement(return_statement)
+      if @current_function == FunctionTypes::NONE
+        error(return_statement.keyword, "Can't return outside of function")
+      end
+
+      if return_statement.value
+        if @current_function == FunctionTypes::INITIALIZER
+          error(return_statement.keyword, "Can't return value from initializer")
         end
 
-      resolve_function(method, declaration_type)
-    end
-
-    end_scope
-
-    if class_statement.superclass
-      end_scope
-    end
-
-    @current_class = enclosing_class
-
-    return nil
-  end
-
-  def visit_expression_statement(expression_statement)
-    resolve(expression_statement.expression)
-
-    return nil
-  end
-
-  def visit_if_statement(if_statement)
-    resolve(if_statement.condition)
-    resolve(if_statement.then_branch)
-    resolve(if_statement.else_branch) if if_statement.else_branch
-
-    return nil
-  end
-
-  def visit_print_statement(print_statement)
-    resolve(print_statement.expression)
-
-    return nil
-  end
-
-  def visit_return_statement(return_statement)
-    if @current_function == FunctionTypes::NONE
-      error(return_statement.keyword, "Can't return outside of function")
-    end
-
-    if return_statement.value
-      if @current_function == FunctionTypes::INITIALIZER
-        error(return_statement.keyword, "Can't return value from initializer")
+        resolve(return_statement.value)
       end
 
-      resolve(return_statement.value)
+      return nil
     end
 
-    return nil
-  end
+    def visit_while_statement(while_statement)
+      resolve(while_statement.condition)
+      resolve(while_statement.body)
 
-  def visit_while_statement(while_statement)
-    resolve(while_statement.condition)
-    resolve(while_statement.body)
-
-    return nil
-  end
-
-  def visit_binary(binary_expression)
-    resolve(binary_expression.left)
-    resolve(binary_expression.right)
-
-    return nil
-  end
-
-  def visit_call(call_expression)
-    resolve(call_expression.callee)
-    call_expression.arguments.each do |argument|
-      resolve(argument)
+      return nil
     end
 
-    return nil
-  end
+    def visit_binary(binary_expression)
+      resolve(binary_expression.left)
+      resolve(binary_expression.right)
 
-  def visit_get_expression(get_expression)
-    resolve(get_expression.object)
-
-    return nil
-  end
-
-  def visit_set_expression(set_expression)
-    resolve(set_expression.value)
-    resolve(set_expression.object)
-
-    return nil
-  end
-
-  def visit_super_expression(super_expression)
-    if @current_class == ClassType::NONE
-      error(super_expression.keyword, "Can't use 'super' outside of class (with a superclass)")
-    elsif @current_class == ClassType::CLASS
-      error(super_expression.keyword, "Can't use 'super' in a class without a superclass")
+      return nil
     end
 
-    resolve_local(super_expression, super_expression.keyword)
-  end
+    def visit_call(call_expression)
+      resolve(call_expression.callee)
+      call_expression.arguments.each do |argument|
+        resolve(argument)
+      end
 
-  def visit_grouping(grouping_expression)
-    resolve(grouping_expression.expression)
-
-    return nil
-  end
-
-  def visit_literal(literal_expression)
-  end
-
-  def visit_this_expression(this_expression)
-    if @current_class == ClassType::NONE
-      error(this_expression.keyword, "this not allowed outside of a class")
+      return nil
     end
 
-    resolve_local(this_expression, this_expression.keyword)
-  end
+    def visit_get_expression(get_expression)
+      resolve(get_expression.object)
 
-  def visit_logical(logical_expression)
-    resolve(logical_expression.left)
-    resolve(logical_expression.right)
+      return nil
+    end
 
-    return nil
-  end
+    def visit_set_expression(set_expression)
+      resolve(set_expression.value)
+      resolve(set_expression.object)
 
-  def visit_unary(unary_expression)
-    resolve(unary_expression.right)
+      return nil
+    end
 
-    return nil
+
+    def visit_grouping(grouping_expression)
+      resolve(grouping_expression.expression)
+
+      return nil
+    end
+
+    def visit_logical(logical_expression)
+      resolve(logical_expression.left)
+      resolve(logical_expression.right)
+
+      return nil
+    end
+
+    def visit_unary(unary_expression)
+      resolve(unary_expression.right)
+
+      return nil
+    end
+
+    def visit_literal(literal_expression); end
+
+    def visit_this_expression(this_expression) = fail
+    def visit_super_expression(super_expression) = fail
+    def visit_class_statement(class_statement) = fail
   end
 end

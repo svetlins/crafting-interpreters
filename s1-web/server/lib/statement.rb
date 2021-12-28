@@ -27,10 +27,10 @@ module Statement
   end
 
   ExpressionStatement = define_statement_type('expression_statement', :expression)
-  FunctionStatement = define_statement_type('function_statement', :name, :parameters, :body)
+  FunctionStatement = define_statement_type('function_statement', :name, :parameters, :body, additional: %i[upvalues])
   ReturnStatement = define_statement_type('return_statement', :keyword, :value)
   PrintStatement = define_statement_type('print_statement', :expression)
-  VarStatement = define_statement_type('var_statement', :name, :initializer, additional: %i[kind stack_slot])
+  VarStatement = define_statement_type('var_statement', :name, :initializer, additional: %i[allocation])
   BlockStatement = define_statement_type('block_statement', :statements, additional: %i[locals])
   IfStatement = define_statement_type('if_statement', :condition, :then_branch, :else_branch)
   WhileStatement = define_statement_type('while_statement', :condition, :body)

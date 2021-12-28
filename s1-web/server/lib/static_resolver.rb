@@ -54,7 +54,11 @@ module StaticResolver
           return Allocation.global
         end
 
-        find_local(name)
+        local = find_local(name)
+
+        return local if find_local(name)
+
+        @enclosing.find_upvalue(name)
       end
 
       def find_local(name)
@@ -62,6 +66,23 @@ module StaticResolver
           if scope.has_key?(name)
             return scope[name]
           end
+        end
+
+        return nil
+      end
+
+      def find_upvalue(name)
+        local = find_local(name)
+
+        if local
+          local.kind = :heap_allocated
+          return local
+        end
+
+        if @enclosing
+          @enclosing.find_upvalue(name)
+        else
+          Allocation.global
         end
       end
     end

@@ -45,6 +45,13 @@ module StaticResolver
       end
     end
 
+    def generate_next_slot
+      next_slot = @stack_frame.last
+      @stack_frame[-1] = @stack_frame.last + 1
+
+      next_slot
+    end
+
     ### Statements
     def visit_expression_statement(expression_statement)
       expression_statement.expression.accept(self)
@@ -52,8 +59,7 @@ module StaticResolver
 
     def visit_function_statement(function_statement)
       if function_statement.allocation.local?
-        function_statement.allocation.slot = @stack_frame.last
-        @stack_frame[-1] = @stack_frame.last + 1
+        function_statement.allocation.slot = generate_next_slot
       end
 
       @function_scopes << function_statement.name.lexeme
@@ -77,8 +83,7 @@ module StaticResolver
 
     def visit_var_statement(var_statement)
       if var_statement.allocation.local?
-        var_statement.allocation.slot = @stack_frame.last
-        @stack_frame[-1] = @stack_frame.last + 1
+        var_statement.allocation.slot = generate_next_slot
       end
     end
 

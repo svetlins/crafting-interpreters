@@ -113,6 +113,8 @@ module StaticResolver
           fun inner() {
             print x;
           }
+
+          var after_fn = 4;
         }
       LOX
 
@@ -125,7 +127,23 @@ module StaticResolver
 
       expect(ast[0].body[2].allocation.slot).to eq(0)
       expect(ast[0].body[3].expression.allocation).to be_heap_allocated
-      expect(ast[0].body[4].expression.allocation.slot).to eq(0)
+
+      expect(ast[0].body[6].allocation.slot).to eq(2)
+    end
+
+    it "assings full name to functions" do
+      source = <<-LOX
+        fun outer() {
+          fun inner() {
+            print x;
+          }
+        }
+      LOX
+
+      ast = resolve(source)
+
+      expect(ast[0].full_name).to eq("__global__outer__")
+      expect(ast[0].body[0].full_name).to eq("__global__outer__inner__")
     end
   end
 

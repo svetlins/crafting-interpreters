@@ -28,7 +28,7 @@ module StaticResolver
 
   class Phase2
     def initialize(error_reporter: nil)
-      @function_scopes = ['__global__']
+      @function_scopes = ['global']
       @stack_frame = [0]
       @error_reporter = error_reporter
     end
@@ -51,7 +51,15 @@ module StaticResolver
     end
 
     def visit_function_statement(function_statement)
+      if function_statement.allocation.local?
+        function_statement.allocation.slot = @stack_frame.last
+        @stack_frame[-1] = @stack_frame.last + 1
+      end
+
       @function_scopes << function_statement.name.lexeme
+
+      function_statement.full_name = "__" + @function_scopes.join('__') + "__"
+
       previous_stack_frame = @stack_frame
       @stack_frame = [0]
       resolve(function_statement.body)
@@ -121,7 +129,7 @@ module StaticResolver
         @scopes.pop
       end
 
-      def add_local(name)
+      def add_variable(name)
         if @global && @scopes.size == 1
           return Allocation.global
         end
@@ -244,12 +252,7 @@ module StaticResolver
     end
 
     def visit_var_statement(var_statement)
-      if @function_scopes.any?
-        var_statement.allocation =
-          @function_scopes.last.add_local(var_statement.name.lexeme)
-      else
-        var_statement.allocation = Allocation.global
-      end
+      var_statement.allocation = @function_scopes.last.add_variable(var_statement.name.lexeme)
 
       # declare(var_statement.name)
 
@@ -287,6 +290,9 @@ module StaticResolver
     def visit_function_statement(function_statement)
       # declare(function_statement.name)
       # define(function_statement.name)
+
+      function_statement.allocation =
+        @function_scopes.last.add_variable(function_statement.name.lexeme)
 
       @function_scopes << FunctionScope.new(@function_scopes.last)
       resolve(function_statement.body)

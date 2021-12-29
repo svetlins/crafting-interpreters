@@ -16,6 +16,7 @@ class Function
 
   def as_json
     {
+      type: :function,
       arity: @arity,
       name: @name,
     }

@@ -26,7 +26,7 @@ RSpec.describe Compiler do
     expect(chunk.as_json).to eq(
       { "__global__fn__" => { code: ["LOAD-CONSTANT", 0, "PRINT", "NIL", "RETURN"], constants: [42.0] },
        "__script__" => { code: ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"],
-                         constants: [{ arity: 0, name: "__global__fn__" }, "fn"] } }
+                         constants: [{type: :function, arity: 0, name: "__global__fn__" }, "fn"] } }
     )
   end
 
@@ -64,6 +64,23 @@ RSpec.describe Compiler do
       } }
     )
   end
+
+  it "compiles local variables" do
+    chunk = compile <<-LOX
+      fun fn() {
+        var x = 1;
+        var y = 2;
+      }
+    LOX
+
+    expect(chunk.as_json).to eq(
+      {
+        "__global__fn__"=>{:code=>["LOAD-CONSTANT", 0, "LOAD-CONSTANT", 1, "NIL", "RETURN"], :constants=>[1.0, 2.0]},
+        "__script__"=>{:code=>["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants=>[{:type=>:function, :arity=>0, :name=>"__global__fn__"}, "fn"]}
+      }
+    )
+  end
+
 end
 
 # RSpec.xdescribe Compiler do

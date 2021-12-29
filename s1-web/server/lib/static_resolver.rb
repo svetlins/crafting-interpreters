@@ -103,7 +103,7 @@ module StaticResolver
     def visit_class_statement = fail
 
     ### Expressions
-    def visit_assign; end
+    def visit_assign(*); end
     def visit_variable(variable_expression); end
     def visit_super_expression; end
     def visit_this_expression; end
@@ -287,7 +287,8 @@ module StaticResolver
 
     def visit_assign(assign_expression)
       resolve(assign_expression.value)
-      resolve_local(assign_expression, assign_expression.name)
+      assign_expression.allocation =
+        @function_scopes.last.resolve_variable(assign_expression.name.lexeme)
 
       return nil
     end

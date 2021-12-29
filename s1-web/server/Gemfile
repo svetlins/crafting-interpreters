@@ -10,3 +10,5 @@ gem "puma"
 gem "rack-contrib"
 
 gem "rspec"
+gem "standardrb"
+gem "rufo"

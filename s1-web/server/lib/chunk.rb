@@ -66,7 +66,7 @@ class Chunk
     @functions.transform_values do |function|
       {
         code: function[:code],
-        constancts: function[:constants].map { |constant| constant.respond_to?(:as_json) ? constant.as_json : constant }
+        constants: function[:constants].map { |constant| constant.respond_to?(:as_json) ? constant.as_json : constant }
       }
     end
   end

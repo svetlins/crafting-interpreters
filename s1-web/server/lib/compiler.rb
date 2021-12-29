@@ -92,7 +92,14 @@ class Compiler
       emit(Opcodes::NIL)
     end
 
-    # ...
+    if var_statement.allocation.global?
+      emit_two(Opcodes::DEFINE_GLOBAL, add_constant(var_statement.name.lexeme))
+    elsif var_statement.allocation.local?
+    elsif var_statement.allocation.heap_allocated?
+      fail
+    else
+      fail
+    end
   end
 
   def visit_block_statement(block_statement)
@@ -136,22 +143,31 @@ class Compiler
   def visit_assign(assign_expression)
     assign_expression.value.accept(self)
 
-    if stack_slot
-      emit_two(Opcodes::SET_LOCAL, stack_slot)
-    else
+    if assign_expression.allocation.global?
       constant_index = add_constant(assign_expression.name.lexeme)
       emit_two(Opcodes::SET_GLOBAL, constant_index)
+    elsif assign_expression.allocation.local?
+      emit_two(Opcodes::SET_LOCAL, assign_expression.allocation.slot)
+    elsif assign_expression.allocation.heap_allocated?
+      fail
+    else
+      fail
     end
   end
 
   def visit_variable(variable_expression)
-    if stack_slot
-      emit_two(Opcodes::GET_LOCAL, stack_slot)
-    else
+    if variable_expression.allocation.global?
       constant_index = add_constant(variable_expression.name.lexeme)
       emit_two(Opcodes::GET_GLOBAL, constant_index)
+    elsif variable_expression.allocation.local?
+      emit_two(Opcodes::GET_LOCAL, stack_slot)
+    elsif variable_expression.allocation.heap_allocated?
+      fail
+    else
+      fail
     end
   end
+
   def visit_super_expression; end
   def visit_this_expression; end
 

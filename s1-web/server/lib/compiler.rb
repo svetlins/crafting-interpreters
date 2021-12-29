@@ -12,7 +12,6 @@ class Function
     @arity = arity
     @name = name
     @type = type
-    @chunk = Chunk.new
   end
 
   def as_json
@@ -29,8 +28,9 @@ class Compiler
 
   attr_reader :locals
 
-  def initialize(statements, type = FunctionType::SCRIPT, parameters = [], enclosing = nil)
+  def initialize(statements, chunk, type = FunctionType::SCRIPT, parameters = [], enclosing = nil)
     @statements = statements
+    @chunk = chunk
     @type = type
     @enclosing = enclosing
     @function = Function.new(0, type, type)

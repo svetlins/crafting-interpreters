@@ -52,7 +52,10 @@ module StaticResolver
 
     def visit_function_statement(function_statement)
       @function_scopes << function_statement.name.lexeme
+      previous_stack_frame = @stack_frame
+      @stack_frame = [0]
       resolve(function_statement.body)
+      @stack_frame = previous_stack_frame
       @function_scopes.pop
     end
 

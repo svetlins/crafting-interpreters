@@ -62,6 +62,39 @@ module StaticResolver
       expect(ast[0].body[4].expression.allocation.slot).to eq(1)
     end
 
+    it "works for multiple functions" do
+      source = <<-LOX
+        fun fn1() {
+          var x = 1;
+        }
+
+        fun fn2() {
+          var x = 1;
+
+          {
+            var y = 2;
+            print y;
+          }
+
+          var z = 3;
+
+          print x;
+          print z;
+        }
+      LOX
+
+      ast = resolve(source)
+
+      expect(ast[1].body[0].allocation.slot).to eq(0)
+
+      expect(ast[1].body[1].statements[0].allocation.slot).to eq(1)
+      expect(ast[1].body[1].statements[1].expression.allocation.slot).to eq(1)
+
+      expect(ast[1].body[2].allocation.slot).to eq(1)
+      expect(ast[1].body[3].expression.allocation.slot).to eq(0)
+      expect(ast[1].body[4].expression.allocation.slot).to eq(1)
+    end
+
     it "assings correct stack slots to local variables in blocks not taking into account upvalues" do
       source = <<-LOX
         fun fn() {

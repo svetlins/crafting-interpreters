@@ -28,41 +28,41 @@ end
 class Chunk
   PLACEHOLDER = "PLACEHOLDER"
 
-  attr_reader :code, :constants
-
   def initialize
-    @code = []
-    @constants = []
+    @functions = {}
   end
 
-  def write(opcode)
-    @code << opcode
-
-    @code.size
+  def init_function(function)
+    @functions[function] ||= {
+      code: [],
+      constants: [],
+    }
   end
 
-  def patch_jump(jump_offset)
+  def write(function, opcode)
+    init_function(function)
+    @functions[function][:code] << opcode
+    @functions[function][:code].size
+  end
+
+  def patch_jump(function, jump_offset)
     jump = @code.size - jump_offset - 2
 
     @code[jump_offset] = jump >> 8 & 0xff
     @code[jump_offset + 1] = jump & 0xff
   end
 
-  def add_constant(constant)
-    @constants << constant
-
-    @constants.size - 1
+  def add_constant(function, constant)
+    init_function(function)
+    @functions[function][:constants] << constant
+    @functions[function][:constants].size - 1
   end
 
-  def size
-    @code.size
+  def size(function)
+    @functions[function][:code].size
   end
 
   def as_json
-    constants = @constants.map do |constant|
-      constant.respond_to?(:as_json) ? constant.as_json : constant
-    end
-
-    {code: @code, constants: constants}
+    @functions
   end
 end

@@ -109,7 +109,7 @@ module StaticResolver
     def visit_this_expression; end
     def visit_binary; end
     def visit_grouping; end
-    def visit_literal; end
+    def visit_literal(*); end
     def visit_logical; end
     def visit_unary; end
     def visit_call; end

@@ -4,6 +4,33 @@ RSpec.describe Compiler do
   def compile(source)
     tokens = Scanner.new(source).scan
     ast = Parser.new(tokens).parse
+    chunk = Chunk.new
+
+    phase1 = ::StaticResolver::Phase1.new(error_reporter: self)
+    phase2 = ::StaticResolver::Phase2.new(error_reporter: self)
+    phase1.resolve(ast)
+    phase2.resolve(ast)
+
+    Compiler.new(ast, chunk).compile
+
+    chunk
+  end
+
+  it "compiles arithmetic correctly" do
+    chunk = compile <<-LOX
+      fun fn() {
+        print 42;
+      }
+    LOX
+
+    binding.irb
+  end
+end
+
+RSpec.xdescribe Compiler do
+  def compile(source)
+    tokens = Scanner.new(source).scan
+    ast = Parser.new(tokens).parse
 
     resolver = StaticResolver.new(error_reporter: self)
     resolver.resolve(ast)

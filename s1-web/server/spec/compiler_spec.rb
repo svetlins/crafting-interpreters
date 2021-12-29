@@ -16,7 +16,7 @@ RSpec.describe Compiler do
     chunk
   end
 
-  it "compiles arithmetic correctly" do
+  it "" do
     chunk = compile <<-LOX
       fun fn() {
         print 42;

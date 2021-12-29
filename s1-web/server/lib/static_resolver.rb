@@ -13,12 +13,92 @@ module StaticResolver
       @kind = kind
     end
 
+    def slot=(slot)
+      fail unless local?
+      @slot = slot
+    end
+
     def kind = @kind
     def slot = @slot || fail
 
     def global? = kind == :global
     def local? = kind == :local
     def heap_allocated? = kind == :heap_allocated
+  end
+
+  class Phase2
+    def initialize(error_reporter: nil)
+      @function_scopes = ['__global__']
+      @stack_frame = [0]
+      @error_reporter = error_reporter
+    end
+
+    def resolve(resolvable)
+      if resolvable.is_a? Array
+        resolvable.each { |resolvable_element| resolve(resolvable_element) }
+      elsif resolvable.statement?
+        resolvable.accept(self)
+      elsif resolvable.expression?
+        resolvable.accept(self)
+      else
+        raise
+      end
+    end
+
+    ### Statements
+    def visit_expression_statement(expression_statement)
+      expression_statement.expression.accept(self)
+    end
+
+    def visit_function_statement(function_statement)
+      @function_scopes << function_statement.name.lexeme
+      resolve(function_statement.body)
+      @function_scopes.pop
+    end
+
+    def visit_return_statement(return_statement)
+      return_statement.value.accept(self)
+    end
+
+    def visit_print_statement(print_statement)
+      print_statement.expression.accept(self);
+    end
+
+    def visit_var_statement(var_statement)
+      if var_statement.allocation.local?
+        var_statement.allocation.slot = @stack_frame.last
+        @stack_frame[-1] = @stack_frame.last + 1
+      end
+    end
+
+    def visit_block_statement(block_statement)
+      @stack_frame << @stack_frame.last
+      resolve(block_statement.statements)
+      @stack_frame.pop
+    end
+
+    def visit_if_statement(if_statement)
+      if_statement.condition.accept(self)
+      if_statement.then_branch.accept(self)
+      if_statement.else_branch.accept(self)
+    end
+
+    def visit_while_statement; end
+    def visit_class_statement = fail
+
+    ### Expressions
+    def visit_assign; end
+    def visit_variable(variable_expression); end
+    def visit_super_expression; end
+    def visit_this_expression; end
+    def visit_binary; end
+    def visit_grouping; end
+    def visit_literal; end
+    def visit_logical; end
+    def visit_unary; end
+    def visit_call; end
+    def visit_get_expression; end
+    def visit_set_expression; end
   end
 
   class Phase1

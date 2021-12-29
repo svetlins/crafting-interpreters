@@ -1,6 +1,101 @@
 require "spec_helper"
 
 module StaticResolver
+  RSpec.describe Phase2 do
+    def resolve(source)
+      tokens = Scanner.new(source).scan
+      ast = Parser.new(tokens).parse
+
+      phase1 = ::StaticResolver::Phase1.new(error_reporter: self)
+      phase2 = ::StaticResolver::Phase2.new(error_reporter: self)
+      phase1.resolve(ast)
+      phase2.resolve(ast)
+
+      ast
+    end
+
+    it "assings correct stack slots to local variables" do
+      source = <<-LOX
+        fun fn() {
+          var x = 1;
+          var y = 2;
+          print x;
+          print y;
+        }
+      LOX
+
+      ast = resolve(source)
+
+      expect(ast[0].body[0].allocation.slot).to eq(0)
+      expect(ast[0].body[1].allocation.slot).to eq(1)
+
+      expect(ast[0].body[2].expression.allocation.slot).to eq(0)
+      expect(ast[0].body[3].expression.allocation.slot).to eq(1)
+    end
+
+    it "assings correct stack slots to local variables in blocks" do
+      source = <<-LOX
+        fun fn() {
+          var x = 1;
+
+          {
+            var y = 2;
+            print y;
+          }
+
+          var z = 3;
+
+          print x;
+          print z;
+        }
+      LOX
+
+      ast = resolve(source)
+
+      expect(ast[0].body[0].allocation.slot).to eq(0)
+
+      expect(ast[0].body[1].statements[0].allocation.slot).to eq(1)
+      expect(ast[0].body[1].statements[1].expression.allocation.slot).to eq(1)
+
+      expect(ast[0].body[2].allocation.slot).to eq(1)
+      expect(ast[0].body[3].expression.allocation.slot).to eq(0)
+      expect(ast[0].body[4].expression.allocation.slot).to eq(1)
+    end
+
+    it "assings correct stack slots to local variables in blocks not taking into account upvalues" do
+      source = <<-LOX
+        fun fn() {
+          var x = 1;
+
+          {
+            var y = 2;
+            print y;
+          }
+
+          var z = 3;
+
+          print x;
+          print z;
+
+          fun inner() {
+            print x;
+          }
+        }
+      LOX
+
+      ast = resolve(source)
+
+      expect(ast[0].body[0].allocation).to be_heap_allocated
+
+      expect(ast[0].body[1].statements[0].allocation.slot).to eq(0)
+      expect(ast[0].body[1].statements[1].expression.allocation.slot).to eq(0)
+
+      expect(ast[0].body[2].allocation.slot).to eq(0)
+      expect(ast[0].body[3].expression.allocation).to be_heap_allocated
+      expect(ast[0].body[4].expression.allocation.slot).to eq(0)
+    end
+  end
+
   RSpec.describe Phase1 do
     def resolve(source)
       tokens = Scanner.new(source).scan

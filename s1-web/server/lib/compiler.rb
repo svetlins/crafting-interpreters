@@ -66,8 +66,7 @@ class Compiler
     if function_statement.allocation.global?
       constant_index = add_constant(function_statement.name.lexeme)
       emit_two(Opcodes::DEFINE_GLOBAL, constant_index)
-    else
-      fail
+    elsif function_statement.allocation.local?
     end
   end
 
@@ -97,7 +96,7 @@ class Compiler
       emit_two(Opcodes::DEFINE_GLOBAL, add_constant(var_statement.name.lexeme))
     elsif var_statement.allocation.local?
     elsif var_statement.allocation.heap_allocated?
-      fail
+      emit_two(Opcodes::SET_HEAP, var_statement.allocation.slot)
     else
       fail
     end
@@ -161,9 +160,9 @@ class Compiler
       constant_index = add_constant(variable_expression.name.lexeme)
       emit_two(Opcodes::GET_GLOBAL, constant_index)
     elsif variable_expression.allocation.local?
-      emit_two(Opcodes::GET_LOCAL, stack_slot)
+      emit_two(Opcodes::GET_LOCAL, variable_expression.allocation.slot)
     elsif variable_expression.allocation.heap_allocated?
-      fail
+      emit_two(Opcodes::GET_HEAP, variable_expression.allocation.slot)
     else
       fail
     end

@@ -13,13 +13,17 @@ module StaticResolver
       @kind = kind
     end
 
+    def kind = @kind
+
     def slot=(slot)
       fail unless local?
       @slot = slot
     end
 
-    def kind = @kind
-    def slot = @slot || fail
+    def slot
+      return object_id if heap_allocated?
+      @slot || fail
+    end
 
     def global? = kind == :global
     def local? = kind == :local

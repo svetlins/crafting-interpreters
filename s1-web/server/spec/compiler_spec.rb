@@ -26,7 +26,7 @@ RSpec.describe Compiler do
     expect(chunk.as_json).to eq(
       { "__global__fn__" => { code: ["LOAD-CONSTANT", 0, "PRINT", "NIL", "RETURN"], constants: [42.0] },
        "__script__" => { code: ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"],
-                         constants: [{type: :function, arity: 0, name: "__global__fn__" }, "fn"] } }
+                         constants: [{ type: :function, arity: 0, name: "__global__fn__" }, "fn"] } }
     )
   end
 
@@ -75,12 +75,50 @@ RSpec.describe Compiler do
 
     expect(chunk.as_json).to eq(
       {
-        "__global__fn__"=>{:code=>["LOAD-CONSTANT", 0, "LOAD-CONSTANT", 1, "NIL", "RETURN"], :constants=>[1.0, 2.0]},
-        "__script__"=>{:code=>["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants=>[{:type=>:function, :arity=>0, :name=>"__global__fn__"}, "fn"]}
+        "__global__fn__" => { :code => ["LOAD-CONSTANT", 0, "LOAD-CONSTANT", 1, "NIL", "RETURN"], :constants => [1.0, 2.0] },
+        "__script__" => { :code => ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
       }
     )
   end
 
+  it "compiles assignment to local variables" do
+    chunk = compile <<-LOX
+      fun fn() {
+        var x = 1;
+        var y = 2;
+        var z = 3;
+        print 1;
+        y = 4;
+      }
+    LOX
+
+    expect(chunk.as_json).to eq(
+      {
+        "__global__fn__" => { :code => ["LOAD-CONSTANT", 0, "LOAD-CONSTANT", 1, "LOAD-CONSTANT", 2, "LOAD-CONSTANT", 3, "PRINT", "LOAD-CONSTANT", 4, "SET-LOCAL", 1, "POP", "NIL", "RETURN"], :constants => [1.0, 2.0, 3.0, 1.0, 4.0] },
+        "__script__" => { :code => ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
+      }
+    )
+  end
+
+  it "compiles heap allocated variables" do
+    chunk = compile <<-LOX
+      fun outer() {
+        var x = 1;
+
+        fun inner() {
+          print x;
+        }
+      }
+    LOX
+
+    expect(chunk.as_json).to eq(
+      {
+        "__global__outer__" => { :code => ["LOAD-CONSTANT", 0, "SET-HEAP", 1340, "LOAD-CONSTANT", 1, "NIL", "RETURN"], :constants => [1.0, { :type => :function, :arity => 0, :name => "__global__outer__inner__" }] },
+        "__global__outer__inner__" => { :code => ["GET-HEAP", 1340, "PRINT", "NIL", "RETURN"], :constants => [] },
+        "__script__" => { :code => ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__outer__" }, "outer"] },
+      }
+    )
+  end
 end
 
 # RSpec.xdescribe Compiler do

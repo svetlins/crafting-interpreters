@@ -72,6 +72,11 @@ module StaticResolver
 
       previous_stack_frame = @stack_frame
       @stack_frame = [0]
+
+      function_statement.parameter_allocations.each do |parameter_allocation|
+        parameter_allocation.slot = generate_next_slot
+      end
+
       resolve(function_statement.body)
       @stack_frame = previous_stack_frame
       @function_scopes.pop
@@ -305,6 +310,12 @@ module StaticResolver
         @function_scopes.last.add_variable(function_statement.name.lexeme)
 
       @function_scopes << FunctionScope.new(@function_scopes.last)
+
+      function_statement.parameter_allocations =
+        function_statement.parameters.map do |parameter|
+          @function_scopes.last.add_variable(parameter.lexeme)
+        end
+
       resolve(function_statement.body)
       # resolve_function(function_statement, FunctionTypes::FUNCTION)
       @function_scopes.pop

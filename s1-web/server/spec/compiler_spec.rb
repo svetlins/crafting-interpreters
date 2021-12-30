@@ -111,11 +111,30 @@ RSpec.describe Compiler do
       }
     LOX
 
+    expect(chunk.as_json).to match(
+      {
+        "__global__outer__" => { :code => ["LOAD-CONSTANT", 0, "SET-HEAP", kind_of(Numeric), "LOAD-CONSTANT", 1, "NIL", "RETURN"], :constants => [1.0, { :type => :function, :arity => 0, :name => "__global__outer__inner__" }] },
+        "__global__outer__inner__" => { :code => ["GET-HEAP", kind_of(Numeric), "PRINT", "NIL", "RETURN"], :constants => [] },
+        "__script__" => { :code => ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__outer__" }, "outer"] },
+      }
+    )
+  end
+
+  it "compiles parameters" do
+    chunk = compile <<-LOX
+      fun fn(a, b) {
+        var c = 1;
+
+        print a;
+        print b;
+        print c;
+      }
+    LOX
+
     expect(chunk.as_json).to eq(
       {
-        "__global__outer__" => { :code => ["LOAD-CONSTANT", 0, "SET-HEAP", 1340, "LOAD-CONSTANT", 1, "NIL", "RETURN"], :constants => [1.0, { :type => :function, :arity => 0, :name => "__global__outer__inner__" }] },
-        "__global__outer__inner__" => { :code => ["GET-HEAP", 1340, "PRINT", "NIL", "RETURN"], :constants => [] },
-        "__script__" => { :code => ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__outer__" }, "outer"] },
+        "__global__fn__" => { :code => ["LOAD-CONSTANT", 0, "GET-LOCAL", 0, "PRINT", "GET-LOCAL", 1, "PRINT", "GET-LOCAL", 2, "PRINT", "NIL", "RETURN"], :constants => [1.0] },
+        "__script__" => { :code => ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
       }
     )
   end

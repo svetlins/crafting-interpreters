@@ -126,7 +126,12 @@ module StaticResolver
     def visit_literal(*); end
     def visit_logical; end
     def visit_unary; end
-    def visit_call; end
+
+    def visit_call(call_expression)
+      call_expression.callee.accept(self)
+      call_expression.arguments.each { |argument| argument.accept(self) }
+    end
+
     def visit_get_expression; end
     def visit_set_expression; end
   end

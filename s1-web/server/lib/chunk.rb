@@ -31,6 +31,8 @@ end
 class Chunk
   PLACEHOLDER = "PLACEHOLDER"
 
+  attr_reader :functions
+
   def initialize
     @functions = {}
   end

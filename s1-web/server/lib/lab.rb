@@ -9,6 +9,7 @@ require 'printers/rpn_printer'
 require 'printers/tree_printer'
 require 'interpreter'
 require 'compiler'
+require 'vm'
 
 module Lab
   include TokenTypes
@@ -52,6 +53,26 @@ end
 
   def compile_ast(ast)
     Compiler.new(ast).compile
+  end
+
+  def compile(source)
+    tokens = Scanner.new(source).scan
+    ast = Parser.new(tokens).parse
+    chunk = Chunk.new
+
+    phase1 = ::StaticResolver::Phase1.new(error_reporter: self)
+    phase2 = ::StaticResolver::Phase2.new(error_reporter: self)
+    phase1.resolve(ast)
+    phase2.resolve(ast)
+
+    Compiler.new(ast, chunk).compile
+
+    chunk
+  end
+
+
+  def execute(chunk)
+    VM.execute(chunk)
   end
 
   def interpret(source)

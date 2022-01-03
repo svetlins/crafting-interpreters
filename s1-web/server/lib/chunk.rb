@@ -1,5 +1,6 @@
 module Opcodes
   LOAD_CONSTANT = "LOAD-CONSTANT"
+  LOAD_CLOSURE = "LOAD-CLOSURE"
   RETURN = "RETURN"
 
   ADD = "ADD"

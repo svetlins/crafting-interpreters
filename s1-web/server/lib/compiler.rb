@@ -6,6 +6,7 @@ module FunctionType
 end
 
 class Function
+  attr_accessor :heap_slots, :heap_usages
   attr_reader :arity, :name
 
   def initialize(arity, name, type)
@@ -61,12 +62,16 @@ class Compiler
       function_statement.parameters.map(&:lexeme),
     ).compile
 
-    emit_two(Opcodes::LOAD_CONSTANT, add_constant(function))
+    function.heap_slots = function_statement.heap_slots
+    function.heap_usages = function_statement.heap_usages
+
+    emit_two(Opcodes::LOAD_CLOSURE, add_constant(function))
 
     if function_statement.allocation.global?
       constant_index = add_constant(function_statement.name.lexeme)
       emit_two(Opcodes::DEFINE_GLOBAL, constant_index)
     elsif function_statement.allocation.local?
+      # noop, it's on the stack
     end
   end
 

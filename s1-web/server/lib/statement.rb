@@ -27,7 +27,7 @@ module Statement
   end
 
   ExpressionStatement = define_statement_type('expression_statement', :expression)
-  FunctionStatement = define_statement_type('function_statement', :name, :parameters, :body, additional: %i[allocation full_name parameter_allocations upvalues])
+  FunctionStatement = define_statement_type('function_statement', :name, :parameters, :body, additional: %i[allocation full_name parameter_allocations heap_slots heap_usages])
   ReturnStatement = define_statement_type('return_statement', :keyword, :value)
   PrintStatement = define_statement_type('print_statement', :expression)
   VarStatement = define_statement_type('var_statement', :name, :initializer, additional: %i[allocation])

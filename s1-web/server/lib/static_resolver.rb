@@ -142,7 +142,8 @@ module StaticResolver
         @global = global
         @enclosing = enclosing
         @scopes = [{}]
-        @heap_allocated = {}
+        @heap_allocated = []
+        @heap_usages = []
       end
 
       def begin_block
@@ -151,6 +152,18 @@ module StaticResolver
 
       def end_block
         @scopes.pop
+      end
+
+      def global?
+        @global
+      end
+
+      def heap_slots
+        @heap_allocated
+      end
+
+      def heap_usages
+        @heap_usages
       end
 
       def add_variable(name)
@@ -173,7 +186,10 @@ module StaticResolver
 
         return local if find_local(name)
 
-        @enclosing.find_upvalue(name)
+        on_the_heap = @enclosing.find_upvalue(name)
+        @heap_usages << on_the_heap.slot
+
+        on_the_heap
       end
 
       def find_local(name)
@@ -191,6 +207,7 @@ module StaticResolver
 
         if local
           local.kind = :heap_allocated
+          @heap_allocated << local.slot
           return local
         end
 
@@ -328,6 +345,8 @@ module StaticResolver
 
       resolve(function_statement.body)
       # resolve_function(function_statement, FunctionTypes::FUNCTION)
+      function_statement.heap_slots = @function_scopes.last.heap_slots
+      function_statement.heap_usages = @function_scopes.last.heap_usages
       @function_scopes.pop
 
       return nil
@@ -354,14 +373,14 @@ module StaticResolver
     end
 
     def visit_return_statement(return_statement)
-      if @current_function == FunctionTypes::NONE
+      if @function_scopes.last.global?
         error(return_statement.keyword, "Can't return outside of function")
       end
 
       if return_statement.value
-        if @current_function == FunctionTypes::INITIALIZER
-          error(return_statement.keyword, "Can't return value from initializer")
-        end
+        # if @current_function == FunctionTypes::INITIALIZER
+        #   error(return_statement.keyword, "Can't return value from initializer")
+        # end
 
         resolve(return_statement.value)
       end

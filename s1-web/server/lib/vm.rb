@@ -54,7 +54,7 @@ module VM
     end
   end
 
-  def execute(chunk)
+  def execute(chunk, out: $stdout)
     stack = []
     globals = {}
     heap = Heap.new
@@ -64,8 +64,6 @@ module VM
     ]
 
     loop do
-      # pp stack
-      # puts
       stack_frame = stack_frames.last
 
       break if stack_frame.nil?
@@ -107,7 +105,7 @@ module VM
       when Opcodes::RETURN
         stack_frames.pop
       when Opcodes::PRINT
-        p stack.pop
+        out.puts(stack.pop.inspect)
       else
         fail op.inspect
       end

@@ -212,7 +212,9 @@ module StaticResolver
         end
 
         if @enclosing
-          @enclosing.find_upvalue(name)
+          allocation = @enclosing.find_upvalue(name)
+          @heap_usages << allocation.slot
+          allocation
         else
           Allocation.global
         end

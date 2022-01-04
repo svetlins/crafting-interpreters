@@ -75,7 +75,7 @@ module VM
         stack.push(stack_frame.read_constant(stack_frame.read_chunk))
       when Opcodes::LOAD_CLOSURE
         function = stack_frame.read_constant(stack_frame.read_chunk)
-        stack.push(Closure.new(function, function.heap_usages.map { [_1, heap.get(_1)] }.to_h))
+        stack.push(Closure.new(function, function.heap_usages.map { [_1, stack_frame.closure.heap_view[_1] || heap.get(_1)] }.to_h))
       when Opcodes::DEFINE_GLOBAL
         globals[stack_frame.read_constant(stack_frame.read_chunk)] = stack.pop
       when Opcodes::GET_GLOBAL

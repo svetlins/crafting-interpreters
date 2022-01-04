@@ -25,7 +25,7 @@ RSpec.describe Compiler do
 
     expect(chunk.as_json).to eq(
       { "__global__fn__" => { code: ["LOAD-CONSTANT", 0, "PRINT", "NIL", "RETURN"], constants: [42.0] },
-       "__script__" => { code: ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"],
+       "__script__" => { code: ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"],
                          constants: [{ type: :function, arity: 0, name: "__global__fn__" }, "fn"] } }
     )
   end
@@ -76,7 +76,7 @@ RSpec.describe Compiler do
     expect(chunk.as_json).to eq(
       {
         "__global__fn__" => { :code => ["LOAD-CONSTANT", 0, "LOAD-CONSTANT", 1, "NIL", "RETURN"], :constants => [1.0, 2.0] },
-        "__script__" => { :code => ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
+        "__script__" => { :code => ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
       }
     )
   end
@@ -95,7 +95,7 @@ RSpec.describe Compiler do
     expect(chunk.as_json).to eq(
       {
         "__global__fn__" => { :code => ["LOAD-CONSTANT", 0, "LOAD-CONSTANT", 1, "LOAD-CONSTANT", 2, "LOAD-CONSTANT", 3, "PRINT", "LOAD-CONSTANT", 4, "SET-LOCAL", 1, "POP", "NIL", "RETURN"], :constants => [1.0, 2.0, 3.0, 1.0, 4.0] },
-        "__script__" => { :code => ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
+        "__script__" => { :code => ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
       }
     )
   end
@@ -113,9 +113,9 @@ RSpec.describe Compiler do
 
     expect(chunk.as_json).to match(
       {
-        "__global__outer__" => { :code => ["LOAD-CONSTANT", 0, "SET-HEAP", kind_of(Numeric), "LOAD-CONSTANT", 1, "NIL", "RETURN"], :constants => [1.0, { :type => :function, :arity => 0, :name => "__global__outer__inner__" }] },
+        "__global__outer__" => { :code => ["LOAD-CONSTANT", 0, "SET-HEAP", kind_of(Numeric), "LOAD-CLOSURE", 1, "NIL", "RETURN"], :constants => [1.0, { :type => :function, :arity => 0, :name => "__global__outer__inner__" }] },
         "__global__outer__inner__" => { :code => ["GET-HEAP", kind_of(Numeric), "PRINT", "NIL", "RETURN"], :constants => [] },
-        "__script__" => { :code => ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__outer__" }, "outer"] },
+        "__script__" => { :code => ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__outer__" }, "outer"] },
       }
     )
   end
@@ -134,7 +134,7 @@ RSpec.describe Compiler do
     expect(chunk.as_json).to eq(
       {
         "__global__fn__" => { :code => ["LOAD-CONSTANT", 0, "GET-LOCAL", 0, "PRINT", "GET-LOCAL", 1, "PRINT", "GET-LOCAL", 2, "PRINT", "NIL", "RETURN"], :constants => [1.0] },
-        "__script__" => { :code => ["LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
+        "__script__" => { :code => ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
       }
     )
   end

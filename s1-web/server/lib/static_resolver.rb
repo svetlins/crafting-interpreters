@@ -187,7 +187,7 @@ module StaticResolver
         return local if find_local(name)
 
         on_the_heap = @enclosing.find_upvalue(name)
-        @heap_usages << on_the_heap.slot
+        @heap_usages << on_the_heap.slot if on_the_heap.heap_allocated?
 
         on_the_heap
       end
@@ -213,7 +213,7 @@ module StaticResolver
 
         if @enclosing
           allocation = @enclosing.find_upvalue(name)
-          @heap_usages << allocation.slot
+          @heap_usages << allocation.slot if allocation.heap_allocated?
           allocation
         else
           Allocation.global

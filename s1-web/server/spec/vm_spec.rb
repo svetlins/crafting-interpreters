@@ -7,8 +7,8 @@ RSpec.describe VM do
     ast = Parser.new(tokens).parse
     chunk = Chunk.new
 
-    phase1 = ::StaticResolver::Phase1.new(error_reporter: self)
-    phase2 = ::StaticResolver::Phase2.new(error_reporter: self)
+    phase1 = ::StaticResolver::Phase1.new(error_reporter: nil)
+    phase2 = ::StaticResolver::Phase2.new(error_reporter: nil)
     phase1.resolve(ast)
     phase2.resolve(ast)
 
@@ -24,6 +24,22 @@ RSpec.describe VM do
   it "can print" do
     source = <<-LOX
       print 42;
+    LOX
+
+    expect(execute(source)).to eq("42.0")
+  end
+
+  it "can assign to locals" do
+    source = <<-LOX
+      fun fn() {
+        var x = 41;
+
+        x = x + 1;
+
+        return x;
+      }
+
+      print fn();
     LOX
 
     expect(execute(source)).to eq("42.0")

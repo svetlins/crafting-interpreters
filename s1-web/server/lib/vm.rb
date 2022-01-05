@@ -38,6 +38,10 @@ module VM
     def slot(offset)
       @stack[@stack_top + offset]
     end
+
+    def set_slot(offset, value)
+      @stack[@stack_top + offset] = value
+    end
   end
 
   def execute(chunk, out: $stdout)
@@ -65,6 +69,8 @@ module VM
         stack.push(globals[stack_frame.read_constant(stack_frame.read_chunk)])
       when Opcodes::GET_LOCAL
         stack.push(stack_frame.slot(stack_frame.read_chunk))
+      when Opcodes::SET_LOCAL
+        stack_frame.set_slot(stack_frame.read_chunk, stack.last)
       when Opcodes::SET_HEAP
         heap_slot = stack_frame.read_chunk
         heap_value = stack_frame.closure.heap_view[heap_slot] || stack_frame.heap_slots.fetch(heap_slot)

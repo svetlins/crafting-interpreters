@@ -113,7 +113,7 @@ RSpec.describe Compiler do
 
     expect(chunk.as_json).to match(
       {
-        "__global__outer__" => { :code => ["LOAD-CONSTANT", 0, "SET-HEAP", kind_of(Numeric), "LOAD-CLOSURE", 1, "NIL", "RETURN"], :constants => [1.0, { :type => :function, :arity => 0, :name => "__global__outer__inner__" }] },
+        "__global__outer__" => { :code => ["LOAD-CONSTANT", 0, "INIT-HEAP", kind_of(Numeric), "LOAD-CLOSURE", 1, "NIL", "RETURN"], :constants => [1.0, { :type => :function, :arity => 0, :name => "__global__outer__inner__" }] },
         "__global__outer__inner__" => { :code => ["GET-HEAP", kind_of(Numeric), "PRINT", "NIL", "RETURN"], :constants => [] },
         "__script__" => { :code => ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__outer__" }, "outer"] },
       }

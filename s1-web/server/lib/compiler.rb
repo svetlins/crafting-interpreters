@@ -102,7 +102,7 @@ class Compiler
       emit_two(Opcodes::DEFINE_GLOBAL, add_constant(var_statement.name.lexeme))
     elsif var_statement.allocation.local?
     elsif var_statement.allocation.heap_allocated?
-      emit_two(Opcodes::SET_HEAP, var_statement.allocation.slot)
+      emit_two(Opcodes::INIT_HEAP, var_statement.allocation.slot)
     else
       fail
     end
@@ -155,7 +155,7 @@ class Compiler
     elsif assign_expression.allocation.local?
       emit_two(Opcodes::SET_LOCAL, assign_expression.allocation.slot)
     elsif assign_expression.allocation.heap_allocated?
-      fail
+      emit_two(Opcodes::SET_HEAP, assign_expression.allocation.slot)
     else
       fail
     end

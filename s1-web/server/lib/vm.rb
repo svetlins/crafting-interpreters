@@ -7,29 +7,16 @@ module VM
     attr_accessor :value
   end
 
-  class Heap
-    def initialize
-      @heap = {}
-    end
-
-    def establish(slot)
-      @heap[slot] = HeapValue.new
-    end
-
-    def get(slot)
-      @heap.fetch(slot)
-    end
-  end
-
   Closure = Struct.new(:function, :heap_view)
 
   class StackFrame
-    attr_reader :closure
+    attr_reader :closure, :heap_slots
 
-    def initialize(chunk, stack, closure, stack_top = 0)
+    def initialize(chunk, stack, closure, heap_slots, stack_top)
       @chunk = chunk
       @stack = stack
       @closure = closure
+      @heap_slots = heap_slots
       @ip = 0
       @stack_top = stack_top
     end
@@ -56,10 +43,9 @@ module VM
   def execute(chunk, out: $stdout)
     stack = []
     globals = {}
-    heap = $heap = Heap.new
 
     stack_frames = [
-      StackFrame.new(chunk, stack, Closure.new(Function.new(0, '__script__', nil), {}))
+      StackFrame.new(chunk, stack, Closure.new(Function.new(0, '__script__', nil), {}), [], 0)
     ]
 
     loop do
@@ -72,7 +58,7 @@ module VM
         stack.push(stack_frame.read_constant(stack_frame.read_chunk))
       when Opcodes::LOAD_CLOSURE
         function = stack_frame.read_constant(stack_frame.read_chunk)
-        stack.push(Closure.new(function, function.heap_usages.map { [_1, stack_frame.closure.heap_view[_1] || heap.get(_1)] }.to_h))
+        stack.push(Closure.new(function, function.heap_usages.map { [_1, stack_frame.closure.heap_view[_1] || stack_frame.heap_slots.fetch(_1)] }.to_h))
       when Opcodes::DEFINE_GLOBAL
         globals[stack_frame.read_constant(stack_frame.read_chunk)] = stack.pop
       when Opcodes::GET_GLOBAL
@@ -80,7 +66,12 @@ module VM
       when Opcodes::GET_LOCAL
         stack.push(stack_frame.slot(stack_frame.read_chunk))
       when Opcodes::SET_HEAP
-        heap.get(stack_frame.read_chunk).value = stack.pop
+        heap_slot = stack_frame.read_chunk
+        heap_value = stack_frame.closure.heap_view[heap_slot] || stack_frame.heap_slots.fetch(heap_slot)
+        heap_value.value = stack.last
+      when Opcodes::INIT_HEAP
+        heap_slot = stack_frame.read_chunk
+        stack_frame.heap_slots.fetch(heap_slot).value = stack.pop
       when Opcodes::GET_HEAP
         stack.push(
           stack_frame.closure.heap_view[stack_frame.read_chunk].value
@@ -99,8 +90,16 @@ module VM
       when Opcodes::CALL
         argument_count = stack_frame.read_chunk
         closure = stack[-argument_count - 1]
-        closure.function.heap_slots.each { heap.establish(_1) }
-        stack_frames << StackFrame.new(chunk, stack, closure, stack.size - argument_count)
+        heap_slots =
+          closure.function.heap_slots.map { [_1, HeapValue.new] }.to_h
+
+        stack_frames << StackFrame.new(
+          chunk,
+          stack,
+          closure,
+          heap_slots,
+          stack.size - argument_count
+        )
       when Opcodes::RETURN
         stack_frames.pop
       when Opcodes::PRINT

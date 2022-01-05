@@ -29,7 +29,7 @@ RSpec.describe VM do
     expect(execute(source)).to eq("42.0")
   end
 
-  it "can handle closures" do
+  it "can handle closures (no assignment to closed variables)" do
     source = <<-LOX
       fun outer(x) {
         var p = x;
@@ -55,6 +55,29 @@ RSpec.describe VM do
     LOX
 
     expect(execute(source)).to eq("105.0\n286.0")
+  end
+
+  it "can handle closures (with assignment to closed variables)" do
+    source = <<-LOX
+      fun outer(x) {
+        var p = x;
+
+        fun inner(r) {
+          p = p + r;
+          return p;
+        }
+
+        return inner;
+      }
+
+      var agg = outer(10);
+
+      print agg(1);
+      print agg(10);
+      print agg(100);
+    LOX
+
+    expect(execute(source)).to eq("11.0\n21.0\n121.0")
   end
 
   context "(memory leaks)" do

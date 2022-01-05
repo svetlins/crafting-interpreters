@@ -113,7 +113,7 @@ module StaticResolver
 
     ### Expressions
     def visit_assign(*); end
-    def visit_variable(variable_expression); end
+    def visit_variable(*); end
     def visit_super_expression; end
     def visit_this_expression; end
 

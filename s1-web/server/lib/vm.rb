@@ -13,12 +13,11 @@ module VM
     end
 
     def establish(slot)
-      @heap[slot] ||= []
-      @heap[slot].push(HeapValue.new)
+      @heap[slot] = HeapValue.new
     end
 
     def get(slot)
-      @heap.fetch(slot).last
+      @heap.fetch(slot)
     end
   end
 
@@ -57,7 +56,7 @@ module VM
   def execute(chunk, out: $stdout)
     stack = []
     globals = {}
-    heap = Heap.new
+    heap = $heap = Heap.new
 
     stack_frames = [
       StackFrame.new(chunk, stack, Closure.new(Function.new(0, '__script__', nil), {}))

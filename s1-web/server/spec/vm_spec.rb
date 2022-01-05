@@ -21,15 +21,6 @@ RSpec.describe VM do
     stdout.tap(&:rewind).read.chomp
   end
 
-  around do |example|
-    stop = false
-    tids = 10.times.map { Thread.new { GC.start while !stop } }
-    example.run
-    stop = true
-    tids.each(&:join)
-  end
-
-
   it "can print" do
     source = <<-LOX
       print 42;
@@ -64,5 +55,47 @@ RSpec.describe VM do
     LOX
 
     expect(execute(source)).to eq("105.0\n286.0")
+  end
+
+  context "(memory leaks)" do
+    around do |example|
+      GC.disable
+      example.run
+      GC.enable
+    end
+
+    def current_heap_values
+      ObjectSpace.each_object.select { |obj| obj.class == VM::HeapValue }
+    end
+
+    it "does not leak" do
+      source = <<-LOX
+        fun outer(x) {
+          var p = x;
+
+          fun middle(y) {
+            var q = y;
+
+            fun inner(r) {
+              print p * q * r;
+            }
+
+            return inner;
+          }
+
+          return middle;
+        }
+
+        var h1 = outer(2);
+        var h2 = outer(3);
+
+        h2(5)(7);
+        h1(11)(13);
+      LOX
+
+      ObjectSpace.garbage_collect
+
+      expect(current_heap_values).to be_empty
+    end
   end
 end

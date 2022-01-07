@@ -192,6 +192,7 @@ class Compiler
       '*' => [Opcodes::MULTIPLY],
       '/' => [Opcodes::DIVIDE],
       '==' => [Opcodes::EQUAL],
+      '!=' => [Opcodes::EQUAL, Opcodes::NOT],
       '>' => [Opcodes::GREATER],
       '<' => [Opcodes::LESSER],
       '>=' => [Opcodes::LESSER, Opcodes::NOT],

@@ -111,7 +111,7 @@ module VM
       when Opcodes::MULTIPLY
         stack.push(stack.pop * stack.pop)
       when Opcodes::EQUAL
-        stack.push(stack.pop == stack.pop)
+        stack.push(equal?(stack.pop, stack.pop))
       when Opcodes::GREATER
         stack.push(stack.pop < stack.pop)
       when Opcodes::LESSER
@@ -146,5 +146,9 @@ module VM
 
   def falsey?(value)
     !value
+  end
+
+  def equal?(a, b)
+    a == b # TODO
   end
 end

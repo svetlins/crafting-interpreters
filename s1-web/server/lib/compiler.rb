@@ -118,7 +118,6 @@ class Compiler
 
   def visit_if_statement(if_statement)
     if_statement.condition.accept(self)
-
     else_jump_offset = emit_jump(Opcodes::JUMP_ON_FALSE)
 
     emit(Opcodes::POP) # pop condition when condition is truthy
@@ -134,7 +133,18 @@ class Compiler
     @chunk.patch_jump(@name, exit_jump)
   end
 
-  def visit_while_statement; end
+  def visit_while_statement(while_statement)
+    begin_loop_offset = @chunk.functions[@name][:code].size
+    while_statement.condition.accept(self)
+    exit_loop_offset = emit_jump(Opcodes::JUMP_ON_FALSE)
+    emit(Opcodes::POP)
+    while_statement.body.accept(self)
+    emit(Opcodes::JUMP)
+    emit_two(*[begin_loop_offset - 2 - @chunk.functions[@name][:code].size].pack('s').bytes)
+    @chunk.patch_jump(@name, exit_loop_offset)
+    emit(Opcodes::POP)
+  end
+
   def visit_class_statement; end
 
   # expressions
@@ -179,6 +189,8 @@ class Compiler
         '*' => Opcodes::MULTIPLY,
         '/' => Opcodes::DIVIDE,
         '==' => Opcodes::EQUAL,
+        '>' => Opcodes::GREATER,
+        '<' => Opcodes::LESSER,
       }.fetch(binary_expression.operator.lexeme)
     )
   end

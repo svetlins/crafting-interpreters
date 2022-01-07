@@ -44,7 +44,7 @@ module VM
     end
 
     def jump(offset_byte_1, ofsset_byte_2)
-      @ip += (offset_byte_1 << 8) + ofsset_byte_2
+      @ip += [offset_byte_1, ofsset_byte_2].map(&:chr).join.unpack('s').first
     end
   end
 
@@ -63,20 +63,27 @@ module VM
 
       op = stack_frame.read_chunk
 
+      puts op
+      pp stack
+      p stack_frame
+      puts
+
       case op
       when Opcodes::LOAD_CONSTANT
         stack.push(stack_frame.read_constant(stack_frame.read_chunk))
       when Opcodes::LOAD_CLOSURE
         function = stack_frame.read_constant(stack_frame.read_chunk)
         stack.push(Closure.new(function, function.heap_usages.map { [_1, stack_frame.closure.heap_view[_1] || stack_frame.heap_slots.fetch(_1)] }.to_h))
+      when Opcodes::SET_GLOBAL
+        stack.push(globals[stack_frame.read_constant(stack_frame.read_chunk)] = stack.pop)
       when Opcodes::DEFINE_GLOBAL
         globals[stack_frame.read_constant(stack_frame.read_chunk)] = stack.pop
       when Opcodes::GET_GLOBAL
         stack.push(globals[stack_frame.read_constant(stack_frame.read_chunk)])
-      when Opcodes::GET_LOCAL
-        stack.push(stack_frame.slot(stack_frame.read_chunk))
       when Opcodes::SET_LOCAL
         stack_frame.set_slot(stack_frame.read_chunk, stack.last)
+      when Opcodes::GET_LOCAL
+        stack.push(stack_frame.slot(stack_frame.read_chunk))
       when Opcodes::SET_HEAP
         heap_slot = stack_frame.read_chunk
         heap_value = stack_frame.closure.heap_view[heap_slot] || stack_frame.heap_slots.fetch(heap_slot)
@@ -101,6 +108,10 @@ module VM
         stack.push(stack.pop * stack.pop)
       when Opcodes::EQUAL
         stack.push(stack.pop == stack.pop)
+      when Opcodes::GREATER
+        stack.push(stack.pop < stack.pop)
+      when Opcodes::LESSER
+        stack.push(stack.pop > stack.pop)
       when Opcodes::CALL
         argument_count = stack_frame.read_chunk
         closure = stack[-argument_count - 1]

@@ -9,6 +9,8 @@ module Opcodes
   DIVIDE = "DIVIDE"
 
   EQUAL = "EQUAL"
+  GREATER = "GREATER"
+  LESSER = "LESSER"
 
   POP = "POP"
   NIL = "NIL"
@@ -57,8 +59,10 @@ class Chunk
   def patch_jump(function, jump_offset)
     jump = @functions[function][:code].size - jump_offset - 2
 
-    @functions[function][:code][jump_offset] = (jump >> 8) & 0xff
-    @functions[function][:code][jump_offset + 1] = jump & 0xff
+    first_byte, second_byte = [jump].pack('s').bytes
+
+    @functions[function][:code][jump_offset] = first_byte
+    @functions[function][:code][jump_offset + 1] = second_byte
   end
 
   def add_constant(function, constant)

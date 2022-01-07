@@ -108,7 +108,11 @@ module StaticResolver
       if_statement.else_branch&.accept(self)
     end
 
-    def visit_while_statement; end
+    def visit_while_statement(while_statement)
+      while_statement.condition.accept(self)
+      while_statement.body.accept(self)
+    end
+
     def visit_class_statement = fail
 
     ### Expressions
@@ -178,18 +182,18 @@ module StaticResolver
       end
 
       def resolve_variable(name)
-        if @global && @scopes.size == 1
-          return Allocation.global
-        end
-
         local = find_local(name)
 
         return local if find_local(name)
 
-        on_the_heap = @enclosing.find_upvalue(name)
-        @heap_usages << on_the_heap.slot if on_the_heap.heap_allocated?
+        if @enclosing
+          on_the_heap = @enclosing.find_upvalue(name)
+          @heap_usages << on_the_heap.slot if on_the_heap.heap_allocated?
 
-        on_the_heap
+          return on_the_heap
+        end
+
+        Allocation.global
       end
 
       def find_local(name)

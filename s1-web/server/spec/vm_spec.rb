@@ -103,6 +103,29 @@ RSpec.describe VM do
     expect(execute(source)).to eq("\"yep\"\n\"preserves stack\"")
   end
 
+  it "handles while loops" do
+    source = <<-LOX
+      var x = 0;
+
+      while (x < 3) {
+        x = x + 1;
+        print x;
+      }
+    LOX
+
+    expect(execute(source)).to eq("1.0\n2.0\n3.0")
+  end
+
+  it "handles for loops" do
+    source = <<-LOX
+      for(var x = 0; x < 3; x = x + 1) {
+        print x + 1;
+      }
+    LOX
+
+    expect(execute(source)).to eq("1.0\n2.0\n3.0")
+  end
+
   it "can handle closures (no assignment to closed variables)" do
     source = <<-LOX
       fun outer(x) {

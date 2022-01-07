@@ -42,6 +42,10 @@ module VM
     def set_slot(offset, value)
       @stack[@stack_top + offset] = value
     end
+
+    def jump(offset_byte_1, ofsset_byte_2)
+      @ip += (offset_byte_1 << 8) + ofsset_byte_2
+    end
   end
 
   def execute(chunk, out: $stdout)
@@ -57,7 +61,9 @@ module VM
 
       break if stack_frame.nil?
 
-      case op = stack_frame.read_chunk
+      op = stack_frame.read_chunk
+
+      case op
       when Opcodes::LOAD_CONSTANT
         stack.push(stack_frame.read_constant(stack_frame.read_chunk))
       when Opcodes::LOAD_CLOSURE
@@ -93,6 +99,8 @@ module VM
         stack.push(a / b)
       when Opcodes::MULTIPLY
         stack.push(stack.pop * stack.pop)
+      when Opcodes::EQUAL
+        stack.push(stack.pop == stack.pop)
       when Opcodes::CALL
         argument_count = stack_frame.read_chunk
         closure = stack[-argument_count - 1]
@@ -110,9 +118,18 @@ module VM
         stack_frames.pop
       when Opcodes::PRINT
         out.puts(stack.pop.inspect)
+      when Opcodes::JUMP_ON_FALSE
+        jump_offset_byte1, jump_offset_byte2 = stack_frame.read_chunk, stack_frame.read_chunk
+        stack_frame.jump(jump_offset_byte1, jump_offset_byte2) if falsey?(stack.last)
+      when Opcodes::JUMP
+        stack_frame.jump(stack_frame.read_chunk, stack_frame.read_chunk)
       else
         fail op.inspect
       end
     end
+  end
+
+  def falsey?(value)
+    !value
   end
 end

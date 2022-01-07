@@ -249,37 +249,6 @@ module StaticResolver
       @scopes.last[name.lexeme] = true
     end
 
-    def resolve_local(expression, name)
-      @scopes.reverse.each_with_index do |scope, index|
-        depth = index
-
-        if scope.has_key? name.lexeme
-          expression.depth = depth
-          expression.location = @scope_names.reverse[index]
-          break
-        end
-      end
-    end
-
-    def resolve_function(function, type)
-      # enclosing_function = @current_function
-      # @current_function = type
-      # begin_scope(function.name.lexeme)
-
-      # function.parameters.each do |parameter|
-      #   declare(parameter)
-      #   define(parameter)
-      # end
-
-      # resolve(function.body)
-
-      # end_scope
-
-      # @current_function = enclosing_function
-
-      resolve(function.body)
-    end
-
     def error(token, message)
       if @error_reporter
         @error_reporter.report_static_analysis_error(token, message)
@@ -289,7 +258,7 @@ module StaticResolver
     def visit_block_statement(block_statement)
       @function_scopes.last.begin_block
       resolve(block_statement.statements)
-      @function_scopes.last.end_block
+      block_statement.locals_count = @function_scopes.last.end_block.size
 
       return nil
     end
@@ -297,38 +266,20 @@ module StaticResolver
     def visit_var_statement(var_statement)
       var_statement.allocation = @function_scopes.last.add_variable(var_statement.name.lexeme)
 
-      # declare(var_statement.name)
-
       if var_statement.initializer
         resolve(var_statement.initializer)
       end
-
-      # define(var_statement.name)
-
-      return nil
     end
 
     def visit_variable(variable_expression)
-      # if !@scopes.empty? && @scopes.last[variable_expression.name.lexeme] == false
-      #   error(variable_expression.name, "Can't read local variable in its own initializer")
-      # end
-
-      # resolve_local(variable_expression, variable_expression.name)
-
-      # return nil
-
       variable_expression.allocation =
         @function_scopes.last.resolve_variable(variable_expression.name.lexeme)
-
-      return nil
     end
 
     def visit_assign(assign_expression)
       resolve(assign_expression.value)
       assign_expression.allocation =
         @function_scopes.last.resolve_variable(assign_expression.name.lexeme)
-
-      return nil
     end
 
     def visit_function_statement(function_statement)

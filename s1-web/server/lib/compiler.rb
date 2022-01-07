@@ -109,19 +109,11 @@ class Compiler
   end
 
   def visit_block_statement(block_statement)
-    begin_scope
-
     block_statement.statements.each do |statement|
       statement.accept(self)
     end
 
-    # Cleanup
-    end_scope
-
-    # while @locals.any? && @locals.last.depth > @scope_depth
-    #   emit(Opcodes::POP)
-    #   @locals.pop
-    # end
+    block_statement.locals_count.times { emit(Opcodes::POP) }
   end
 
   def visit_if_statement(if_statement)
@@ -186,7 +178,8 @@ class Compiler
         '-' => Opcodes::SUBTRACT,
         '*' => Opcodes::MULTIPLY,
         '/' => Opcodes::DIVIDE,
-      }[binary_expression.operator.lexeme]
+        '==' => Opcodes::EQUAL,
+      }.fetch(binary_expression.operator.lexeme)
     )
   end
 
@@ -228,14 +221,6 @@ class Compiler
 
   def visit_get_expression; end
   def visit_set_expression; end
-
-  def begin_scope
-    @scope_depth += 1
-  end
-
-  def end_scope
-    @scope_depth -= 1
-  end
 
   def emit(opcode)
     @chunk.write(@name, opcode)

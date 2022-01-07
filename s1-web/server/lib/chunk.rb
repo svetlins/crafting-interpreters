@@ -8,6 +8,8 @@ module Opcodes
   MULTIPLY = "MULTIPLY"
   DIVIDE = "DIVIDE"
 
+  EQUAL = "EQUAL"
+
   POP = "POP"
   NIL = "NIL"
 
@@ -53,10 +55,10 @@ class Chunk
   end
 
   def patch_jump(function, jump_offset)
-    jump = @code.size - jump_offset - 2
+    jump = @functions[function][:code].size - jump_offset - 2
 
-    @code[jump_offset] = jump >> 8 & 0xff
-    @code[jump_offset + 1] = jump & 0xff
+    @functions[function][:code][jump_offset] = (jump >> 8) & 0xff
+    @functions[function][:code][jump_offset + 1] = jump & 0xff
   end
 
   def add_constant(function, constant)

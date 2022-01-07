@@ -45,6 +45,64 @@ RSpec.describe VM do
     expect(execute(source)).to eq("42.0")
   end
 
+  it "handles blocks" do
+    source = <<-LOX
+      fun fn() {
+        {
+          var x = 42;
+          print x;
+        }
+
+        var y = 69;
+        print y;
+      }
+
+      fn();
+    LOX
+
+    expect(execute(source)).to eq("42.0\n69.0")
+  end
+
+  it "handles else branch of if" do
+    source = <<-LOX
+      fun fn() {
+        if(1 == 2) {
+          print "hmm";
+        } else {
+          print "nope";
+        }
+
+        var x = "preserves stack";
+
+        print x;
+      }
+
+      fn();
+    LOX
+
+    expect(execute(source)).to eq("\"nope\"\n\"preserves stack\"")
+  end
+
+  it "handles then branch of if" do
+    source = <<-LOX
+      fun fn() {
+        if(1 == 1) {
+          print "yep";
+        } else {
+          print "hmm";
+        }
+
+        var x = "preserves stack";
+
+        print x;
+      }
+
+      fn();
+    LOX
+
+    expect(execute(source)).to eq("\"yep\"\n\"preserves stack\"")
+  end
+
   it "can handle closures (no assignment to closed variables)" do
     source = <<-LOX
       fun outer(x) {

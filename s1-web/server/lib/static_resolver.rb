@@ -105,7 +105,7 @@ module StaticResolver
     def visit_if_statement(if_statement)
       if_statement.condition.accept(self)
       if_statement.then_branch.accept(self)
-      if_statement.else_branch.accept(self)
+      if_statement.else_branch&.accept(self)
     end
 
     def visit_while_statement; end

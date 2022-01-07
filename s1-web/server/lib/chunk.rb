@@ -12,6 +12,9 @@ module Opcodes
   GREATER = "GREATER"
   LESSER = "LESSER"
 
+  NOT = "NOT"
+  NEGATE = "NEGATE"
+
   POP = "POP"
   NIL = "NIL"
 

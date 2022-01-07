@@ -122,14 +122,17 @@ module StaticResolver
     def visit_this_expression; end
 
     def visit_binary(binary_expression)
-      binary_expression.left.accept(self);
-      binary_expression.right.accept(self);
+      binary_expression.left.accept(self)
+      binary_expression.right.accept(self)
     end
 
     def visit_grouping; end
     def visit_literal(*); end
     def visit_logical; end
-    def visit_unary; end
+
+    def visit_unary(unary_expression)
+      unary_expression.right.accept(self)
+    end
 
     def visit_call(call_expression)
       call_expression.callee.accept(self)

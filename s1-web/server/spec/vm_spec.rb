@@ -126,6 +126,29 @@ RSpec.describe VM do
     expect(execute(source)).to eq("1.0\n2.0\n3.0")
   end
 
+  it "handles binaries" do
+    source = <<-LOX
+      print 1 + 4 * 4 / 8 <= 3;
+    LOX
+
+    expect(execute(source)).to eq("true")
+  end
+
+  specify { expect(execute("print 1 > 2;")).to eq("false") }
+  specify { expect(execute("print 3 > 2;")).to eq("true") }
+  specify { expect(execute("print 1 >= 2;")).to eq("false") }
+  specify { expect(execute("print 2 > 2;")).to eq("false") }
+  specify { expect(execute("print 2 >= 2;")).to eq("true") }
+
+  specify { expect(execute("print 1 < 0;")).to eq("false") }
+  specify { expect(execute("print -1 < 0;")).to eq("true") }
+  specify { expect(execute("print 1 <= 0;")).to eq("false") }
+  specify { expect(execute("print 0 < 0;")).to eq("false") }
+  specify { expect(execute("print 0 <= 0;")).to eq("true") }
+
+  specify { expect(execute("print -5;")).to eq("-5.0") }
+  specify { expect(execute("print !true;")).to eq("false") }
+
   it "can handle closures (no assignment to closed variables)" do
     source = <<-LOX
       fun outer(x) {

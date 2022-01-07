@@ -97,6 +97,10 @@ module VM
         )
       when Opcodes::NIL
         stack.push(nil)
+      when Opcodes::NOT
+        stack.push(falsey?(stack.pop))
+      when Opcodes::NEGATE
+        stack.push(-stack.pop)
       when Opcodes::POP
         stack.pop
       when Opcodes::ADD

@@ -185,17 +185,18 @@ class Compiler
   def visit_binary(binary_expression)
     binary_expression.left.accept(self)
     binary_expression.right.accept(self)
-    emit(
-      {
-        '+' => Opcodes::ADD,
-        '-' => Opcodes::SUBTRACT,
-        '*' => Opcodes::MULTIPLY,
-        '/' => Opcodes::DIVIDE,
-        '==' => Opcodes::EQUAL,
-        '>' => Opcodes::GREATER,
-        '<' => Opcodes::LESSER,
-      }.fetch(binary_expression.operator.lexeme)
-    )
+
+    {
+      '+' => [Opcodes::ADD],
+      '-' => [Opcodes::SUBTRACT],
+      '*' => [Opcodes::MULTIPLY],
+      '/' => [Opcodes::DIVIDE],
+      '==' => [Opcodes::EQUAL],
+      '>' => [Opcodes::GREATER],
+      '<' => [Opcodes::LESSER],
+      '>=' => [Opcodes::LESSER, Opcodes::NOT],
+      '<=' => [Opcodes::GREATER, Opcodes::NOT],
+    }.fetch(binary_expression.operator.lexeme).each { |op| emit(op) }
   end
 
   def visit_grouping; end
@@ -225,7 +226,14 @@ class Compiler
     end
   end
 
-  def visit_unary; end
+  def visit_unary(unary_expression)
+    unary_expression.right.accept(self)
+
+    {
+      '-' => [Opcodes::NEGATE],
+      '!' => [Opcodes::NOT],
+    }.fetch(unary_expression.operator.lexeme).each { |op| emit(op) }
+  end
 
   def visit_call(call_expression)
     call_expression.callee.accept(self)

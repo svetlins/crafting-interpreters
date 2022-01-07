@@ -32,6 +32,9 @@ class Compiler
     @name = name
     @type = type
     @function = Function.new(0, name, type)
+
+    # TODO: should not be needed
+    chunk.touch(name)
   end
 
   def compile

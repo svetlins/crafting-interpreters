@@ -63,10 +63,10 @@ module VM
 
       op = stack_frame.read_chunk
 
-      puts op
-      pp stack
-      p stack_frame
-      puts
+      # puts op
+      # pp stack
+      # p stack_frame
+      # puts
 
       case op
       when Opcodes::LOAD_CONSTANT

@@ -50,6 +50,10 @@ class Chunk
     }
   end
 
+  def touch(function)
+    init_function(function)
+  end
+
   def write(function, opcode)
     init_function(function)
     @functions[function][:code] << opcode

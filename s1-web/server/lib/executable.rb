@@ -1,17 +1,10 @@
-class Chunk
+class Executable
   PLACEHOLDER = "PLACEHOLDER"
 
   attr_reader :functions
 
   def initialize
     @functions = {}
-  end
-
-  def init_function(function)
-    @functions[function] ||= {
-      code: [],
-      constants: [],
-    }
   end
 
   def touch(function)
@@ -50,5 +43,14 @@ class Chunk
         constants: function[:constants].map { |constant| constant.respond_to?(:as_json) ? constant.as_json : constant }
       }
     end
+  end
+
+  private
+
+  def init_function(function)
+    @functions[function] ||= {
+      code: [],
+      constants: [],
+    }
   end
 end

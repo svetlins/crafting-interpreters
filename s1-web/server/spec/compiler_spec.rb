@@ -4,26 +4,26 @@ RSpec.describe Compiler do
   def compile(source)
     tokens = Scanner.new(source).scan
     ast = Parser.new(tokens).parse
-    chunk = Chunk.new
+    executable = Executable.new
 
     phase1 = ::StaticResolver::Phase1.new(error_reporter: self)
     phase2 = ::StaticResolver::Phase2.new(error_reporter: self)
     phase1.resolve(ast)
     phase2.resolve(ast)
 
-    Compiler.new(ast, chunk).compile
+    Compiler.new(ast, executable).compile
 
-    chunk
+    executable
   end
 
   it "compiles functions" do
-    chunk = compile <<-LOX
+    executable = compile <<-LOX
       fun fn() {
         print 42;
       }
     LOX
 
-    expect(chunk.as_json).to eq(
+    expect(executable.as_json).to eq(
       { "__global__fn__" => { code: ["LOAD-CONSTANT", 0, "PRINT", "NIL", "RETURN"], constants: [42.0] },
        "__script__" => { code: ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"],
                          constants: [{ type: :function, arity: 0, name: "__global__fn__" }, "fn"] } }
@@ -31,14 +31,14 @@ RSpec.describe Compiler do
   end
 
   it "compiles global variables" do
-    chunk = compile <<-LOX
+    executable = compile <<-LOX
       var x = 1;
       var y = 2;
       print x;
       print y;
     LOX
 
-    expect(chunk.as_json).to eq(
+    expect(executable.as_json).to eq(
       { "__script__" => {
         :code => [
           "LOAD-CONSTANT",
@@ -50,12 +50,12 @@ RSpec.describe Compiler do
   end
 
   it "compiles assignment to global variables" do
-    chunk = compile <<-LOX
+    executable = compile <<-LOX
       var x = 1;
       x = 2;
     LOX
 
-    expect(chunk.as_json).to eq(
+    expect(executable.as_json).to eq(
       { "__script__" => {
         :code => [
           "LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "LOAD-CONSTANT", 2, "SET-GLOBAL", 3, "POP", "NIL", "RETURN",
@@ -66,14 +66,14 @@ RSpec.describe Compiler do
   end
 
   it "compiles local variables" do
-    chunk = compile <<-LOX
+    executable = compile <<-LOX
       fun fn() {
         var x = 1;
         var y = 2;
       }
     LOX
 
-    expect(chunk.as_json).to eq(
+    expect(executable.as_json).to eq(
       {
         "__global__fn__" => { :code => ["LOAD-CONSTANT", 0, "LOAD-CONSTANT", 1, "NIL", "RETURN"], :constants => [1.0, 2.0] },
         "__script__" => { :code => ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
@@ -82,7 +82,7 @@ RSpec.describe Compiler do
   end
 
   it "compiles assignment to local variables" do
-    chunk = compile <<-LOX
+    executable = compile <<-LOX
       fun fn() {
         var x = 1;
         var y = 2;
@@ -92,7 +92,7 @@ RSpec.describe Compiler do
       }
     LOX
 
-    expect(chunk.as_json).to eq(
+    expect(executable.as_json).to eq(
       {
         "__global__fn__" => { :code => ["LOAD-CONSTANT", 0, "LOAD-CONSTANT", 1, "LOAD-CONSTANT", 2, "LOAD-CONSTANT", 3, "PRINT", "LOAD-CONSTANT", 4, "SET-LOCAL", 1, "POP", "NIL", "RETURN"], :constants => [1.0, 2.0, 3.0, 1.0, 4.0] },
         "__script__" => { :code => ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
@@ -101,7 +101,7 @@ RSpec.describe Compiler do
   end
 
   it "compiles heap allocated variables" do
-    chunk = compile <<-LOX
+    executable = compile <<-LOX
       fun outer() {
         var x = 1;
 
@@ -111,7 +111,7 @@ RSpec.describe Compiler do
       }
     LOX
 
-    expect(chunk.as_json).to match(
+    expect(executable.as_json).to match(
       {
         "__global__outer__" => { :code => ["LOAD-CONSTANT", 0, "INIT-HEAP", kind_of(Numeric), "LOAD-CLOSURE", 1, "NIL", "RETURN"], :constants => [1.0, { :type => :function, :arity => 0, :name => "__global__outer__inner__" }] },
         "__global__outer__inner__" => { :code => ["GET-HEAP", kind_of(Numeric), "PRINT", "NIL", "RETURN"], :constants => [] },
@@ -121,7 +121,7 @@ RSpec.describe Compiler do
   end
 
   it "compiles parameters" do
-    chunk = compile <<-LOX
+    executable = compile <<-LOX
       fun fn(a, b) {
         var c = 1;
 
@@ -131,7 +131,7 @@ RSpec.describe Compiler do
       }
     LOX
 
-    expect(chunk.as_json).to eq(
+    expect(executable.as_json).to eq(
       {
         "__global__fn__" => { :code => ["LOAD-CONSTANT", 0, "GET-LOCAL", 0, "PRINT", "GET-LOCAL", 1, "PRINT", "GET-LOCAL", 2, "PRINT", "NIL", "RETURN"], :constants => [1.0] },
         "__script__" => { :code => ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
@@ -152,11 +152,11 @@ end
 #   end
 
 #   it "compiles arithmetic correctly" do
-#     chunk = compile <<-LOX
+#     executable = compile <<-LOX
 #       1 + 2 * 3;
 #     LOX
 
-#     expect(chunk.code).to eq([
+#     expect(executable.code).to eq([
 #       "LOAD-CONSTANT", 0,
 #       "LOAD-CONSTANT", 1,
 #       "LOAD-CONSTANT", 2,
@@ -165,7 +165,7 @@ end
 #       "POP"
 #     ])
 
-#     expect(chunk.constants).to eq([
+#     expect(executable.constants).to eq([
 #       1.0,
 #       2.0,
 #       3.0
@@ -173,7 +173,7 @@ end
 #   end
 
 #   it "compiles if/then/else correctly" do
-#     chunk = compile <<-LOX
+#     executable = compile <<-LOX
 #       if (1 + 2) {
 #         print "Oh, yes";
 #         print "It's true!";
@@ -183,7 +183,7 @@ end
 #       }
 #     LOX
 
-#     expect(chunk.code).to eq([
+#     expect(executable.code).to eq([
 #       "LOAD-CONSTANT", 0,
 #       "LOAD-CONSTANT", 1,
 #       "ADD",
@@ -203,11 +203,11 @@ end
 #   end
 
 #   it "compiles `and` expressions correctly" do
-#     chunk = compile <<-LOX
+#     executable = compile <<-LOX
 #       1 and 2;
 #     LOX
 
-#     expect(chunk.code).to eq([
+#     expect(executable.code).to eq([
 #       "LOAD-CONSTANT", 0,
 #       "JUMP-ON-FALSE", 0, 3,
 #       "POP",
@@ -218,11 +218,11 @@ end
 #   end
 
 #   it "compiles `or` expressions correctly" do
-#     chunk = compile <<-LOX
+#     executable = compile <<-LOX
 #       1 or 2;
 #     LOX
 
-#     expect(chunk.code).to eq([
+#     expect(executable.code).to eq([
 #       "LOAD-CONSTANT", 0,
 #       "JUMP-ON-FALSE", 0, 3,
 #       "JUMP", 0, 3,
@@ -234,7 +234,7 @@ end
 #   end
 
 #   it "compiles local variables correctly" do
-#     chunk = compile <<-LOX
+#     executable = compile <<-LOX
 #       var outer = 100;
 
 #       {
@@ -248,7 +248,7 @@ end
 #       }
 #     LOX
 
-#     expect(chunk.code).to eq([
+#     expect(executable.code).to eq([
 #       "LOAD-CONSTANT", 0,
 #       "DEFINE-GLOBAL", 1,
 #       "LOAD-CONSTANT", 2,
@@ -271,7 +271,7 @@ end
 #       "POP"
 #     ])
 
-#     expect(chunk.constants).to eq([
+#     expect(executable.constants).to eq([
 #       100.0, # 0
 #       "outer", # 1
 #       "dummy", # 2

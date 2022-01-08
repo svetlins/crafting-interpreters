@@ -1,4 +1,4 @@
-require 'chunk'
+require 'executable'
 require 'opcodes'
 
 module FunctionType
@@ -26,15 +26,15 @@ class Function
 end
 
 class Compiler
-  def initialize(statements, chunk, name = "__script__", type = FunctionType::SCRIPT, parameters = [])
+  def initialize(statements, executable, name = "__script__", type = FunctionType::SCRIPT, parameters = [])
     @statements = statements
-    @chunk = chunk
+    @executable = executable
     @name = name
     @type = type
     @function = Function.new(0, name, type)
 
     # TODO: should not be needed
-    chunk.touch(name)
+    executable.touch(name)
   end
 
   def compile
@@ -48,7 +48,7 @@ class Compiler
   end
 
   def add_constant(constant)
-    @chunk.add_constant(@name, constant)
+    @executable.add_constant(@name, constant)
   end
 
   # statements
@@ -60,7 +60,7 @@ class Compiler
   def visit_function_statement(function_statement)
     function = Compiler.new(
       function_statement.body,
-      @chunk,
+      @executable,
       function_statement.full_name,
       FunctionType::FUNCTION,
       function_statement.parameters.map(&:lexeme),
@@ -128,23 +128,23 @@ class Compiler
 
     exit_jump = emit_jump(Opcodes::JUMP)
 
-    @chunk.patch_jump(@name, else_jump_offset)
+    @executable.patch_jump(@name, else_jump_offset)
 
     emit(Opcodes::POP) # pop condition when condition is falsy
     if_statement.else_branch&.accept(self)
 
-    @chunk.patch_jump(@name, exit_jump)
+    @executable.patch_jump(@name, exit_jump)
   end
 
   def visit_while_statement(while_statement)
-    begin_loop_offset = @chunk.functions[@name][:code].size
+    begin_loop_offset = @executable.functions[@name][:code].size
     while_statement.condition.accept(self)
     exit_loop_offset = emit_jump(Opcodes::JUMP_ON_FALSE)
     emit(Opcodes::POP)
     while_statement.body.accept(self)
     emit(Opcodes::JUMP)
-    emit_two(*[begin_loop_offset - 2 - @chunk.functions[@name][:code].size].pack('s').bytes)
-    @chunk.patch_jump(@name, exit_loop_offset)
+    emit_two(*[begin_loop_offset - 2 - @executable.functions[@name][:code].size].pack('s').bytes)
+    @executable.patch_jump(@name, exit_loop_offset)
     emit(Opcodes::POP)
   end
 
@@ -213,15 +213,15 @@ class Compiler
       short_circuit_exit = emit_jump(Opcodes::JUMP_ON_FALSE)
       emit(Opcodes::POP) # clean up the left since there's no short circuit
       logical_expression.right.accept(self)
-      @chunk.patch_jump(@name, short_circuit_exit)
+      @executable.patch_jump(@name, short_circuit_exit)
     elsif logical_expression.operator.lexeme == "or"
       logical_expression.left.accept(self)
       else_jump = emit_jump(Opcodes::JUMP_ON_FALSE)
       end_jump = emit_jump(Opcodes::JUMP)
-      @chunk.patch_jump(@name, else_jump)
+      @executable.patch_jump(@name, else_jump)
       emit(Opcodes::POP) # clean up the left since there's no short circuit
       logical_expression.right.accept(self)
-      @chunk.patch_jump(@name, end_jump)
+      @executable.patch_jump(@name, end_jump)
     else
       fail
     end
@@ -247,7 +247,7 @@ class Compiler
   def visit_set_expression; end
 
   def emit(opcode)
-    @chunk.write(@name, opcode)
+    @executable.write(@name, opcode)
   end
 
   def emit_two(opcode, operand)
@@ -257,10 +257,10 @@ class Compiler
 
   def emit_jump(jump_opcode)
     emit(jump_opcode)
-    emit(Chunk::PLACEHOLDER)
-    emit(Chunk::PLACEHOLDER)
+    emit('PLACEHOLDER')
+    emit('PLACEHOLDER')
 
-    @chunk.size(@name) - 2
+    @executable.size(@name) - 2
   end
 
   def emit_return

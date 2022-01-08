@@ -5,18 +5,18 @@ RSpec.describe VM do
   def execute(source)
     tokens = Scanner.new(source).scan
     ast = Parser.new(tokens).parse
-    chunk = Chunk.new
+    executable = Executable.new
 
     phase1 = ::StaticResolver::Phase1.new(error_reporter: nil)
     phase2 = ::StaticResolver::Phase2.new(error_reporter: nil)
     phase1.resolve(ast)
     phase2.resolve(ast)
 
-    Compiler.new(ast, chunk).compile
+    Compiler.new(ast, executable).compile
 
     stdout = StringIO.new
 
-    VM.execute(chunk, out: stdout)
+    VM.execute(executable, out: stdout)
 
     stdout.tap(&:rewind).read.chomp
   end

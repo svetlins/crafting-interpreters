@@ -40,12 +40,8 @@ module StaticResolver
     def resolve(resolvable)
       if resolvable.is_a? Array
         resolvable.each { |resolvable_element| resolve(resolvable_element) }
-      elsif resolvable.statement?
-        resolvable.accept(self)
-      elsif resolvable.expression?
-        resolvable.accept(self)
       else
-        raise
+        resolvable.accept(self)
       end
     end
 
@@ -236,12 +232,8 @@ module StaticResolver
     def resolve(resolvable)
       if resolvable.is_a? Array
         resolvable.each { |resolvable_element| resolve(resolvable_element) }
-      elsif resolvable.statement?
-        resolvable.accept(self)
-      elsif resolvable.expression?
-        resolvable.accept(self)
       else
-        raise
+        resolvable.accept(self)
       end
     end
 

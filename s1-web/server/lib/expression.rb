@@ -1,42 +1,61 @@
-require 'scanner'
+require 'ast_node_dsl'
 
 module Expression
-  @expression_kinds = []
+  include AstNodeDSL
 
-  def self.define_expression_type(name, *fields, additional: [])
-    @expression_kinds << name
-
-    Struct.new(*fields) do
-      def expression?; true; end
-      def statement?; false; end
-
-      if additional.any?
-        attr_accessor *additional
-      end
-
-      define_method :accept do |visitor|
-        visitor.public_send(:"visit_#{name}", self)
-      end
-    end
+  Assign = define_node do
+    name
+    value
+    additional :allocation
   end
 
-  def self.generate_visitors
-    @expression_kinds.map do |name|
-      "def visit_#{name}; end"
-    end.join("\n")
+  Variable = define_node do
+    name
+    additional :allocation
   end
 
-  Assign = define_expression_type('assign', :name, :value, additional: %i[allocation])
-  Variable = define_expression_type('variable', :name, additional: %i[allocation])
-  SuperExpression = define_expression_type('super_expression', :keyword, :method_name)
-  ThisExpression = define_expression_type('this_expression', :keyword)
+  Binary = define_node do
+    left
+    operator
+    right
+  end
 
-  Binary = define_expression_type('binary', :left, :operator, :right)
-  Grouping = define_expression_type('grouping', :expression)
-  Literal = define_expression_type('literal', :value)
-  Logical = define_expression_type('logical', :left, :operator, :right)
-  Unary = define_expression_type('unary', :operator, :right)
-  Call = define_expression_type('call', :callee, :paren, :arguments)
-  GetExpression = define_expression_type('get_expression', :object, :name)
-  SetExpression = define_expression_type('set_expression', :object, :name, :value)
+  Logical = define_node do
+    left
+    operator
+    right
+  end
+
+  Unary = define_node do
+    operator
+    right
+  end
+
+  Grouping = define_node { expression }
+
+  Literal = define_node { value }
+
+  Call = define_node do
+    callee
+    paren
+    arguments
+  end
+
+  GetExpression = define_node do
+    object
+    name
+  end
+
+  SetExpression = define_node do
+    object
+    name
+    value
+  end
+
+  SuperExpression = define_node do
+    keyword
+    method_name
+  end
+
+  ThisExpression = define_node { keyword }
 end

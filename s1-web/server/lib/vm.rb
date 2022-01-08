@@ -1,4 +1,5 @@
 require 'chunk'
+require 'opcodes'
 
 module VM
   extend self

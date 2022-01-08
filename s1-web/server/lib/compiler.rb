@@ -1,5 +1,5 @@
 require 'chunk'
-require 'pry'
+require 'opcodes'
 
 module FunctionType
   SCRIPT = "SCRIPT"

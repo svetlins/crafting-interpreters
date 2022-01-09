@@ -122,7 +122,10 @@ module StaticResolver
       binary_expression.right.accept(self)
     end
 
-    def visit_grouping; end
+    def visit_grouping(grouping_expression)
+      grouping_expression.expression.accept(self)
+    end
+
     def visit_literal(*); end
     def visit_logical; end
 

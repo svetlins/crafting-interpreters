@@ -192,7 +192,9 @@ class Compiler
     }.fetch(binary_expression.operator.lexeme).each { |op| emit(op) }
   end
 
-  def visit_grouping; end
+  def visit_grouping(grouping_expression)
+    grouping_expression.expression.accept(self)
+  end
 
   def visit_literal(literal_expression)
     constant_index = add_constant(literal_expression.value)

@@ -29,6 +29,14 @@ RSpec.describe VM do
     expect(execute(source)).to eq("42.0")
   end
 
+  it "handles grouping" do
+    source = <<-LOX
+      print (1 + 1) * 2;
+    LOX
+
+    expect(execute(source)).to eq("4.0")
+  end
+
   it "can assign to locals" do
     source = <<-LOX
       fun fn() {

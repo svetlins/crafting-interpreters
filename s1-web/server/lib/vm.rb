@@ -183,8 +183,15 @@ module VM
 
   def debug(b)
     puts b.local_variable_get(:op)
-    pp b.local_variable_get(:stack)
-    p b.local_variable_get(:stack_frame)
+    print_stack b.local_variable_get(:stack)
     puts
+  end
+
+  def print_stack(stack)
+    puts [
+      '[',
+      *stack.map { |value| value.is_a?(Callable) ? "<#{value.function_name}>" : value},
+      ']',
+    ].join(" ")
   end
 end

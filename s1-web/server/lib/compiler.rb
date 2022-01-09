@@ -1,30 +1,30 @@
 require 'executable'
 require 'opcodes'
 
-class Function
-  attr_accessor :heap_slots, :heap_usages
-  attr_reader :arity, :name
-
-  def initialize(arity, name)
-    @arity = arity
-    @name = name
-  end
-
-  def as_json
-    {
-      type: :function,
-      arity: @arity,
-      name: @name,
-    }
-  end
-end
-
 class Compiler
-  def initialize(statements, executable, name = "__script__", parameters = [])
+  class FunctionDescriptor
+    attr_accessor :heap_slots, :heap_usages
+    attr_reader :arity, :name
+
+    def initialize(name, arity)
+      @arity = arity
+      @name = name
+    end
+
+    def as_json
+      {
+        type: :function,
+        arity: @arity,
+        name: @name,
+      }
+    end
+  end
+
+  def initialize(statements, executable, name = "__script__", arity = 0)
     @statements = statements
     @executable = executable
     @name = name
-    @function = Function.new(0, name)
+    @function = FunctionDescriptor.new(name, arity)
 
     # TODO: should not be needed
     executable.touch(name)
@@ -55,7 +55,7 @@ class Compiler
       function_statement.body,
       @executable,
       function_statement.full_name,
-      function_statement.parameters.map(&:lexeme),
+      function_statement.parameters.count,
     ).compile
 
     function.heap_slots = function_statement.heap_slots

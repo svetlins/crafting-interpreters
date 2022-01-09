@@ -134,7 +134,7 @@ RSpec.describe Compiler do
     expect(executable.as_json).to eq(
       {
         "__global__fn__" => { :code => ["LOAD-CONSTANT", 0, "GET-LOCAL", 0, "PRINT", "GET-LOCAL", 1, "PRINT", "GET-LOCAL", 2, "PRINT", "NIL", "RETURN"], :constants => [1.0] },
-        "__script__" => { :code => ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
+        "__script__" => { :code => ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 2, :name => "__global__fn__" }, "fn"] },
       }
     )
   end

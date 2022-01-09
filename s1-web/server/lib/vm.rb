@@ -1,5 +1,6 @@
 require 'executable'
 require 'opcodes'
+require 'ostruct'
 
 module VM
   extend self
@@ -9,13 +10,25 @@ module VM
   end
 
   class Callable
+    def self.top_level_script
+      OpenStruct.new(
+        function_name: '__script__',
+        heap_slots: [],
+        heap_view: {}
+      )
+    end
+
     def initialize(function_descriptor, heap_view)
       @function_descriptor = function_descriptor
       @heap_view = heap_view
     end
 
-    def function
-      @function_descriptor
+    def function_name
+      @function_descriptor.name
+    end
+
+    def heap_slots
+      @function_descriptor.heap_slots
     end
 
     def heap_view
@@ -36,7 +49,7 @@ module VM
     end
 
     def function_name
-      @closure.function.name
+      @closure.function_name
     end
 
     def read_executable
@@ -67,7 +80,7 @@ module VM
     globals = {}
 
     stack_frames = [
-      StackFrame.new(executable, stack, Callable.new(Compiler::FunctionDescriptor.new('__script__', 0), {}), [], 0)
+      StackFrame.new(executable, stack, Callable.top_level_script, [], 0)
     ]
 
     loop do
@@ -77,10 +90,7 @@ module VM
 
       op = stack_frame.read_executable
 
-      # puts op
-      # pp stack
-      # p stack_frame
-      # puts
+      debug(binding) if ENV["VM_DEBUG"]
 
       case op
       when Opcodes::LOAD_CONSTANT
@@ -134,7 +144,7 @@ module VM
         argument_count = stack_frame.read_executable
         closure = stack[-argument_count - 1]
         heap_slots =
-          closure.function.heap_slots.map { [_1, HeapValue.new] }.to_h
+          closure.heap_slots.map { [_1, HeapValue.new] }.to_h
 
         stack_frames << StackFrame.new(
           executable,
@@ -164,5 +174,12 @@ module VM
 
   def equal?(a, b)
     a == b # TODO
+  end
+
+  def debug(b)
+    puts b.local_variable_get(:op)
+    pp b.local_variable_get(:stack)
+    p b.local_variable_get(:stack_frame)
+    puts
   end
 end

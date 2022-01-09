@@ -37,7 +37,7 @@ module VM
   end
 
   class StackFrame
-    attr_reader :closure, :heap_slots
+    attr_reader :closure, :heap_slots, :stack_top
 
     def initialize(executable, stack, closure, heap_slots, stack_top)
       @executable = executable
@@ -89,8 +89,6 @@ module VM
       break if stack_frame.nil?
 
       op = stack_frame.read_executable
-
-      debug(binding) if ENV["VM_DEBUG"]
 
       case op
       when Opcodes::LOAD_CONSTANT
@@ -154,7 +152,12 @@ module VM
           stack.size - argument_count
         )
       when Opcodes::RETURN
+        result = stack.pop
         stack_frames.pop
+
+        stack = stack[0...stack_frame.stack_top]
+
+        stack.push(result)
       when Opcodes::PRINT
         out.puts(stack.pop.inspect)
       when Opcodes::JUMP_ON_FALSE
@@ -165,6 +168,8 @@ module VM
       else
         fail op.inspect
       end
+
+      debug(binding) if ENV["VM_DEBUG"]
     end
   end
 

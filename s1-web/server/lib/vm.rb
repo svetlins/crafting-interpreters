@@ -8,7 +8,20 @@ module VM
     attr_accessor :value
   end
 
-  Closure = Struct.new(:function, :heap_view)
+  class Callable
+    def initialize(function_descriptor, heap_view)
+      @function_descriptor = function_descriptor
+      @heap_view = heap_view
+    end
+
+    def function
+      @function_descriptor
+    end
+
+    def heap_view
+      @heap_view
+    end
+  end
 
   class StackFrame
     attr_reader :closure, :heap_slots
@@ -54,7 +67,7 @@ module VM
     globals = {}
 
     stack_frames = [
-      StackFrame.new(executable, stack, Closure.new(Compiler::FunctionDescriptor.new('__script__', 0), {}), [], 0)
+      StackFrame.new(executable, stack, Callable.new(Compiler::FunctionDescriptor.new('__script__', 0), {}), [], 0)
     ]
 
     loop do
@@ -74,7 +87,7 @@ module VM
         stack.push(stack_frame.read_constant(stack_frame.read_executable))
       when Opcodes::LOAD_CLOSURE
         function = stack_frame.read_constant(stack_frame.read_executable)
-        stack.push(Closure.new(function, function.heap_usages.map { [_1, stack_frame.closure.heap_view[_1] || stack_frame.heap_slots.fetch(_1)] }.to_h))
+        stack.push(Callable.new(function, function.heap_usages.map { [_1, stack_frame.closure.heap_view[_1] || stack_frame.heap_slots.fetch(_1)] }.to_h))
       when Opcodes::SET_GLOBAL
         stack.push(globals[stack_frame.read_constant(stack_frame.read_executable)] = stack.pop)
       when Opcodes::DEFINE_GLOBAL

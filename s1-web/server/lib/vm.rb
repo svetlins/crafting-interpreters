@@ -54,7 +54,7 @@ module VM
     globals = {}
 
     stack_frames = [
-      StackFrame.new(executable, stack, Closure.new(Function.new(0, '__script__', nil), {}), [], 0)
+      StackFrame.new(executable, stack, Closure.new(Function.new(0, '__script__'), {}), [], 0)
     ]
 
     loop do

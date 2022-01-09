@@ -296,7 +296,6 @@ module StaticResolver
         end
 
       resolve(function_statement.body)
-      # resolve_function(function_statement, FunctionTypes::FUNCTION)
       function_statement.heap_slots = @function_scopes.last.heap_slots
       function_statement.heap_usages = @function_scopes.last.heap_usages
       @function_scopes.pop
@@ -330,7 +329,7 @@ module StaticResolver
       end
 
       if return_statement.value
-        # if @current_function == FunctionTypes::INITIALIZER
+        # if ~initializer~
         #   error(return_statement.keyword, "Can't return value from initializer")
         # end
 

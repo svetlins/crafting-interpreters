@@ -37,36 +37,30 @@ module VM
   end
 
   class StackFrame
-    attr_reader :closure, :heap_slots, :stack_top
+    attr_reader :callable, :heap_slots, :stack_top
 
-    def initialize(executable, stack, closure, heap_slots, stack_top)
+    def initialize(executable, stack, callable, heap_slots, stack_top)
       @executable = executable
       @stack = stack
-      @closure = closure
+      @callable = callable
       @heap_slots = heap_slots
       @ip = 0
       @stack_top = stack_top
     end
 
-    def function_name
-      @closure.function_name
-    end
-
-    def read_executable
-      @ip += 1
-
-      @executable.functions[function_name][:code][@ip - 1]
+    def read_code
+      @executable.functions[@callable.function_name][:code][(@ip += 1) - 1]
     end
 
     def read_constant(constant_index)
-      @executable.functions[function_name][:constants][constant_index]
+      @executable.functions[@callable.function_name][:constants][constant_index]
     end
 
-    def slot(offset)
+    def get_stack_slot(offset)
       @stack[@stack_top + offset]
     end
 
-    def set_slot(offset, value)
+    def set_stack_slot(offset, value)
       @stack[@stack_top + offset] = value
     end
 
@@ -88,34 +82,45 @@ module VM
 
       break if stack_frame.nil?
 
-      op = stack_frame.read_executable
+      op = stack_frame.read_code
 
       case op
       when Opcodes::LOAD_CONSTANT
-        stack.push(stack_frame.read_constant(stack_frame.read_executable))
+        stack.push(stack_frame.read_constant(stack_frame.read_code))
       when Opcodes::LOAD_CLOSURE
-        function = stack_frame.read_constant(stack_frame.read_executable)
-        stack.push(Callable.new(function, function.heap_usages.map { [_1, stack_frame.closure.heap_view[_1] || stack_frame.heap_slots.fetch(_1)] }.to_h))
+        function_descriptor = stack_frame.read_constant(stack_frame.read_code)
+
+        heap_view =
+          function_descriptor.heap_usages.map do |heap_usage|
+            [
+              heap_usage,
+              stack_frame.callable.heap_view[heap_usage] || stack_frame.heap_slots.fetch(heap_usage)
+            ]
+          end.to_h
+
+        stack.push(
+          Callable.new(function_descriptor, heap_view)
+        )
       when Opcodes::SET_GLOBAL
-        stack.push(globals[stack_frame.read_constant(stack_frame.read_executable)] = stack.pop)
+        stack.push(globals[stack_frame.read_constant(stack_frame.read_code)] = stack.pop)
       when Opcodes::DEFINE_GLOBAL
-        globals[stack_frame.read_constant(stack_frame.read_executable)] = stack.pop
+        globals[stack_frame.read_constant(stack_frame.read_code)] = stack.pop
       when Opcodes::GET_GLOBAL
-        stack.push(globals[stack_frame.read_constant(stack_frame.read_executable)])
+        stack.push(globals[stack_frame.read_constant(stack_frame.read_code)])
       when Opcodes::SET_LOCAL
-        stack_frame.set_slot(stack_frame.read_executable, stack.last)
+        stack_frame.set_stack_slot(stack_frame.read_code, stack.last)
       when Opcodes::GET_LOCAL
-        stack.push(stack_frame.slot(stack_frame.read_executable))
+        stack.push(stack_frame.get_stack_slot(stack_frame.read_code))
       when Opcodes::SET_HEAP
-        heap_slot = stack_frame.read_executable
-        heap_value = stack_frame.closure.heap_view[heap_slot] || stack_frame.heap_slots.fetch(heap_slot)
+        heap_slot = stack_frame.read_code
+        heap_value = stack_frame.callable.heap_view[heap_slot] || stack_frame.heap_slots.fetch(heap_slot)
         heap_value.value = stack.last
       when Opcodes::INIT_HEAP
-        heap_slot = stack_frame.read_executable
+        heap_slot = stack_frame.read_code
         stack_frame.heap_slots.fetch(heap_slot).value = stack.pop
       when Opcodes::GET_HEAP
         stack.push(
-          stack_frame.closure.heap_view[stack_frame.read_executable].value
+          stack_frame.callable.heap_view[stack_frame.read_code].value
         )
       when Opcodes::NIL
         stack.push(nil)
@@ -139,15 +144,15 @@ module VM
       when Opcodes::LESSER
         stack.push(stack.pop > stack.pop)
       when Opcodes::CALL
-        argument_count = stack_frame.read_executable
-        closure = stack[-argument_count - 1]
+        argument_count = stack_frame.read_code
+        callable = stack[-argument_count - 1]
         heap_slots =
-          closure.heap_slots.map { [_1, HeapValue.new] }.to_h
+          callable.heap_slots.map { [_1, HeapValue.new] }.to_h
 
         stack_frames << StackFrame.new(
           executable,
           stack,
-          closure,
+          callable,
           heap_slots,
           stack.size - argument_count
         )
@@ -155,16 +160,16 @@ module VM
         result = stack.pop
         stack_frames.pop
 
-        stack = stack[0...stack_frame.stack_top]
+        stack[0..-1] = stack[0...stack_frame.stack_top - 1]
 
         stack.push(result)
       when Opcodes::PRINT
         out.puts(stack.pop.inspect)
       when Opcodes::JUMP_ON_FALSE
-        jump_offset_byte1, jump_offset_byte2 = stack_frame.read_executable, stack_frame.read_executable
+        jump_offset_byte1, jump_offset_byte2 = stack_frame.read_code, stack_frame.read_code
         stack_frame.jump(jump_offset_byte1, jump_offset_byte2) if falsey?(stack.last)
       when Opcodes::JUMP
-        stack_frame.jump(stack_frame.read_executable, stack_frame.read_executable)
+        stack_frame.jump(stack_frame.read_code, stack_frame.read_code)
       else
         fail op.inspect
       end

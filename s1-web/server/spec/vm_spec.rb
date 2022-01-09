@@ -37,6 +37,27 @@ RSpec.describe VM do
     expect(execute(source)).to eq("4.0")
   end
 
+  it "manages the stack correctly" do
+    source = <<-LOX
+      fun other(a, b, c) {
+        return a + b + c;
+      }
+
+      fun fn() {
+        var x = 40;
+        other(1,2,3);
+        var y = 60;
+
+        return x + y;
+      }
+
+      print fn();
+    LOX
+
+    expect(execute(source)).to eq("100.0")
+
+  end
+
   it "can assign to locals" do
     source = <<-LOX
       fun fn() {

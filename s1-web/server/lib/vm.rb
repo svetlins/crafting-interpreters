@@ -2,9 +2,7 @@ require 'executable'
 require 'opcodes'
 require 'ostruct'
 
-module VM
-  extend self
-
+class VM
   class HeapValue
     attr_accessor :value
   end
@@ -69,12 +67,18 @@ module VM
     end
   end
 
-  def execute(executable, out: $stdout)
-    stack = []
-    globals = {}
+  def self.execute(executable, out: $stdout)
+    new.execute(executable, out: out)
+  end
 
+  def initialize
+    @stack = []
+    @globals = {}
+  end
+
+  def execute(executable, out: $stdout)
     call_frames = [
-      CallFrame.new(executable, stack, Callable.top_level_script, [], 0)
+      CallFrame.new(executable, @stack, Callable.top_level_script, [], 0)
     ]
 
     loop do
@@ -86,7 +90,7 @@ module VM
 
       case op
       when Opcodes::LOAD_CONSTANT
-        stack.push(call_frame.read_constant(call_frame.read_code))
+        @stack.push(call_frame.read_constant(call_frame.read_code))
       when Opcodes::LOAD_CLOSURE
         function_descriptor = call_frame.read_constant(call_frame.read_code)
 
@@ -98,76 +102,76 @@ module VM
             ]
           end.to_h
 
-        stack.push(
+        @stack.push(
           Callable.new(function_descriptor, heap_view)
         )
       when Opcodes::SET_GLOBAL
-        stack.push(globals[call_frame.read_constant(call_frame.read_code)] = stack.pop)
+        @stack.push(@globals[call_frame.read_constant(call_frame.read_code)] = @stack.pop)
       when Opcodes::DEFINE_GLOBAL
-        globals[call_frame.read_constant(call_frame.read_code)] = stack.pop
+        @globals[call_frame.read_constant(call_frame.read_code)] = @stack.pop
       when Opcodes::GET_GLOBAL
-        stack.push(globals[call_frame.read_constant(call_frame.read_code)])
+        @stack.push(@globals[call_frame.read_constant(call_frame.read_code)])
       when Opcodes::SET_LOCAL
-        call_frame.set_stack_slot(call_frame.read_code, stack.last)
+        call_frame.set_stack_slot(call_frame.read_code, @stack.last)
       when Opcodes::GET_LOCAL
-        stack.push(call_frame.get_stack_slot(call_frame.read_code))
+        @stack.push(call_frame.get_stack_slot(call_frame.read_code))
       when Opcodes::SET_HEAP
         heap_slot = call_frame.read_code
         heap_value = call_frame.callable.heap_view[heap_slot] || call_frame.heap_slots.fetch(heap_slot)
-        heap_value.value = stack.last
+        heap_value.value = @stack.last
       when Opcodes::INIT_HEAP
         heap_slot = call_frame.read_code
-        call_frame.heap_slots.fetch(heap_slot).value = stack.pop
+        call_frame.heap_slots.fetch(heap_slot).value = @stack.pop
       when Opcodes::GET_HEAP
-        stack.push(
+        @stack.push(
           call_frame.callable.heap_view[call_frame.read_code].value
         )
       when Opcodes::NIL
-        stack.push(nil)
+        @stack.push(nil)
       when Opcodes::NOT
-        stack.push(falsey?(stack.pop))
+        @stack.push(falsey?(@stack.pop))
       when Opcodes::NEGATE
-        stack.push(-stack.pop)
+        @stack.push(-@stack.pop)
       when Opcodes::POP
-        stack.pop
+        @stack.pop
       when Opcodes::ADD
-        stack.push(stack.pop + stack.pop)
+        @stack.push(@stack.pop + @stack.pop)
       when Opcodes::DIVIDE
-        b, a = stack.pop, stack.pop
-        stack.push(a / b)
+        b, a = @stack.pop, @stack.pop
+        @stack.push(a / b)
       when Opcodes::MULTIPLY
-        stack.push(stack.pop * stack.pop)
+        @stack.push(@stack.pop * @stack.pop)
       when Opcodes::EQUAL
-        stack.push(equal?(stack.pop, stack.pop))
+        @stack.push(equal?(@stack.pop, @stack.pop))
       when Opcodes::GREATER
-        stack.push(stack.pop < stack.pop)
+        @stack.push(@stack.pop < @stack.pop)
       when Opcodes::LESSER
-        stack.push(stack.pop > stack.pop)
+        @stack.push(@stack.pop > @stack.pop)
       when Opcodes::CALL
         argument_count = call_frame.read_code
-        callable = stack[-argument_count - 1]
+        callable = @stack[-argument_count - 1]
         heap_slots =
           callable.heap_slots.map { [_1, HeapValue.new] }.to_h
 
         call_frames << CallFrame.new(
           executable,
-          stack,
+          @stack,
           callable,
           heap_slots,
-          stack.size - argument_count
+          @stack.size - argument_count
         )
       when Opcodes::RETURN
-        result = stack.pop
+        result = @stack.pop
         call_frames.pop
 
-        stack[0..-1] = stack[0...call_frame.stack_top - 1]
+        @stack[0..-1] = @stack[0...call_frame.stack_top - 1]
 
-        stack.push(result)
+        @stack.push(result)
       when Opcodes::PRINT
-        out.puts(stack.pop.inspect)
+        out.puts(@stack.pop.inspect)
       when Opcodes::JUMP_ON_FALSE
         jump_offset_byte1, jump_offset_byte2 = call_frame.read_code, call_frame.read_code
-        call_frame.jump(jump_offset_byte1, jump_offset_byte2) if falsey?(stack.last)
+        call_frame.jump(jump_offset_byte1, jump_offset_byte2) if falsey?(@stack.last)
       when Opcodes::JUMP
         call_frame.jump(call_frame.read_code, call_frame.read_code)
       else

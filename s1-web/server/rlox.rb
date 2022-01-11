@@ -56,6 +56,9 @@ class Rlox
     end
 
     puts "👋"
+  rescue Interrupt
+    puts
+    retry
   end
 
   def execute(source)

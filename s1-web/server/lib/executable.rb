@@ -15,12 +15,14 @@ class Executable
     }
   end
 
-  def touch(function)
-    init_function(function)
+  def reset_function(function)
+    @functions[function] = {
+      code: [],
+      constants: [],
+    }
   end
 
   def write(function, opcode)
-    init_function(function)
     @functions[function][:code] << opcode
     @functions[function][:code].size
   end
@@ -35,7 +37,6 @@ class Executable
   end
 
   def add_constant(function, constant)
-    init_function(function)
     @functions[function][:constants] << constant
     @functions[function][:constants].size - 1
   end
@@ -51,14 +52,5 @@ class Executable
         constants: function[:constants].map { |constant| constant.respond_to?(:as_json) ? constant.as_json : constant }
       }
     end
-  end
-
-  private
-
-  def init_function(function)
-    @functions[function] ||= {
-      code: [],
-      constants: [],
-    }
   end
 end

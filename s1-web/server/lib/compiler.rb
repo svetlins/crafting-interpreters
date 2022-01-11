@@ -26,8 +26,7 @@ class Compiler
     @name = name
     @function = FunctionDescriptor.new(name, arity)
 
-    # TODO: should not be needed
-    executable.touch(name)
+    executable.reset_function(name)
   end
 
   def compile

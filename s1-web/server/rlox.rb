@@ -16,6 +16,8 @@ class Rlox
     @argv = argv
     @had_error = false
     @interpreter = Interpreter.new(error_reporter: self)
+    @vm = VM.new
+    @executable = Executable.new
   end
 
   def main
@@ -37,10 +39,39 @@ class Rlox
   end
 
   def run_prompt
-    while line = Readline.readline("> ", true)
-      run(line)
-      @had_error = false
+    buffer = ""
+
+    Readline.pre_input_hook = lambda do
+       Readline.insert_text("  " * [buffer.count("{") - buffer.count("}"), 0].max)
+       Readline.redisplay
     end
+
+    while line = Readline.readline(buffer.empty? ? "> " : "| ", true)&.chomp
+      if line.empty?
+        execute(buffer)
+        buffer = ""
+      else
+        buffer += line
+      end
+    end
+
+    puts "👋"
+  end
+
+  def execute(source)
+    tokens = Scanner.new(source).scan
+    ast = Parser.new(tokens).parse
+
+    phase1 = ::StaticResolver::Phase1.new(error_reporter: nil)
+    phase2 = ::StaticResolver::Phase2.new(error_reporter: nil)
+    phase1.resolve(ast)
+    phase2.resolve(ast)
+
+    @executable.reset_top_level_script
+
+    Compiler.new(ast, @executable).compile
+
+    @vm.execute(@executable)
   end
 
   def run(source)

@@ -136,6 +136,9 @@ class VM
         @stack.pop
       when Opcodes::ADD
         @stack.push(@stack.pop + @stack.pop)
+      when Opcodes::SUBTRACT
+        b, a = @stack.pop, @stack.pop
+        @stack.push(a - b)
       when Opcodes::DIVIDE
         b, a = @stack.pop, @stack.pop
         @stack.push(a / b)
@@ -192,14 +195,14 @@ class VM
 
   def debug(b)
     puts b.local_variable_get(:op)
-    print_stack b.local_variable_get(:stack)
+    print_stack
     puts
   end
 
-  def print_stack(stack)
+  def print_stack
     puts [
       '[',
-      *stack.map { |value| value.is_a?(Callable) ? "<#{value.function_name}>" : value},
+      *@stack.map { |value| value.is_a?(Callable) ? "<#{value.function_name}>" : value},
       ']',
     ].join(" ")
   end

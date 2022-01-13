@@ -158,7 +158,7 @@ class VM
         argument_count = call_frame.read_code
         callable = @stack[-argument_count - 1]
         heap_slots =
-          callable.heap_slots.map { [_1, HeapValue.new] }.to_h
+          callable.heap_slots.map { |slot| [slot, HeapValue.new] }.to_h
 
         call_frames << CallFrame.new(
           executable,

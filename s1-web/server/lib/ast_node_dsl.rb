@@ -43,7 +43,7 @@ module AstNodeDSL
           self.instance_variable_set(:"@#{primary_field_name}", args[i])
         end
 
-        env.additional_fields.each { self.instance_variable_set(:"@#{_1}", nil) }
+        env.additional_fields.each { |f| self.instance_variable_set(:"@#{f}", nil) }
       end
 
       define_method :accept do |visitor|
@@ -78,7 +78,7 @@ module AstNodeDSL
         return "no fields" if fields.empty?
         return "`#{fields.first}`" if fields.size == 1
 
-        fields[0..-2].map { "`#{_1}`"}.join(", ") + " and `#{fields[-1]}`"
+        fields[0..-2].map { |f| "`#{f}`"}.join(", ") + " and `#{fields[-1]}`"
       end
 
       def underscore(camel_cased_word)

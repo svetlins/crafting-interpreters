@@ -11,5 +11,3 @@ gem "rack-contrib"
 
 gem "rspec"
 gem "standardrb"
-gem "rufo"
-gem "pry"

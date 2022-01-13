@@ -58,7 +58,7 @@ class TreePrinter
       attributes: {
         name: variable_statement.name.lexeme,
     }.merge(scope_attributes(variable_statement)),
-      children: [variable_statement.initializer&.accept(self)].compact
+      children: [adorn(variable_statement.initializer&.accept(self), "INITIALIZER")].compact
     }
   end
 

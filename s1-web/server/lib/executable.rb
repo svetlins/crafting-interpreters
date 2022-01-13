@@ -7,14 +7,6 @@ class Executable
     @functions = {}
   end
 
-  # TODO: Temporary while I figure out the REPL
-  def reset_top_level_script
-    @functions['__script__'] = {
-      code: [],
-      constants: [],
-    }
-  end
-
   def reset_function(function)
     @functions[function] = {
       code: [],

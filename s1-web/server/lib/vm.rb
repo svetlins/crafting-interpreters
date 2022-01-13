@@ -47,7 +47,8 @@ class VM
     end
 
     def read_code
-      @executable.functions[@callable.function_name][:code][(@ip += 1) - 1]
+      @ip += 1
+      @executable.functions[@callable.function_name][:code][@ip -1]
     end
 
     def read_constant(constant_index)
@@ -71,9 +72,10 @@ class VM
     new.execute(executable, out: out)
   end
 
-  def initialize
+  def initialize(error_reporter: nil)
     @stack = []
     @globals = {}
+    @error_reporter = error_reporter
   end
 
   def execute(executable, out: $stdout)
@@ -135,7 +137,8 @@ class VM
       when Opcodes::POP
         @stack.pop
       when Opcodes::ADD
-        @stack.push(@stack.pop + @stack.pop)
+        b, a = @stack.pop, @stack.pop
+        @stack.push(a + b)
       when Opcodes::SUBTRACT
         b, a = @stack.pop, @stack.pop
         @stack.push(a - b)
@@ -143,7 +146,8 @@ class VM
         b, a = @stack.pop, @stack.pop
         @stack.push(a / b)
       when Opcodes::MULTIPLY
-        @stack.push(@stack.pop * @stack.pop)
+        b, a = @stack.pop, @stack.pop
+        @stack.push(a * b)
       when Opcodes::EQUAL
         @stack.push(equal?(@stack.pop, @stack.pop))
       when Opcodes::GREATER
@@ -183,6 +187,8 @@ class VM
 
       debug(binding) if ENV["VM_DEBUG"]
     end
+  rescue => e
+    error(e.message, call_frames)
   end
 
   def falsey?(value)
@@ -191,6 +197,12 @@ class VM
 
   def equal?(a, b)
     a == b # TODO
+  end
+
+  def error(message, call_frames)
+    if @error_reporter
+      @error_reporter.report_runtime_error(message)
+    end
   end
 
   def debug(b)

@@ -15,8 +15,7 @@ class Rlox
   def initialize(argv)
     @argv = argv
     @had_error = false
-    @interpreter = Interpreter.new(error_reporter: self)
-    @vm = VM.new
+    @vm = VM.new(error_reporter: self)
     @executable = Executable.new
   end
 
@@ -62,35 +61,25 @@ class Rlox
   end
 
   def execute(source)
-    tokens = Scanner.new(source).scan
-    ast = Parser.new(tokens).parse
+    @had_error = false
 
-    phase1 = ::StaticResolver::Phase1.new(error_reporter: nil)
-    phase2 = ::StaticResolver::Phase2.new(error_reporter: nil)
+    tokens = Scanner.new(source, error_reporter: self).scan
+    ast = Parser.new(tokens, error_reporter: self).parse
+
+    return if @had_error
+
+    phase1 = ::StaticResolver::Phase1.new(error_reporter: self)
+    phase2 = ::StaticResolver::Phase2.new(error_reporter: self)
     phase1.resolve(ast)
     phase2.resolve(ast)
 
-    @executable.reset_top_level_script
+    return if @had_error
 
     Compiler.new(ast, @executable).compile
 
+    return if @had_error
+
     @vm.execute(@executable)
-  end
-
-  def run(source)
-    scanner = Scanner.new(source, error_reporter: self)
-    tokens = scanner.scan
-    parser = Parser.new(tokens, error_reporter: self)
-    statements = parser.parse
-
-    return if @had_error
-
-    resolver = StaticResolver.new(error_reporter: self)
-    resolver.resolve(statements)
-
-    return if @had_error
-
-    @interpreter.interpret(statements)
   end
 
   def report_scanner_error(line, message)
@@ -113,8 +102,8 @@ class Rlox
     @had_error = true
   end
 
-  def report_runtime_error(token, message)
-    $stderr.puts "runtime error. line: #{token.line} - error: #{message}"
+  def report_runtime_error(message)
+    $stderr.puts "runtime error: #{message}"
     @had_error = true
   end
 end

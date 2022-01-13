@@ -24,16 +24,36 @@ end
 
 post '/analyze' do
   source = request.params["source"]
-
-  tokens = Scanner.new(source).scan
-  ast = Parser.new(tokens).parse
-
-  resolver = StaticResolver.new(error_reporter: self)
-  resolver.resolve(ast)
-
-  tree = TreePrinter.new(ast).print
-
-  bytecode = Compiler.new(ast).compile
-
-  {tokens: tokens.map(&:as_json), tree: tree, bytecode: bytecode&.as_json}.to_json
+  process(source).to_json
 end
+
+
+def process(source)
+  executable = Executable.new
+  had_error = false
+
+  error_reporter = Object.new
+
+  error_reporter.define_singleton_method 'method_missing' do |*|
+    had_error = true
+  end
+
+  tokens = Scanner.new(source, error_reporter: error_reporter).scan
+  ast = !had_error ? Parser.new(tokens, error_reporter: error_reporter).parse : nil
+
+  unless had_error
+    phase1 = ::StaticResolver::Phase1.new(error_reporter: error_reporter)
+    phase2 = ::StaticResolver::Phase2.new(error_reporter: error_reporter)
+    phase1.resolve(ast)
+    phase2.resolve(ast)
+  end
+
+  Compiler.new(ast, executable).compile unless had_error
+
+  {
+    tokens: tokens.map(&:as_json),
+    tree: TreePrinter.new(ast).print,
+    executable: executable&.as_json
+  }
+end
+

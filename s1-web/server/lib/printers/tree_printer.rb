@@ -57,7 +57,7 @@ class TreePrinter
       name: "VAR-DEF",
       attributes: {
         name: variable_statement.name.lexeme,
-      },
+    }.merge(scope_attributes(variable_statement)),
       children: [variable_statement.initializer&.accept(self)].compact
     }
   end
@@ -170,15 +170,15 @@ class TreePrinter
     end
   end
 
-  def scope_attributes(expression)
-    if expression.depth.nil?
+  def scope_attributes(node)
+    if node.allocation.global?
       {scope: "GLOBAL"}
-    elsif expression.depth.zero?
-      {scope: "LOCAL"}
-    elsif expression.depth.nonzero?
+    elsif node.allocation.local?
+      {scope: "STACK"}
+    elsif node.allocation.heap_allocated?
       {
-        scope: "CLOSURE",
-        closure: expression.location,
+        scope: "HEAP",
+        heap_slot: node.allocation.slot,
       }
     end
   end

@@ -22,7 +22,7 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState("Tokens");
   const [tokens, setTokens] = useState([]);
   const [tree, setTree] = useState(null);
-  const [bytecode, setBytecode] = useState(null);
+  const [executable, setExecutable] = useState(null);
   const [loading, setLoading] = useState(false);
 
   function submitSource(event) {
@@ -34,7 +34,7 @@ export default function App() {
         setLoading(false);
         setTokens(response.data.tokens);
         setTree(response.data.tree);
-        setBytecode(response.data.bytecode);
+        setExecutable(response.data.executable);
       }, Math.max(1500, new Date() - startedAt));
     });
     event.preventDefault();
@@ -157,7 +157,7 @@ export default function App() {
                   tokens={tokens}
                   tree={tree}
                   currentTab={currentTab}
-                  bytecode={bytecode}
+                  executable={executable}
                 />
               ) : (
                 <div className="self-center my-auto text-4xl text-gray-400 font-light italic">
@@ -178,7 +178,7 @@ export default function App() {
   );
 }
 
-function Content({ tokens, tree, bytecode, currentTab }) {
+function Content({ tokens, tree, executable, currentTab }) {
   return (
     <>
       {currentTab === "Tokens" && (
@@ -207,7 +207,7 @@ function Content({ tokens, tree, bytecode, currentTab }) {
         </div>
       )}
 
-      {currentTab === "Bytecode" && bytecode && renderOpcodes(bytecode.code)}
+      {currentTab === "Bytecode" && executable && renderOpcodes(executable)}
     </>
   );
 }
@@ -266,37 +266,64 @@ function Badge({ text, color }) {
 
 const opcodeSizes = {
   "LOAD-CONSTANT": 2,
+  "LOAD-CLOSURE": 2,
   "DEFINE-GLOBAL": 2,
   "SET-GLOBAL": 2,
   "GET-GLOBAL": 2,
   "SET-LOCAL": 2,
   "GET-LOCAL": 2,
+  "INIT-HEAP": 2,
+  "SET-HEAP": 2,
+  "GET-HEAP": 2,
   "JUMP-ON-FALSE": 3,
+  CALL: 2,
   JUMP: 3,
 };
-function renderOpcodes(code) {
+function renderOpcodes(executable) {
   let elements = [];
 
-  for (let i = 0; i < code.length; i++) {
-    const opcode = code[i];
-    const opcodeSize = opcodeSizes[opcode] || 1;
-    let text;
+  const functions = Object.keys(executable);
 
-    if (opcodeSize > 1) {
-      const args = code.slice(i + 1, i + opcodeSize);
-      text = `${i}: ${opcode} (${args.join(", ")})`;
-    } else {
-      text = `${i}: ${opcode}`;
-    }
-
-    i += opcodeSize - 1;
+  for (let fn of functions) {
+    const code = executable[fn].code;
+    const constants = executable[fn].constants;
 
     elements.push(
-      <div>
-        <Badge text={text} color="yellow" />
-      </div>
+      <h1 className="px-2 py-0.5 italic text-gray-500 text-sm">{fn}:</h1>
     );
-  }
 
+    for (let i = 0; i < code.length; i++) {
+      const opcode = code[i];
+      const opcodeSize = opcodeSizes[opcode] || 1;
+      let text;
+
+      if (
+        opcode === "LOAD-CONSTANT" ||
+        opcode === "DEFINE-GLOBAL" ||
+        opcode === "SET-GLOBAL" ||
+        opcode === "GET-GLOBAL"
+      ) {
+        const constantIndex = code[i + 1];
+        text = `${i}: ${opcode} ( $${constantIndex} = ${constants[constantIndex]})`;
+      } else if (opcode === "LOAD-CLOSURE") {
+        const constantIndex = code[i + 1];
+        const functionDescriptor = constants[constantIndex];
+        text = `${i}: ${opcode} ( fun ${functionDescriptor.name}/${functionDescriptor.arity} )`;
+      } else if (opcodeSize > 1) {
+        const args = code.slice(i + 1, i + opcodeSize);
+        text = `${i}: ${opcode} ( arg = ${args.join(", ")})`;
+      } else {
+        text = `${i}: ${opcode}`;
+      }
+
+      i += opcodeSize - 1;
+
+      elements.push(
+        <div>
+          <Badge text={text} color="yellow" />
+        </div>
+      );
+    }
+  }
   return elements;
 }

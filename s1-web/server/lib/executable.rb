@@ -29,8 +29,12 @@ class Executable
   end
 
   def add_constant(function, constant)
-    @functions[function][:constants] << constant
-    @functions[function][:constants].size - 1
+    if @functions[function][:constants].include?(constant)
+      @functions[function][:constants].index(constant)
+    else
+      @functions[function][:constants] << constant
+      @functions[function][:constants].size - 1
+    end
   end
 
   def size(function)

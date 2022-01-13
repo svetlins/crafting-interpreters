@@ -13,7 +13,9 @@ module StaticResolver
       @kind = kind
     end
 
-    def kind = @kind
+    def kind
+      @kind
+    end
 
     def slot=(slot)
       fail unless local?
@@ -25,9 +27,17 @@ module StaticResolver
       @slot || fail
     end
 
-    def global? = kind == :global
-    def local? = kind == :local
-    def heap_allocated? = kind == :heap_allocated
+    def global?
+      kind == :global
+    end
+
+    def local?
+      kind == :local
+    end
+
+    def heap_allocated?
+      kind == :heap_allocated
+    end
   end
 
   class Phase2
@@ -109,7 +119,9 @@ module StaticResolver
       while_statement.body.accept(self)
     end
 
-    def visit_class_statement = fail
+    def visit_class_statement
+      fail
+    end
 
     ### Expressions
     def visit_assign(*); end
@@ -400,8 +412,8 @@ module StaticResolver
 
     def visit_literal(literal_expression); end
 
-    def visit_this_expression(this_expression) = fail
-    def visit_super_expression(super_expression) = fail
-    def visit_class_statement(class_statement) = fail
+    def visit_this_expression(this_expression); fail; end
+    def visit_super_expression(super_expression); fail; end
+    def visit_class_statement(class_statement); fail; end
   end
 end

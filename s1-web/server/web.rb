@@ -27,6 +27,12 @@ post '/analyze' do
   process(source).to_json
 end
 
+get '/status' do
+  {
+    ruby_version: RUBY_VERSION,
+  }.to_json
+end
+
 
 def process(source)
   executable = Executable.new

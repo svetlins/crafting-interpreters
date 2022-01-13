@@ -58,7 +58,7 @@ def process(source)
 
   {
     tokens: tokens.map(&:as_json),
-    tree: TreePrinter.new(ast).print,
+    tree: ast ? TreePrinter.new(ast).print : nil,
     executable: executable&.as_json
   }
 end

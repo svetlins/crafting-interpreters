@@ -172,12 +172,15 @@ class TreePrinter
 
   def scope_attributes(node)
     if node.allocation.global?
-      {scope: "GLOBAL"}
+      {allocation: "GLOBAL"}
     elsif node.allocation.local?
-      {scope: "STACK"}
+      {
+        allocation: "STACK",
+        stack_slot: node.allocation.slot,
+      }
     elsif node.allocation.heap_allocated?
       {
-        scope: "HEAP",
+        allocation: "HEAP",
         heap_slot: node.allocation.slot,
       }
     end

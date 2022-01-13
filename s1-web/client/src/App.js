@@ -55,7 +55,6 @@ export default function App() {
                 type="button"
                 className="border-r border-gray-200 px-4 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 md:hidden"
               >
-                <span className="sr-only">Open sidebar</span>
                 <MenuAlt2Icon className="h-6 w-6" aria-hidden="true" />
               </button>
               <div className="flex-1 flex justify-between px-4 sm:px-6">
@@ -78,7 +77,7 @@ export default function App() {
 
           {/* Main content */}
           <div className="flex-1 flex items-stretch overflow-hidden">
-            <main className="overflow-y-auto resize-x w-4/12">
+            <main className="overflow-y-auto resize-x w-6/12">
               {/* Primary column */}
               <section
                 aria-labelledby="primary-heading"
@@ -304,7 +303,9 @@ function renderOpcodes(executable) {
         opcode === "GET-GLOBAL"
       ) {
         const constantIndex = code[i + 1];
-        text = `${i}: ${opcode} ( $${constantIndex} = ${constants[constantIndex]})`;
+        text = `${i}: ${opcode} ( $${constantIndex} = ${JSON.stringify(
+          constants[constantIndex]
+        )})`;
       } else if (opcode === "LOAD-CLOSURE") {
         const constantIndex = code[i + 1];
         const functionDescriptor = constants[constantIndex];

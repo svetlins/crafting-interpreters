@@ -8,18 +8,21 @@ function classNames(...classes) {
 }
 
 export const presetSources = [
+  { title: "Arithmetic", source: "print 1 + 2 * 3;" },
   {
     title: "Function",
     source: `
-    fun fn() {
-      print "Hi!";
+    fun fn(personName) {
+      print "Hi," + personName + "!";
     }
+
+    fn("Svetlin");
   `,
   },
   {
     title: "If",
     source: `
-    if (1 + 2) {
+    if (1 + 2 > 3) {
       print "Oh, yes";
       print "It's true!";
     } else {
@@ -29,42 +32,41 @@ export const presetSources = [
   `,
   },
   {
-    title: "Scope",
-    source: `var outer = 100;
+    title: "Block",
+    source: `var global = 100;
 
   {
-    var dummy = "dummy";
-    var x = 32 + 42;
-    var y = 200;
-    print x + y;
+    var block1 = "dummy";
+    var block2 = 32 + 42;
+    var block3 = 200;
+    print block2 + block3;
 
-    outer = 100;
-    x = 100;
+    block1 = 100;
   }`,
   },
-  { title: "Arithmetic", source: "print 1 + 2 * 3;" },
   {
     title: "Closure",
     source: `
-      var y = 69;
+      var global = 69;
 
       fun outer() {
-        var z = 666;
+        var closedOver = 666;
 
-          fun doStuff(a, b, c) {
-            var x = a + b + c;
-            if (x + y + z > 2) {
-              x = x + 1;
-              return x;
+          fun doStuff(firstParam, secondParam) {
+            var local = firstParam + secondParamn;
+            if (global + closedOver + local > 2) {
+              local = local + 1;
+              return local;
             } else {
-              return -1;
+              closedOver = closedOver + 1;
+              return closedOver;
             }
           }
 
-          print doStuff(1,2,3);
+          print doStuff(1,2);
         }
 
-        print "123" + "456";`,
+        print outer();`,
   },
 ];
 

@@ -3,7 +3,7 @@ module AstNodeDSL
     base.extend self
   end
 
-  class DSLEnv
+  class DSLEnvironment
     attr_reader :primary_fields, :additional_fields
 
     def initialize
@@ -26,7 +26,7 @@ module AstNodeDSL
   end
 
   def define_node(&block)
-    env = DSLEnv.new
+    env = DSLEnvironment.new
     env.instance_eval(&block)
 
     Class.new do
@@ -67,7 +67,6 @@ module AstNodeDSL
 
           ")",
         ].join
-        # "#{self.class.name}(#{env.required_fields.map { |f| f + "-" + public_send(f) }.join(",") })")
       end
 
       alias_method :to_s, :inspect
@@ -91,15 +90,3 @@ module AstNodeDSL
     end
   end
 end
-
-# While = AstNode.define_node do
-#   condition
-#   body
-# end
-
-# VarStatement = AstNode.define_node do
-#   name
-#   initializer
-
-#   additional :allocation
-# end

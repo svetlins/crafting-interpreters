@@ -41,10 +41,9 @@ RSpec.describe Compiler do
     expect(executable.as_json).to eq(
       { "__script__" => {
         :code => [
-          "LOAD-CONSTANT",
-          0, "DEFINE-GLOBAL", 1, "LOAD-CONSTANT", 2, "DEFINE-GLOBAL", 3, "GET-GLOBAL", 4, "PRINT", "GET-GLOBAL", 5, "PRINT", "NIL", "RETURN",
+          "LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "LOAD-CONSTANT", 2, "DEFINE-GLOBAL", 3, "GET-GLOBAL", 1, "PRINT", "GET-GLOBAL", 3, "PRINT", "NIL", "RETURN",
         ],
-        :constants => [1.0, "x", 2.0, "y", "x", "y"],
+        :constants => [1.0, "x", 2.0, "y"],
       } }
     )
   end
@@ -58,9 +57,9 @@ RSpec.describe Compiler do
     expect(executable.as_json).to eq(
       { "__script__" => {
         :code => [
-          "LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "LOAD-CONSTANT", 2, "SET-GLOBAL", 3, "POP", "NIL", "RETURN",
+          "LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "LOAD-CONSTANT", 2, "SET-GLOBAL", 1, "POP", "NIL", "RETURN",
         ],
-        :constants => [1.0, "x", 2.0, "x"],
+        :constants => [1.0, "x", 2.0],
       } }
     )
   end
@@ -94,7 +93,7 @@ RSpec.describe Compiler do
 
     expect(executable.as_json).to eq(
       {
-        "__global__fn__" => { :code => ["LOAD-CONSTANT", 0, "LOAD-CONSTANT", 1, "LOAD-CONSTANT", 2, "LOAD-CONSTANT", 3, "PRINT", "LOAD-CONSTANT", 4, "SET-LOCAL", 1, "POP", "NIL", "RETURN"], :constants => [1.0, 2.0, 3.0, 1.0, 4.0] },
+        "__global__fn__" => { :code => ["LOAD-CONSTANT", 0, "LOAD-CONSTANT", 1, "LOAD-CONSTANT", 2, "LOAD-CONSTANT", 0, "PRINT", "LOAD-CONSTANT", 3, "SET-LOCAL", 1, "POP", "NIL", "RETURN"], :constants => [1.0, 2.0, 3.0, 4.0] },
         "__script__" => { :code => ["LOAD-CLOSURE", 0, "DEFINE-GLOBAL", 1, "NIL", "RETURN"], :constants => [{ :type => :function, :arity => 0, :name => "__global__fn__" }, "fn"] },
       }
     )

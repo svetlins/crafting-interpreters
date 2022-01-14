@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MenuAlt2Icon, DotsHorizontalIcon } from "@heroicons/react/outline";
 import { CubeIcon, DotsVerticalIcon, CogIcon } from "@heroicons/react/solid";
 import axios from "axios";
@@ -7,11 +7,13 @@ import classNames from "classnames";
 
 import { pretty } from "./utils";
 import { PresetDropdown, presetSources } from "./components/PresetDropdown";
+import { execute } from "./VM";
 
 const tabs = [
   { name: "Tokens", icon: CubeIcon },
   { name: "AST", icon: DotsVerticalIcon },
   { name: "Bytecode", icon: CogIcon },
+  { name: "Execute", icon: CogIcon },
 ];
 
 const analyzeUrl = process.env.REACT_APP_ANALYZE_ENDPOINT_URL || "/api/analyze";
@@ -77,7 +79,7 @@ export default function App() {
 
           {/* Main content */}
           <div className="flex-1 flex items-stretch overflow-hidden">
-            <main className="overflow-y-auto resize-x w-6/12">
+            <main className="overflow-y-auto resize-x w-4/12">
               {/* Primary column */}
               <section
                 aria-labelledby="primary-heading"
@@ -207,8 +209,19 @@ function Content({ tokens, tree, executable, currentTab }) {
       )}
 
       {currentTab === "Bytecode" && executable && renderOpcodes(executable)}
+      {currentTab === "Execute" && executable && (
+        <ExecutionResult executable={executable} />
+      )}
     </>
   );
+}
+
+function ExecutionResult({ executable }) {
+  useEffect(() => {
+    execute(executable);
+  }, [executable]);
+
+  return <></>;
 }
 
 function TokenView({ tokenData }) {

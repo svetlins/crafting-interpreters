@@ -37,7 +37,7 @@ class VM
   class CallFrame
     attr_reader :callable, :heap_slots, :stack_top
 
-    def initialize(executable, stack, callable, heap_slots, stack_top)
+    def initialize(executable, stack, callable, heap_slots = [], stack_top = 0)
       @executable = executable
       @stack = stack
       @callable = callable
@@ -80,7 +80,7 @@ class VM
 
   def execute(executable, out: $stdout)
     call_frames = [
-      CallFrame.new(executable, @stack, Callable.top_level_script, [], 0)
+      CallFrame.new(executable, @stack, Callable.top_level_script)
     ]
 
     loop do

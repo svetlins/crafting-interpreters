@@ -21,3 +21,9 @@ export function pretty(source) {
 
   return lines.join("\n");
 }
+
+export function shortLittleEndianToInteger(byte1, byte2) {
+  let value = (byte2 << 8) + byte1;
+  if (value > 2 ** 15) value = -1 * (2 ** 16 - value);
+  return value;
+}

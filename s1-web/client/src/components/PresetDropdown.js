@@ -73,10 +73,10 @@ export const presetSources = [
     source: `
       fun fib(n) {
         if (n < 2) return 1;
-        return fib(n - 1) * fib(n - 2);
+        return fib(n - 1) + fib(n - 2);
       }
 
-      fib(5);
+      print fib(5);
     `,
   },
 ];

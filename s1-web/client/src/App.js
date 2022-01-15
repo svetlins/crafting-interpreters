@@ -10,7 +10,7 @@ import axios from "axios";
 import Tree from "react-d3-tree";
 import classNames from "classnames";
 
-import { pretty } from "./utils";
+import { pretty, shortLittleEndianToInteger } from "./utils";
 import { PresetDropdown, presetSources } from "./components/PresetDropdown";
 import { createVM } from "./VM";
 
@@ -294,7 +294,10 @@ function InteractiveExecution({ executable }) {
             </div>
             {Object.entries(vmState.globals || {}).map(
               ([globalName, globalValue]) => (
-                <Badge text={`${globalName} = ${globalValue}`} color="purple" />
+                <Badge
+                  text={`${globalName} = ${JSON.stringify(globalValue)}`}
+                  color="purple"
+                />
               )
             )}
           </div>
@@ -305,7 +308,7 @@ function InteractiveExecution({ executable }) {
                 Stack
               </h3>
             </div>
-            <div className="flex flex-col m-2">
+            <div className="flex flex-col">
               {(vmState.stack || []).map((value, index) => (
                 <Badge
                   text={JSON.stringify(value)}
@@ -446,6 +449,9 @@ function ExecutableFunction({ executable, functionName, highlight }) {
         const constantIndex = code[i + 1];
         const functionDescriptor = constants[constantIndex];
         text = `${i}: ${opcode} ( fun ${functionDescriptor.name}/${functionDescriptor.arity} )`;
+      } else if (opcode === "JUMP-ON-FALSE" || opcode === "JUMP") {
+        const jumpOffset = shortLittleEndianToInteger(code[i + 1], code[i + 2]);
+        text = `${i}: ${opcode} ( target = ${jumpOffset + i + opcodeSize})`;
       } else if (opcodeSize > 1) {
         const args = code.slice(i + 1, i + opcodeSize);
         text = `${i}: ${opcode} ( arg = ${args.join(", ")})`;

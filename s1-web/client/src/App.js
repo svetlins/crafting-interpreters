@@ -210,13 +210,13 @@ function Content({ tokens, tree, executable, currentTab }) {
         <BytecodeTab executable={executable} />
       )}
       {currentTab === "Execute" && executable && (
-        <ExecutionResult executable={executable} />
+        <InteractiveExecution executable={executable} />
       )}
     </>
   );
 }
 
-function ExecutionResult({ executable }) {
+function InteractiveExecution({ executable }) {
   const [vmState, setVMState] = useState();
 
   const vm = useMemo(() => {
@@ -232,27 +232,27 @@ function ExecutionResult({ executable }) {
   }
 
   return (
-    <div className="m-2">
+    <div className="m-2 min-w-[700px] overflow-scroll">
       <div className="flex flex-row">
         <button
-          className="btn m-2"
+          className="btn mr-2 mb-2"
           disabled={vmState.terminated}
           type="button"
           onClick={() => {
-            setVMState(vm.tick());
+            setVMState(vm.step());
           }}
         >
-          Tick
+          Step
         </button>
         <button
-          className="btn m-2"
+          className="btn mr-2 mb-2"
           disabled={vmState.terminated}
           type="button"
           onClick={() => {
             let terminated = false;
 
             while (!terminated) {
-              const intermediateVMState = vm.tick();
+              const intermediateVMState = vm.step();
               terminated = intermediateVMState.terminated;
               if (terminated) setVMState(intermediateVMState);
             }
@@ -261,45 +261,68 @@ function ExecutionResult({ executable }) {
           Run to completion
         </button>
         <button
-          className="btn m-2"
+          className="btn mr-2 mb-2"
           type="button"
           onClick={() => setVMState(vm.reset())}
         >
           Reset
         </button>
       </div>
-      <ExecutableFunction
-        executable={executable}
-        functionName={vmState.callFrame.functionName}
-        highlight={vmState.callFrame.ip()}
-      />
-      <div className="flex flex-row m-2">
-        {(vmState.stack || []).map((value, index) => (
-          <div
-            className={classNames("border-2 border-collapse", {
-              "border-red-500": index === vmState.callFrame?.stackTop,
-            })}
-          >
-            <Badge text={JSON.stringify(value)} color="yellow" />
+      <div className="flex flex-col">
+        <div className="flex flex-row items-start">
+          <div className="flex-1">
+            <div className="pb-5 border-b border-gray-200">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                Call Stack
+              </h3>
+            </div>
+            {vmState.callFrames.map((callFrame) => (
+              <div>{callFrame.functionName}</div>
+            ))}
+            <ExecutableFunction
+              executable={executable}
+              functionName={vmState.callFrame.functionName}
+              highlight={vmState.callFrame.ip()}
+            />
           </div>
-        ))}
+
+          <div className="flex-1">
+            <div className="pb-5 border-b border-gray-200">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                Globals
+              </h3>
+            </div>
+            {Object.entries(vmState.globals || {}).map(
+              ([globalName, globalValue]) => (
+                <Badge text={`${globalName} = ${globalValue}`} color="purple" />
+              )
+            )}
+          </div>
+
+          <div className="flex-1">
+            <div className="pb-5 border-b border-gray-200">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                Stack
+              </h3>
+            </div>
+            <div className="flex flex-col m-2">
+              {(vmState.stack || []).map((value, index) => (
+                <Badge
+                  text={JSON.stringify(value)}
+                  color={
+                    index === vmState.callFrame?.stackTop ? "green" : "yellow"
+                  }
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+        <code className="block bg-gray-100 font-mono m-2 p-2">
+          {vmState.output.length > 0
+            ? vmState.output.map((line) => <div>{line}</div>)
+            : "no output"}
+        </code>
       </div>
-      <code className="block bg-gray-100 font-mono m-2 p-2">
-        {vmState.output || "no output"}
-      </code>
-      <table className="font-mono">
-        <tbody>
-          {Object.entries(vmState.globals || {}).map(
-            ([globalName, globalValue]) => (
-              <tr>
-                <td className="px-2">{globalName}</td>
-                <td className="px-2">{globalValue}</td>
-              </tr>
-            )
-          )}
-        </tbody>
-      </table>
-      callFrames: {JSON.stringify(vmState.callFrames)}
     </div>
   );
 }

@@ -57,7 +57,7 @@ export function createVM(executable) {
   let callFrames;
 
   function reset() {
-    output = "";
+    output = [];
     stack = [];
     globals = {};
 
@@ -79,7 +79,7 @@ export function createVM(executable) {
 
   return {
     reset,
-    tick() {
+    step() {
       callFrame = callFrames[callFrames.length - 1];
 
       const op = callFrame?.readCode();
@@ -102,7 +102,7 @@ export function createVM(executable) {
             stack.push(stack.pop() * stack.pop());
             break;
           case "PRINT":
-            output = output + stack.pop().toString() + "\n";
+            output.push(stack.pop().toString());
             break;
           case "NIL":
             stack.push(null);

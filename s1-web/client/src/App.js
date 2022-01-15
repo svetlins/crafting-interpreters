@@ -206,7 +206,9 @@ function Content({ tokens, tree, executable, currentTab }) {
         </div>
       )}
 
-      {currentTab === "Bytecode" && executable && renderOpcodes(executable)}
+      {currentTab === "Bytecode" && executable && (
+        <BytecodeTab executable={executable} />
+      )}
       {currentTab === "Execute" && executable && (
         <ExecutionResult executable={executable} />
       )}
@@ -252,9 +254,8 @@ function ExecutionResult({ executable }) {
             while (!terminated) {
               const intermediateVMState = vm.tick();
               terminated = intermediateVMState.terminated;
+              if (terminated) setVMState(intermediateVMState);
             }
-
-            setVMState(vm.tick());
           }}
         >
           Run to completion
@@ -267,20 +268,11 @@ function ExecutionResult({ executable }) {
           Reset
         </button>
       </div>
-      <Badge text={vmState.nextOp || "N/A"} color="yellow" />
-      <table className="m-2 border-collapse">
-        <tbody>
-          {(vmState.callFrame?.code || []).map((value, index) => (
-            <tr
-              className={classNames("border-2 border-gray-100", {
-                "bg-red-200": index === vmState.callFrame.ip(),
-              })}
-            >
-              <Badge text={value} color="yellow" />
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ExecutableFunction
+        executable={executable}
+        functionName={vmState.callFrame.functionName}
+        highlight={vmState.callFrame.ip()}
+      />
       <div className="flex flex-row m-2">
         {(vmState.stack || []).map((value, index) => (
           <div
@@ -348,6 +340,16 @@ function Badge({ text, color }) {
     colorClasses = [`bg-yellow-100`, `text-yellow-800`];
   } else if (color === "green") {
     colorClasses = [`bg-green-100`, `text-green-800`];
+  } else if (color === "red") {
+    colorClasses = [`bg-red-100`, `text-red-800`];
+  } else if (color === "blue") {
+    colorClasses = [`bg-blue-100`, `text-blue-800`];
+  } else if (color === "indigo") {
+    colorClasses = [`bg-indigo-100`, `text-indigo-800`];
+  } else if (color === "purple") {
+    colorClasses = [`bg-purple-100`, `text-purple-800`];
+  } else if (color === "pink") {
+    colorClasses = [`bg-pink-100`, `text-pink-800`];
   } else {
     throw "uknown color";
   }
@@ -379,20 +381,30 @@ const opcodeSizes = {
   CALL: 2,
   JUMP: 3,
 };
-function renderOpcodes(executable) {
-  let elements = [];
 
+function BytecodeTab({ executable }) {
   const functions = Object.keys(executable);
 
-  for (let fn of functions) {
-    const code = executable[fn].code;
-    const constants = executable[fn].constants;
+  return (
+    <>
+      {functions.map((fn) => (
+        <div>
+          <h1 className="px-2 py-0.5 italic text-gray-500 text-sm">{fn}:</h1>
+          <ExecutableFunction executable={executable} functionName={fn} />
+        </div>
+      ))}
+    </>
+  );
+}
 
-    elements.push(
-      <h1 className="px-2 py-0.5 italic text-gray-500 text-sm">{fn}:</h1>
-    );
+function ExecutableFunction({ executable, functionName, highlight }) {
+  const code = executable[functionName].code;
+  const constants = executable[functionName].constants;
 
+  const ops = useMemo(() => {
+    const ops = [];
     for (let i = 0; i < code.length; i++) {
+      const opStart = i;
       const opcode = code[i];
       const opcodeSize = opcodeSizes[opcode] || 1;
       let text;
@@ -420,12 +432,26 @@ function renderOpcodes(executable) {
 
       i += opcodeSize - 1;
 
-      elements.push(
-        <div>
-          <Badge text={text} color="yellow" />
-        </div>
-      );
+      ops.push([text, opStart]);
     }
-  }
-  return elements;
+
+    return ops;
+  }, [code, constants]);
+
+  return (
+    <table>
+      <tbody>
+        {ops.map(([op, offset]) => (
+          <tr>
+            <td>
+              <Badge
+                text={op}
+                color={offset === highlight ? "red" : "yellow"}
+              />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
 }

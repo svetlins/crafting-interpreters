@@ -17,7 +17,7 @@ function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
 
   return {
     stackTop,
-    code: executable[callable.functionName].code,
+    functionName: callable.functionName,
     ip() {
       return ip;
     },
@@ -59,7 +59,7 @@ export function createVM(executable) {
   function reset() {
     output = "";
     stack = [];
-    globals = { hiks: 42, igrek: 69 };
+    globals = {};
 
     callFrame = createCallFrame(executable, stack, TOP_LEVEL_SCRIPT, [], 0);
     callFrames = [callFrame];
@@ -111,7 +111,7 @@ export function createVM(executable) {
             const result = stack.pop();
             callFrames.pop();
             stack = stack.slice(0, callFrame.stackTop - 1);
-            stack.push(result);
+            if (callFrames.length > 0) stack.push(result);
             break;
           default:
             break;

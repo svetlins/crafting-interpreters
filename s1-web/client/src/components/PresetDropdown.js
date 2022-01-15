@@ -53,7 +53,7 @@ export const presetSources = [
         var closedOver = 666;
 
           fun doStuff(firstParam, secondParam) {
-            var local = firstParam + secondParamn;
+            var local = firstParam + secondParam;
             if (global + closedOver + local > 2) {
               local = local + 1;
               return local;

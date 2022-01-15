@@ -17,6 +17,7 @@ function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
 
   return {
     stackTop,
+    code: executable[callable.functionName].code,
     ip() {
       return ip;
     },
@@ -58,7 +59,7 @@ export function createVM(executable) {
   function reset() {
     output = "";
     stack = [];
-    globals = {};
+    globals = { hiks: 42, igrek: 69 };
 
     callFrame = createCallFrame(executable, stack, TOP_LEVEL_SCRIPT, [], 0);
     callFrames = [callFrame];
@@ -68,6 +69,7 @@ export function createVM(executable) {
       stack,
       globals,
       callFrames,
+      callFrame,
       nextOp: callFrame?.peekCode(),
       terminated: callFrames.length === 0,
     };
@@ -84,6 +86,12 @@ export function createVM(executable) {
 
       if (callFrame && op) {
         switch (op) {
+          case "DEFINE-GLOBAL":
+            globals[callFrame.readConstant(callFrame.readCode())] = stack.pop();
+            break;
+          case "GET-GLOBAL":
+            stack.push(globals[callFrame.readConstant(callFrame.readCode())]);
+            break;
           case "LOAD-CONSTANT":
             stack.push(callFrame.readConstant(callFrame.readCode()));
             break;
@@ -115,6 +123,7 @@ export function createVM(executable) {
         stack,
         globals,
         callFrames,
+        callFrame,
         nextOp: callFrame?.peekCode(),
         terminated: callFrames.length === 0,
       };

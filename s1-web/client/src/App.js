@@ -1,19 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { MenuAlt2Icon, DotsHorizontalIcon } from "@heroicons/react/outline";
-import { CubeIcon, DotsVerticalIcon, CogIcon } from "@heroicons/react/solid";
+import {
+  CubeIcon,
+  DotsVerticalIcon,
+  CogIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/solid";
 import axios from "axios";
 import Tree from "react-d3-tree";
 import classNames from "classnames";
 
 import { pretty } from "./utils";
 import { PresetDropdown, presetSources } from "./components/PresetDropdown";
-import { createVM, execute } from "./VM";
+import { createVM } from "./VM";
 
 const tabs = [
   { name: "Tokens", icon: CubeIcon },
   { name: "AST", icon: DotsVerticalIcon },
   { name: "Bytecode", icon: CogIcon },
-  { name: "Execute", icon: CogIcon },
+  { name: "Execute", icon: ChevronRightIcon },
 ];
 
 const analyzeUrl = process.env.REACT_APP_ANALYZE_ENDPOINT_URL || "/api/analyze";
@@ -220,14 +225,16 @@ function ExecutionResult({ executable }) {
     setVMState(vm.reset());
   }, [vm, executable]);
 
-  console.log(vmState);
+  if (vmState === undefined) {
+    return null;
+  }
 
   return (
     <div className="m-2">
       <div className="flex flex-row">
         <button
           className="btn m-2"
-          disabled={vmState?.terminated}
+          disabled={vmState.terminated}
           type="button"
           onClick={() => {
             setVMState(vm.tick());
@@ -237,7 +244,7 @@ function ExecutionResult({ executable }) {
         </button>
         <button
           className="btn m-2"
-          disabled={vmState?.terminated}
+          disabled={vmState.terminated}
           type="button"
           onClick={() => {
             let terminated = false;
@@ -260,17 +267,47 @@ function ExecutionResult({ executable }) {
           Reset
         </button>
       </div>
-      <Badge text={vmState.nextOp || "NONE"} color="yellow" />
-      <div className="flex flex-row">
-        {(vmState?.stack || []).map((value) => (
-          <div className="border-2 border-collapse">
+      <Badge text={vmState.nextOp || "N/A"} color="yellow" />
+      <table className="m-2 border-collapse">
+        <tbody>
+          {(vmState.callFrame?.code || []).map((value, index) => (
+            <tr
+              className={classNames("border-2 border-gray-100", {
+                "bg-red-200": index === vmState.callFrame.ip(),
+              })}
+            >
+              <Badge text={value} color="yellow" />
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="flex flex-row m-2">
+        {(vmState.stack || []).map((value, index) => (
+          <div
+            className={classNames("border-2 border-collapse", {
+              "border-red-500": index === vmState.callFrame?.stackTop,
+            })}
+          >
             <Badge text={JSON.stringify(value)} color="yellow" />
           </div>
         ))}
       </div>
-      <code className="block bg-gray-100 font-mono">{vmState?.output}</code>
-      globals: {JSON.stringify(vmState?.globals)}
-      callFrames: {JSON.stringify(vmState?.callFrames)}
+      <code className="block bg-gray-100 font-mono m-2 p-2">
+        {vmState.output || "no output"}
+      </code>
+      <table className="font-mono">
+        <tbody>
+          {Object.entries(vmState.globals || {}).map(
+            ([globalName, globalValue]) => (
+              <tr>
+                <td className="px-2">{globalName}</td>
+                <td className="px-2">{globalValue}</td>
+              </tr>
+            )
+          )}
+        </tbody>
+      </table>
+      callFrames: {JSON.stringify(vmState.callFrames)}
     </div>
   );
 }

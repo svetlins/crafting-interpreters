@@ -16,9 +16,17 @@ function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
   let ip = 0;
 
   return {
+    stackTop,
+    ip() {
+      return ip;
+    },
     readCode() {
       ip += 1;
       return executable[callable.functionName].code[ip - 1];
+    },
+
+    peekCode() {
+      return executable[callable.functionName].code[ip];
     },
 
     readConstant(constantIndex) {
@@ -39,45 +47,77 @@ function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
   };
 }
 
-export function execute(executable) {
-  let stack = [];
-  const globals = {};
+export function createVM(executable) {
+  let output;
+  let stack;
+  let globals;
 
-  const callFrames = [createCallFrame(executable, stack, TOP_LEVEL_SCRIPT)];
+  let callFrame;
+  let callFrames;
 
-  do {
-    const callFrame = callFrames[callFrames.length - 1];
+  function reset() {
+    output = "";
+    stack = [];
+    globals = {};
 
-    const op = callFrame.readCode();
+    callFrame = createCallFrame(executable, stack, TOP_LEVEL_SCRIPT, [], 0);
+    callFrames = [callFrame];
 
-    switch (op) {
-      case "LOAD-CONSTANT":
-        stack.push(callFrame.readConstant(callFrame.readCode()));
-        break;
-      case "ADD":
-        stack.push(stack.pop() + stack.pop());
-        break;
-      case "MULTIPLY":
-        const b = stack.pop();
-        const a = stack.pop();
-        stack.push(a * b);
-        break;
-      case "PRINT":
-        console.log("PRINTED:", stack.pop());
-        break;
-      case "NIL":
-        stack.push(null);
-        break;
-      case "RETURN":
-        const result = stack.pop();
-        callFrames.pop();
-        stack = stack.slice(0, callFrame.stackTop - 1);
-        stack.push(result);
-        break;
-      default:
-        break;
-    }
-  } while (callFrames.length > 0);
+    return {
+      output,
+      stack,
+      globals,
+      callFrames,
+      nextOp: callFrame?.peekCode(),
+      terminated: callFrames.length === 0,
+    };
+  }
 
-  console.log("STACK AT END: ", stack);
+  reset();
+
+  return {
+    reset,
+    tick() {
+      callFrame = callFrames[callFrames.length - 1];
+
+      const op = callFrame?.readCode();
+
+      if (callFrame && op) {
+        switch (op) {
+          case "LOAD-CONSTANT":
+            stack.push(callFrame.readConstant(callFrame.readCode()));
+            break;
+          case "ADD":
+            stack.push(stack.pop() + stack.pop());
+            break;
+          case "MULTIPLY":
+            stack.push(stack.pop() * stack.pop());
+            break;
+          case "PRINT":
+            output = output + stack.pop().toString() + "\n";
+            break;
+          case "NIL":
+            stack.push(null);
+            break;
+          case "RETURN":
+            const result = stack.pop();
+            callFrames.pop();
+            stack = stack.slice(0, callFrame.stackTop - 1);
+            stack.push(result);
+            break;
+          default:
+            break;
+        }
+      }
+
+      return {
+        output,
+        stack,
+        globals,
+        callFrames,
+        nextOp: callFrame?.peekCode(),
+        terminated: callFrames.length === 0,
+      };
+    },
+  };
 }

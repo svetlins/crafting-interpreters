@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MenuAlt2Icon, DotsHorizontalIcon } from "@heroicons/react/outline";
 import { CubeIcon, DotsVerticalIcon, CogIcon } from "@heroicons/react/solid";
 import axios from "axios";
@@ -7,7 +7,7 @@ import classNames from "classnames";
 
 import { pretty } from "./utils";
 import { PresetDropdown, presetSources } from "./components/PresetDropdown";
-import { execute } from "./VM";
+import { createVM, execute } from "./VM";
 
 const tabs = [
   { name: "Tokens", icon: CubeIcon },
@@ -83,10 +83,10 @@ export default function App() {
               {/* Primary column */}
               <section
                 aria-labelledby="primary-heading"
-                className="min-w-0 flex-1 h-full flex flex-col lg:order-last"
+                className="relative min-w-0 flex-1 h-full flex flex-col lg:order-last"
               >
                 {/* Content */}
-                <div className="h-full m-3 relative">
+                <div className="h-full m-3">
                   <form className="h-full" onSubmit={submitSource}>
                     <div className="mb-2">
                       <PresetDropdown
@@ -106,16 +106,9 @@ export default function App() {
                     />
                     <button
                       type="submit"
-                      className="absolute bottom-4 right-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      className="absolute bottom-4 right-6 btn"
                     >
                       Analyze
-                    </button>
-                    <button
-                      type="button"
-                      className="absolute bottom-4 left-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                      onClick={prettifySource}
-                    >
-                      Pretify
                     </button>
                   </form>
                 </div>
@@ -217,11 +210,69 @@ function Content({ tokens, tree, executable, currentTab }) {
 }
 
 function ExecutionResult({ executable }) {
-  useEffect(() => {
-    execute(executable);
+  const [vmState, setVMState] = useState();
+
+  const vm = useMemo(() => {
+    return createVM(executable);
   }, [executable]);
 
-  return <></>;
+  useEffect(() => {
+    setVMState(vm.reset());
+  }, [vm, executable]);
+
+  console.log(vmState);
+
+  return (
+    <div className="m-2">
+      <div className="flex flex-row">
+        <button
+          className="btn m-2"
+          disabled={vmState?.terminated}
+          type="button"
+          onClick={() => {
+            setVMState(vm.tick());
+          }}
+        >
+          Tick
+        </button>
+        <button
+          className="btn m-2"
+          disabled={vmState?.terminated}
+          type="button"
+          onClick={() => {
+            let terminated = false;
+
+            while (!terminated) {
+              const intermediateVMState = vm.tick();
+              terminated = intermediateVMState.terminated;
+            }
+
+            setVMState(vm.tick());
+          }}
+        >
+          Run to completion
+        </button>
+        <button
+          className="btn m-2"
+          type="button"
+          onClick={() => setVMState(vm.reset())}
+        >
+          Reset
+        </button>
+      </div>
+      <Badge text={vmState.nextOp || "NONE"} color="yellow" />
+      <div className="flex flex-row">
+        {(vmState?.stack || []).map((value) => (
+          <div className="border-2 border-collapse">
+            <Badge text={JSON.stringify(value)} color="yellow" />
+          </div>
+        ))}
+      </div>
+      <code className="block bg-gray-100 font-mono">{vmState?.output}</code>
+      globals: {JSON.stringify(vmState?.globals)}
+      callFrames: {JSON.stringify(vmState?.callFrames)}
+    </div>
+  );
 }
 
 function TokenView({ tokenData }) {

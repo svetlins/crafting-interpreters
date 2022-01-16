@@ -2,7 +2,6 @@
 
 require_relative "a_lox/version"
 require_relative "a_lox/printers/pretty_printer"
-require_relative "a_lox/printers/tree_printer"
 require_relative "a_lox/scanner"
 require_relative "a_lox/ast_node_dsl"
 require_relative "a_lox/expression"

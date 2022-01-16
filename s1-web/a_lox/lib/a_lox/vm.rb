@@ -1,4 +1,4 @@
-require 'ostruct'
+require "ostruct"
 
 module ALox
   class VM
@@ -9,7 +9,7 @@ module ALox
     class Callable
       def self.top_level_script
         OpenStruct.new(
-          function_name: '__script__',
+          function_name: "__script__",
           heap_slots: [],
           heap_view: {}
         )
@@ -28,9 +28,7 @@ module ALox
         @function_descriptor.heap_slots
       end
 
-      def heap_view
-        @heap_view
-      end
+      attr_reader :heap_view
     end
 
     class CallFrame
@@ -47,7 +45,7 @@ module ALox
 
       def read_code
         @ip += 1
-        @executable.functions[@callable.function_name][:code][@ip -1]
+        @executable.functions[@callable.function_name][:code][@ip - 1]
       end
 
       def read_constant(constant_index)
@@ -63,12 +61,12 @@ module ALox
       end
 
       def jump(offset_byte_1, ofsset_byte_2)
-        @ip += [offset_byte_1, ofsset_byte_2].map(&:chr).join.unpack('s').first
+        @ip += [offset_byte_1, ofsset_byte_2].map(&:chr).join.unpack1("s")
       end
     end
 
-    def self.execute(executable, out: $stdout)
-      new.execute(executable, out: out)
+    def self.execute(executable, out: $stdout, debug: false)
+      new.execute(executable, out: out, debug: debug)
     end
 
     def initialize(error_reporter: nil)
@@ -77,7 +75,7 @@ module ALox
       @error_reporter = error_reporter
     end
 
-    def execute(executable, out: $stdout)
+    def execute(executable, out: $stdout, debug: false)
       call_frames = [
         CallFrame.new(executable, @stack, Callable.top_level_script)
       ]
@@ -150,9 +148,11 @@ module ALox
         when Opcodes::EQUAL
           @stack.push(equal?(@stack.pop, @stack.pop))
         when Opcodes::GREATER
-          @stack.push(@stack.pop < @stack.pop)
+          b, a = @stack.pop, @stack.pop
+          @stack.push(a > b)
         when Opcodes::LESSER
-          @stack.push(@stack.pop > @stack.pop)
+          b, a = @stack.pop, @stack.pop
+          @stack.push(a < b)
         when Opcodes::CALL
           argument_count = call_frame.read_code
           callable = @stack[-argument_count - 1]
@@ -184,7 +184,7 @@ module ALox
           fail op.inspect
         end
 
-        debug(binding) if ENV["VM_DEBUG"]
+        print_debug_info(binding) if debug
       end
     rescue => e
       error(e.message, call_frames)
@@ -199,12 +199,10 @@ module ALox
     end
 
     def error(message, call_frames)
-      if @error_reporter
-        @error_reporter.report_runtime_error(message)
-      end
+      @error_reporter&.report_runtime_error(message)
     end
 
-    def debug(b)
+    def print_debug_info(b)
       puts b.local_variable_get(:op)
       print_stack
       puts
@@ -212,9 +210,9 @@ module ALox
 
     def print_stack
       puts [
-        '[',
-        *@stack.map { |value| value.is_a?(Callable) ? "<#{value.function_name}>" : value},
-        ']',
+        "[",
+        *@stack.map { |value| value.is_a?(Callable) ? "<#{value.function_name}>" : value },
+        "]"
       ].join(" ")
     end
   end

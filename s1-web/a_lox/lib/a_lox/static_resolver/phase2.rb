@@ -2,7 +2,7 @@ module ALox
   module StaticResolver
     class Phase2
       def initialize(error_reporter: nil)
-        @function_scopes = ['global']
+        @function_scopes = ["global"]
         @stack_frame = [0]
         @error_reporter = error_reporter
       end
@@ -34,7 +34,7 @@ module ALox
 
         @function_scopes << function_statement.name.lexeme
 
-        function_statement.full_name = "__" + @function_scopes.join('__') + "__"
+        function_statement.full_name = "__" + @function_scopes.join("__") + "__"
 
         previous_stack_frame = @stack_frame
         @stack_frame = [0]
@@ -53,7 +53,7 @@ module ALox
       end
 
       def visit_print_statement(print_statement)
-        print_statement.expression.accept(self);
+        print_statement.expression.accept(self)
       end
 
       def visit_var_statement(var_statement)
@@ -84,10 +84,17 @@ module ALox
       end
 
       ### Expressions
-      def visit_assign(*); end
-      def visit_variable(*); end
-      def visit_super_expression; end
-      def visit_this_expression; end
+      def visit_assign(*)
+      end
+
+      def visit_variable(*)
+      end
+
+      def visit_super_expression
+      end
+
+      def visit_this_expression
+      end
 
       def visit_binary(binary_expression)
         binary_expression.left.accept(self)
@@ -98,8 +105,11 @@ module ALox
         grouping_expression.expression.accept(self)
       end
 
-      def visit_literal(*); end
-      def visit_logical; end
+      def visit_literal(*)
+      end
+
+      def visit_logical
+      end
 
       def visit_unary(unary_expression)
         unary_expression.right.accept(self)
@@ -110,8 +120,11 @@ module ALox
         call_expression.arguments.each { |argument| argument.accept(self) }
       end
 
-      def visit_get_expression; end
-      def visit_set_expression; end
+      def visit_get_expression
+      end
+
+      def visit_set_expression
+      end
     end
   end
 end

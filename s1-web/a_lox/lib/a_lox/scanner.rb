@@ -60,17 +60,17 @@ module ALox
       "and" => AND,
       "class" => CLASS,
       "else" => ELSE,
-      "false" => FALSE,
+      "false" => false,
       "for" => FOR,
       "fun" => FUN,
       "if" => IF,
-      "nil" => NIL,
+      "nil" => nil,
       "or" => OR,
-      "print" =>  PRINT,
+      "print" => PRINT,
       "return" => RETURN,
-      "super" =>  SUPER,
+      "super" => SUPER,
       "this" => THIS,
-      "true" => TRUE,
+      "true" => true,
       "var" => VAR,
       "while" => WHILE
     }
@@ -87,7 +87,7 @@ module ALox
     end
 
     def scan
-      while (has_more?)
+      while has_more?
         @start = @current
         scan_token
       end
@@ -96,43 +96,46 @@ module ALox
 
       add_token(EOF)
 
-      return @tokens
+      @tokens
     end
 
     def scan_token
       current_char = advance
 
       case current_char
-      when '(' then add_token(LEFT_PAREN)
-      when ')' then add_token(RIGHT_PAREN)
-      when '{' then add_token(LEFT_BRACE)
-      when '}' then add_token(RIGHT_BRACE)
-      when ',' then add_token(COMMA)
-      when '.' then add_token(DOT)
-      when '-' then add_token(MINUS)
-      when '+' then add_token(PLUS)
-      when ';' then add_token(SEMICOLON)
-      when '*' then add_token(STAR)
-      when '!' then add_token(match?('=') ? BANG_EQUAL : BANG)
-      when '=' then add_token(match?('=') ? EQUAL_EQUAL : EQUAL)
-      when '<' then add_token(match?('=') ? LESS_EQUAL : LESS)
-      when '>' then add_token(match?('=') ? GREATER_EQUAL : GREATER)
-      when '/'
-        if match?('/')
-          while(peek != "\n" && has_more?)
+      when "(" then add_token(LEFT_PAREN)
+      when ")" then add_token(RIGHT_PAREN)
+      when "{" then add_token(LEFT_BRACE)
+      when "}" then add_token(RIGHT_BRACE)
+      when "," then add_token(COMMA)
+      when "." then add_token(DOT)
+      when "-" then add_token(MINUS)
+      when "+" then add_token(PLUS)
+      when ";" then add_token(SEMICOLON)
+      when "*" then add_token(STAR)
+      when "!" then add_token(match?("=") ? BANG_EQUAL : BANG)
+      when "=" then add_token(match?("=") ? EQUAL_EQUAL : EQUAL)
+      when "<" then add_token(match?("=") ? LESS_EQUAL : LESS)
+      when ">" then add_token(match?("=") ? GREATER_EQUAL : GREATER)
+      when "/"
+        if match?("/")
+          while peek != "\n" && has_more?
             advance
           end
         else
           add_token(SLASH)
         end
       when "\n" then @line += 1
-      when /\s/ then ;
+      when /\s/ then noop
       when '"' then consume_string
       when /\d/ then consume_number
       when /\w/ then consume_identifier
       else
         @error_reporter.report_scanner_error(@line, "invalid token")
       end
+    end
+
+    def noop
     end
 
     def at_end?
@@ -149,12 +152,12 @@ module ALox
       char
     end
 
-    def peek()
+    def peek
       return "\0" if at_end?
       @source[@current]
     end
 
-    def peek_next()
+    def peek_next
       return "\0" if at_end?
       @source[@current + 1]
     end
@@ -163,7 +166,7 @@ module ALox
       return false if at_end?
       return false if @source[@current] != expected
 
-      @current +=1
+      @current += 1
 
       true
     end
@@ -180,7 +183,7 @@ module ALox
 
       advance # closing "
 
-      add_token(STRING, @source[@start + 1 ... @current - 1])
+      add_token(STRING, @source[@start + 1...@current - 1])
     end
 
     def consume_number
@@ -188,7 +191,7 @@ module ALox
         advance
       end
 
-      if peek == '.' && digit?(peek_next)
+      if peek == "." && digit?(peek_next)
         advance
 
         while digit?(peek)
@@ -196,7 +199,7 @@ module ALox
         end
       end
 
-      add_token(NUMBER, @source[@start ... @current].to_f)
+      add_token(NUMBER, @source[@start...@current].to_f)
     end
 
     def consume_identifier
@@ -204,17 +207,17 @@ module ALox
         advance
       end
 
-      lexeme = @source[@start ... @current]
+      lexeme = @source[@start...@current]
 
       add_token(KEY_WORDS[lexeme] || IDENTIFIER)
     end
 
     def digit?(char)
-      char >= '0' && char <= '9'
+      char >= "0" && char <= "9"
     end
 
     def add_token(type, literal = nil)
-      lexeme = @source[@start ... @current]
+      lexeme = @source[@start...@current]
       @tokens << Token.new(type, lexeme, literal, @line)
     end
   end

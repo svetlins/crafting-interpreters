@@ -13,7 +13,7 @@ module ALox
         {
           type: :function,
           arity: @arity,
-          name: @name,
+          name: @name
         }
       end
     end
@@ -52,7 +52,7 @@ module ALox
         function_statement.body,
         @executable,
         function_statement.full_name,
-        function_statement.parameters.count,
+        function_statement.parameters.count
       ).compile
 
       function.heap_slots = function_statement.heap_slots
@@ -132,12 +132,13 @@ module ALox
       emit(Opcodes::POP)
       while_statement.body.accept(self)
       emit(Opcodes::JUMP)
-      emit_two(*[begin_loop_offset - 2 - @executable.functions[@name][:code].size].pack('s').bytes)
+      emit_two(*[begin_loop_offset - 2 - @executable.functions[@name][:code].size].pack("s").bytes)
       @executable.patch_jump(@name, exit_loop_offset)
       emit(Opcodes::POP)
     end
 
-    def visit_class_statement; end
+    def visit_class_statement
+    end
 
     # expressions
     def visit_assign(assign_expression)
@@ -168,24 +169,27 @@ module ALox
       end
     end
 
-    def visit_super_expression; end
-    def visit_this_expression; end
+    def visit_super_expression
+    end
+
+    def visit_this_expression
+    end
 
     def visit_binary(binary_expression)
       binary_expression.left.accept(self)
       binary_expression.right.accept(self)
 
       {
-        '+' => [Opcodes::ADD],
-        '-' => [Opcodes::SUBTRACT],
-        '*' => [Opcodes::MULTIPLY],
-        '/' => [Opcodes::DIVIDE],
-        '==' => [Opcodes::EQUAL],
-        '!=' => [Opcodes::EQUAL, Opcodes::NOT],
-        '>' => [Opcodes::GREATER],
-        '<' => [Opcodes::LESSER],
-        '>=' => [Opcodes::LESSER, Opcodes::NOT],
-        '<=' => [Opcodes::GREATER, Opcodes::NOT],
+        "+" => [Opcodes::ADD],
+        "-" => [Opcodes::SUBTRACT],
+        "*" => [Opcodes::MULTIPLY],
+        "/" => [Opcodes::DIVIDE],
+        "==" => [Opcodes::EQUAL],
+        "!=" => [Opcodes::EQUAL, Opcodes::NOT],
+        ">" => [Opcodes::GREATER],
+        "<" => [Opcodes::LESSER],
+        ">=" => [Opcodes::LESSER, Opcodes::NOT],
+        "<=" => [Opcodes::GREATER, Opcodes::NOT]
       }.fetch(binary_expression.operator.lexeme).each { |op| emit(op) }
     end
 
@@ -222,8 +226,8 @@ module ALox
       unary_expression.right.accept(self)
 
       {
-        '-' => [Opcodes::NEGATE],
-        '!' => [Opcodes::NOT],
+        "-" => [Opcodes::NEGATE],
+        "!" => [Opcodes::NOT]
       }.fetch(unary_expression.operator.lexeme).each { |op| emit(op) }
     end
 
@@ -234,8 +238,11 @@ module ALox
       emit_two(Opcodes::CALL, call_expression.arguments.count)
     end
 
-    def visit_get_expression; end
-    def visit_set_expression; end
+    def visit_get_expression
+    end
+
+    def visit_set_expression
+    end
 
     def emit(opcode)
       @executable.write(@name, opcode)
@@ -248,8 +255,8 @@ module ALox
 
     def emit_jump(jump_opcode)
       emit(jump_opcode)
-      emit('PLACEHOLDER')
-      emit('PLACEHOLDER')
+      emit("PLACEHOLDER")
+      emit("PLACEHOLDER")
 
       @executable.size(@name) - 2
     end

@@ -5,16 +5,16 @@ require "a_lox/commands/execute_source"
 
 begin
   executable = ALox::Executable.new
-  vm = ALox::VM.new
+  vm = ALox::VM.new(error_reporter: nil) # TODO: error_reporter
 
   buffer = ""
 
   Readline.pre_input_hook = lambda do
-     Readline.insert_text("  " * [buffer.count("{") - buffer.count("}"), 0].max)
-     Readline.redisplay
+    Readline.insert_text("  " * [buffer.count("{") - buffer.count("}"), 0].max)
+    Readline.redisplay
   end
 
-  while line = Readline.readline(buffer.empty? ? "> " : "| ", true)&.chomp
+  while (line = Readline.readline(buffer.empty? ? "> " : "| ", true)&.chomp)
     if line.empty?
       ALox::Commands::ExecuteSource.call(buffer, executable: executable, vm: vm)
       buffer = ""

@@ -18,6 +18,8 @@ module ALox
         @primary_fields << name
       end
 
+      def respond_to_missing?(*) = true
+
       def additional(*names)
         names.each do |name|
           fail if @additional_fields.include?(name)
@@ -31,20 +33,20 @@ module ALox
       env.instance_eval(&block)
 
       Class.new do
-        attr_reader *env.primary_fields
-        attr_accessor *env.additional_fields
+        attr_reader(*env.primary_fields)
+        attr_accessor(*env.additional_fields)
 
         define_method :initialize do |*args|
           if args.size != env.primary_fields.size
             fail ArgumentError,
-                "exactly #{present_fields_list(env.primary_fields)} needed"
+              "exactly #{present_fields_list(env.primary_fields)} needed"
           end
 
           env.primary_fields.each_with_index do |primary_field_name, i|
-            self.instance_variable_set(:"@#{primary_field_name}", args[i])
+            instance_variable_set(:"@#{primary_field_name}", args[i])
           end
 
-          env.additional_fields.each { |f| self.instance_variable_set(:"@#{f}", nil) }
+          env.additional_fields.each { |f| instance_variable_set(:"@#{f}", nil) }
         end
 
         define_method :accept do |visitor|
@@ -62,11 +64,11 @@ module ALox
               end,
 
               *env.additional_fields.map do |field_name|
-                "#{field_name}=#{public_send(field_name) || '(not yet set)'}"
+                "#{field_name}=#{public_send(field_name) || "(not yet set)"}"
               end
             ].join(", "),
 
-            ")",
+            ")"
           ].join
         end
 
@@ -78,11 +80,11 @@ module ALox
           return "no fields" if fields.empty?
           return "`#{fields.first}`" if fields.size == 1
 
-          fields[0..-2].map { |f| "`#{f}`"}.join(", ") + " and `#{fields[-1]}`"
+          fields[0..-2].map { |f| "`#{f}`" }.join(", ") + " and `#{fields[-1]}`"
         end
 
         def underscore(camel_cased_word)
-          word = camel_cased_word.split('::').last
+          word = camel_cased_word.split("::").last
           word.gsub!(/([A-Z]+)(?=[A-Z][a-z])|([a-z\d])(?=[A-Z])/) { ($1 || $2) << "_" }
           word.tr!("-", "_")
           word.downcase!

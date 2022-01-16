@@ -23,7 +23,7 @@ module ALox
       {
         name: "EXP-STMT",
         attributes: {},
-        children: [expression_statement.expression.accept(self)],
+        children: [expression_statement.expression.accept(self)]
       }
     end
 
@@ -31,7 +31,7 @@ module ALox
       {
         name: "FUN-DEF",
         attributes: {
-          name: "#{function_statement.name.lexeme}(#{function_statement.parameters.map(&:lexeme).join(", ")})",
+          name: "#{function_statement.name.lexeme}(#{function_statement.parameters.map(&:lexeme).join(", ")})"
         },
         children: function_statement.body.map { |statement| statement.accept(self) }
       }
@@ -41,7 +41,7 @@ module ALox
       {
         name: "RETURN",
         attributes: {},
-        children: [return_statement.value.accept(self)],
+        children: [return_statement.value.accept(self)]
       }
     end
 
@@ -49,7 +49,7 @@ module ALox
       {
         name: "PRINT",
         attributes: {},
-        children: [print_statement.expression.accept(self)],
+        children: [print_statement.expression.accept(self)]
       }
     end
 
@@ -57,8 +57,8 @@ module ALox
       {
         name: "VAR-DEF",
         attributes: {
-          name: variable_statement.name.lexeme,
-      }.merge(scope_attributes(variable_statement)),
+          name: variable_statement.name.lexeme
+        }.merge(scope_attributes(variable_statement)),
         children: [adorn(variable_statement.initializer&.accept(self), "INITIALIZER")].compact
       }
     end
@@ -78,8 +78,8 @@ module ALox
         children: [
           adorn(if_statement.condition.accept(self), "CONDITION"),
           adorn(if_statement.then_branch.accept(self), "THEN"),
-          adorn(if_statement.else_branch&.accept(self), "ELSE"),
-        ].compact,
+          adorn(if_statement.else_branch&.accept(self), "ELSE")
+        ].compact
       }
     end
 
@@ -89,12 +89,12 @@ module ALox
         attributes: {},
         children: [
           adorn(while_statement.condition.accept(self), "CONDITION"),
-          adorn(while_statement.body.accept(self), "BODY"),
+          adorn(while_statement.body.accept(self), "BODY")
         ]
       }
     end
 
-    def visit_class_statement(statement); {name: "CLASS", attributes: {}} end
+    def visit_class_statement(statement) = {name: "CLASS", attributes: {}}
 
     # ---------
 
@@ -102,10 +102,10 @@ module ALox
       {
         name: "ASSIGN",
         attributes: {
-          name: assign_expression.name.lexeme,
+          name: assign_expression.name.lexeme
         }.merge(scope_attributes(assign_expression)),
         children: [
-          assign_expression.value.accept(self),
+          assign_expression.value.accept(self)
         ]
       }
     end
@@ -114,24 +114,24 @@ module ALox
       {
         name: "BINARY_EXP",
         attributes: {
-          operator: binary_expression.operator.lexeme,
+          operator: binary_expression.operator.lexeme
         },
         children: [binary_expression.left.accept(self), binary_expression.right.accept(self)]
       }
     end
 
-    def visit_grouping(expression); {name: "GROUP", attributes: {}} end
+    def visit_grouping(expression) = {name: "GROUP", attributes: {}}
 
     def visit_literal(literal_expression)
       {
         name: "LITERAL",
         attributes: {
-          value: literal_expression.value.inspect,
+          value: literal_expression.value.inspect
         }
       }
     end
 
-    def visit_logical(expression); {name: "LOGICAL", attributes: {}} end
+    def visit_logical(expression) = {name: "LOGICAL", attributes: {}}
 
     def visit_unary(unary_expression)
       {
@@ -157,18 +157,18 @@ module ALox
         name: "CALL",
         attributes: {},
         children: [
-          adorn(call_expression.callee.accept(self), "CALLEE"),
-        ] + call_expression.arguments.map { |argument| adorn(argument.accept(self), "ARG") },
+          adorn(call_expression.callee.accept(self), "CALLEE")
+        ] + call_expression.arguments.map { |argument| adorn(argument.accept(self), "ARG") }
       }
     end
 
-    def visit_get_expression(expression); {name: "GET", attributes: {}}; end
+    def visit_get_expression(expression) = {name: "GET", attributes: {}}
 
-    def visit_set_expression(expression); {name: "SET", attributes: {}}; end
+    def visit_set_expression(expression) = {name: "SET", attributes: {}}
 
-    def visit_super_expression(expression); {name: "SUPER", attributes: {}}; end
+    def visit_super_expression(expression) = {name: "SUPER", attributes: {}}
 
-    def visit_this_expression(expression); {name: "THIS", attributes: {}}; end
+    def visit_this_expression(expression) = {name: "THIS", attributes: {}}
 
     private
 
@@ -186,12 +186,12 @@ module ALox
       elsif node.allocation.local?
         {
           allocation: "STACK",
-          stack_slot: node.allocation.slot,
+          stack_slot: node.allocation.slot
         }
       elsif node.allocation.heap_allocated?
         {
           allocation: "HEAP",
-          heap_slot: node.allocation.slot,
+          heap_slot: node.allocation.slot
         }
       end
     end

@@ -1,15 +1,15 @@
-require 'irb'
+require "irb"
 
-require 'scanner'
-require 'expression'
-require 'parser'
-require 'printers/printer'
-require 'printers/sexp_printer'
-require 'printers/rpn_printer'
-require 'printers/tree_printer'
-require 'interpreter'
-require 'compiler'
-require 'vm'
+require "scanner"
+require "expression"
+require "parser"
+require "printers/printer"
+require "printers/sexp_printer"
+require "printers/rpn_printer"
+require "printers/tree_printer"
+require "interpreter"
+require "compiler"
+require "vm"
 
 module Lab
   include TokenTypes
@@ -20,20 +20,20 @@ module Lab
   def run
     IRB.setup nil
     IRB.conf[:MAIN_CONTEXT] = IRB::Irb.new.context
-    require 'irb/ext/multi-irb'
+    require "irb/ext/multi-irb"
     IRB.irb nil, self
   end
 
   def generate_visitor(name)
     code =
       <<~RUBY.strip
-class #{name}Visitor
-### Statements
-#{Statement.generate_visitors}
-
-### Expressions
-#{Expression.generate_visitors}
-end
+        class #{name}Visitor
+        ### Statements
+        #{Statement.generate_visitors}
+        
+        ### Expressions
+        #{Expression.generate_visitors}
+        end
       RUBY
 
     puts code
@@ -81,7 +81,6 @@ end
 
     executable
   end
-
 
   def execute(executable)
     VM.execute(executable)
@@ -145,7 +144,7 @@ end
           Token.new(TokenTypes::MINUS, "-", nil, 1),
           Literal.new(3)
         )
-      ),
+      )
     )
   end
 end

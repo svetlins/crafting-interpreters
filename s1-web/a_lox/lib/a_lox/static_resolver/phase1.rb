@@ -14,9 +14,7 @@ module ALox
         @kind = kind
       end
 
-      def kind
-        @kind
-      end
+      attr_reader :kind
 
       def slot=(slot)
         fail unless local?
@@ -67,9 +65,7 @@ module ALox
           @heap_allocated
         end
 
-        def heap_usages
-          @heap_usages
-        end
+        attr_reader :heap_usages
 
         def add_variable(name)
           if @global && @scopes.size == 1
@@ -98,13 +94,13 @@ module ALox
         end
 
         def find_local(name)
-          @scopes.reverse.each do |scope|
+          @scopes.reverse_each do |scope|
             if scope.has_key?(name)
               return scope[name]
             end
           end
 
-          return nil
+          nil
         end
 
         def find_upvalue(name)
@@ -151,9 +147,7 @@ module ALox
       end
 
       def error(token, message)
-        if @error_reporter
-          @error_reporter.report_static_analysis_error(token, message)
-        end
+        @error_reporter&.report_static_analysis_error(token, message)
       end
 
       def visit_block_statement(block_statement)
@@ -161,7 +155,7 @@ module ALox
         resolve(block_statement.statements)
         block_statement.locals_count = @function_scopes.last.end_block.size
 
-        return nil
+        nil
       end
 
       def visit_var_statement(var_statement)
@@ -202,13 +196,13 @@ module ALox
         function_statement.heap_usages = @function_scopes.last.heap_usages
         @function_scopes.pop
 
-        return nil
+        nil
       end
 
       def visit_expression_statement(expression_statement)
         resolve(expression_statement.expression)
 
-        return nil
+        nil
       end
 
       def visit_if_statement(if_statement)
@@ -216,13 +210,13 @@ module ALox
         resolve(if_statement.then_branch)
         resolve(if_statement.else_branch) if if_statement.else_branch
 
-        return nil
+        nil
       end
 
       def visit_print_statement(print_statement)
         resolve(print_statement.expression)
 
-        return nil
+        nil
       end
 
       def visit_return_statement(return_statement)
@@ -238,21 +232,21 @@ module ALox
           resolve(return_statement.value)
         end
 
-        return nil
+        nil
       end
 
       def visit_while_statement(while_statement)
         resolve(while_statement.condition)
         resolve(while_statement.body)
 
-        return nil
+        nil
       end
 
       def visit_binary(binary_expression)
         resolve(binary_expression.left)
         resolve(binary_expression.right)
 
-        return nil
+        nil
       end
 
       def visit_call(call_expression)
@@ -261,47 +255,49 @@ module ALox
           resolve(argument)
         end
 
-        return nil
+        nil
       end
 
       def visit_get_expression(get_expression)
         resolve(get_expression.object)
 
-        return nil
+        nil
       end
 
       def visit_set_expression(set_expression)
         resolve(set_expression.value)
         resolve(set_expression.object)
 
-        return nil
+        nil
       end
-
 
       def visit_grouping(grouping_expression)
         resolve(grouping_expression.expression)
 
-        return nil
+        nil
       end
 
       def visit_logical(logical_expression)
         resolve(logical_expression.left)
         resolve(logical_expression.right)
 
-        return nil
+        nil
       end
 
       def visit_unary(unary_expression)
         resolve(unary_expression.right)
 
-        return nil
+        nil
       end
 
-      def visit_literal(literal_expression); end
+      def visit_literal(literal_expression)
+      end
 
-      def visit_this_expression(this_expression); fail; end
-      def visit_super_expression(super_expression); fail; end
-      def visit_class_statement(class_statement); fail; end
+      def visit_this_expression(this_expression) = fail
+
+      def visit_super_expression(super_expression) = fail
+
+      def visit_class_statement(class_statement) = fail
     end
   end
 end

@@ -29,9 +29,9 @@ module ALox
       else
         parse_statement
       end
-    rescue ParserError => error
+    rescue ParserError
       synchronize
-      return nil
+      nil
     end
 
     def parse_variable_declaration
@@ -99,7 +99,8 @@ module ALox
       elsif match_any?(WHILE) then parse_while
       elsif match_any?(FOR) then parse_for
       elsif match_any?(RETURN) then parse_return
-      else parse_expression_statement
+      else
+        parse_expression_statement
       end
     end
 
@@ -130,12 +131,12 @@ module ALox
     def parse_for
       consume(LEFT_PAREN, "Expected ( after for")
 
-      if match_any?(SEMICOLON)
-        initializer = nil
+      initializer = if match_any?(SEMICOLON)
+        nil
       elsif match_any?(VAR)
-        initializer = parse_variable_declaration
+        parse_variable_declaration
       else
-        initializer = parse_expression_statement
+        parse_expression_statement
       end
 
       if !check(SEMICOLON)
@@ -152,7 +153,7 @@ module ALox
 
       body = parse_statement
 
-      if increment != nil
+      if !increment.nil?
         body = BlockStatement.new([body, increment])
       end
 
@@ -337,7 +338,6 @@ module ALox
 
       loop do
         if match_any?(LEFT_PAREN)
-          paren = previous
           expression = parse_finish_call(expression)
         elsif match_any?(DOT)
           name = consume(IDENTIFIER, "Expected identifier after .")
@@ -372,11 +372,11 @@ module ALox
 
     def parse_primary
       if match_any?(NUMBER, STRING) then return Literal.new(previous.literal) end
-      if match_any?(FALSE)          then return Literal.new(false) end
-      if match_any?(TRUE)           then return Literal.new(true) end
-      if match_any?(NIL)            then return Literal.new(nil) end
-      if match_any?(THIS)           then return ThisExpression.new(previous) end
-      if match_any?(IDENTIFIER)     then return Variable.new(previous) end
+      if match_any?(false) then return Literal.new(false) end
+      if match_any?(true) then return Literal.new(true) end
+      if match_any?(nil) then return Literal.new(nil) end
+      if match_any?(THIS) then return ThisExpression.new(previous) end
+      if match_any?(IDENTIFIER) then return Variable.new(previous) end
 
       if match_any?(SUPER)
         keyword = previous
@@ -385,7 +385,6 @@ module ALox
 
         return SuperExpression.new(keyword, method_name)
       end
-
 
       if match_any?(LEFT_PAREN)
         expression = parse_expression
@@ -404,7 +403,7 @@ module ALox
         end
       end
 
-      return false
+      false
     end
 
     def check(token_type)
@@ -434,8 +433,8 @@ module ALox
     end
 
     def error(token, message)
-      @error_reporter.report_parser_error(token, message) if @error_reporter
-      return ParserError.new
+      @error_reporter&.report_parser_error(token, message)
+      ParserError.new
     end
 
     # Not yet utilized :shrug:
@@ -454,7 +453,7 @@ module ALox
     end
 
     def has_more?
-      not at_end?
+      !at_end?
     end
   end
 end

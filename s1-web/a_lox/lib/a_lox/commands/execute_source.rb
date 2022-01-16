@@ -30,29 +30,29 @@ module ALox
       end
 
       def report_scanner_error(line, message)
-        $stderr.puts "scanner error. line: #{line} - error: #{message}"
+        warn "scanner error. line: #{line} - error: #{message}"
         @had_error = true
       end
 
       def report_parser_error(token, message)
         if token.type == TokenTypes::EOF
-          $stderr.puts "parser error. line: #{token.line} at end - error: #{message}"
+          warn "parser error. line: #{token.line} at end - error: #{message}"
         else
-          $stderr.puts "parser error. line: #{token.line}, token: #{token.lexeme} - error: #{message}"
+          warn "parser error. line: #{token.line}, token: #{token.lexeme} - error: #{message}"
         end
 
         @had_error = true
       end
 
       def report_static_analysis_error(token, message)
-        $stderr.puts "static analysis error. line: #{token.line} - error: #{message}"
+        warn "static analysis error. line: #{token.line} - error: #{message}"
         @had_error = true
       end
 
       def report_runtime_error(message)
-        $stderr.puts "runtime error: #{message}"
+        warn "runtime error: #{message}"
         @had_error = true
       end
-        end
+    end
   end
 end

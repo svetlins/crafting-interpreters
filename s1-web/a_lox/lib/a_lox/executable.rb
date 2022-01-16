@@ -11,7 +11,7 @@ module ALox
     def reset_function(function)
       @functions[function] = {
         code: [],
-        constants: [],
+        constants: []
       }
     end
 
@@ -23,7 +23,7 @@ module ALox
     def patch_jump(function, jump_offset)
       jump = @functions[function][:code].size - jump_offset - 2
 
-      first_byte, second_byte = [jump].pack('s').bytes
+      first_byte, second_byte = [jump].pack("s").bytes
 
       @functions[function][:code][jump_offset] = first_byte
       @functions[function][:code][jump_offset + 1] = second_byte

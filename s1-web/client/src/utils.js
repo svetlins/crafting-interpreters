@@ -27,3 +27,13 @@ export function shortLittleEndianToInteger(byte1, byte2) {
   if (value > 2 ** 15) value = -1 * (2 ** 16 - value);
   return value;
 }
+
+export function loxObjectToString(loxObject) {
+  if (typeof loxObject === "object" && loxObject.functionName) {
+    return `fun ${loxObject.functionName}`;
+  } else if (typeof loxObject === "boolean") {
+    return loxObject ? "true" : "false";
+  } else {
+    return loxObject;
+  }
+}

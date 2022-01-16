@@ -10,7 +10,7 @@ import axios from "axios";
 import Tree from "react-d3-tree";
 import classNames from "classnames";
 
-import { pretty, shortLittleEndianToInteger } from "./utils";
+import { loxObjectToString, pretty, shortLittleEndianToInteger } from "./utils";
 import { PresetDropdown, presetSources } from "./components/PresetDropdown";
 import { createVM } from "./VM";
 
@@ -231,11 +231,13 @@ function InteractiveExecution({ executable }) {
     return null;
   }
 
+  console.log(vmState.stack);
+
   return (
-    <div className="m-2 min-w-[700px] overflow-scroll">
+    <div className="min-w-[700px] overflow-scroll">
       <div className="flex flex-row">
         <button
-          className="btn mr-2 mb-2"
+          className="btn m-2"
           disabled={vmState.terminated}
           type="button"
           onClick={() => {
@@ -245,7 +247,7 @@ function InteractiveExecution({ executable }) {
           Step
         </button>
         <button
-          className="btn mr-2 mb-2"
+          className="btn m-2"
           disabled={vmState.terminated}
           type="button"
           onClick={() => {
@@ -261,29 +263,33 @@ function InteractiveExecution({ executable }) {
           Run to completion
         </button>
         <button
-          className="btn mr-2 mb-2"
+          className="btn m-2"
           type="button"
           onClick={() => setVMState(vm.reset())}
         >
           Reset
         </button>
       </div>
-      <div className="flex flex-col">
+      <div className="flex flex-col m-2">
         <div className="flex flex-row items-start">
           <div className="flex-1">
             <div className="pb-5 border-b border-gray-200">
               <h3 className="text-lg leading-6 font-medium text-gray-900">
-                Call Stack
+                Call Stack / Code
               </h3>
             </div>
-            {vmState.callFrames.map((callFrame) => (
-              <div>{callFrame.functionName}</div>
-            ))}
-            <ExecutableFunction
-              executable={executable}
-              functionName={vmState.callFrame.functionName}
-              highlight={vmState.callFrame.ip()}
-            />
+            <div className="h-96 overflow-y-scroll">
+              {vmState.callFrames.map((callFrame) => (
+                <div className="font-mono m-2">
+                  {callFrame.functionName}@{callFrame.ip()}
+                </div>
+              ))}
+              <ExecutableFunction
+                executable={executable}
+                functionName={vmState.callFrame.functionName}
+                highlight={vmState.callFrame.ip()}
+              />
+            </div>
           </div>
 
           <div className="flex-1">
@@ -292,14 +298,16 @@ function InteractiveExecution({ executable }) {
                 Globals
               </h3>
             </div>
-            {Object.entries(vmState.globals || {}).map(
-              ([globalName, globalValue]) => (
-                <Badge
-                  text={`${globalName} = ${JSON.stringify(globalValue)}`}
-                  color="purple"
-                />
-              )
-            )}
+            <div className="h-96 overflow-y-scroll">
+              {Object.entries(vmState.globals || {}).map(
+                ([globalName, globalValue]) => (
+                  <Badge
+                    text={`${globalName} = ${loxObjectToString(globalValue)}`}
+                    color="purple"
+                  />
+                )
+              )}
+            </div>
           </div>
 
           <div className="flex-1">
@@ -308,10 +316,10 @@ function InteractiveExecution({ executable }) {
                 Stack
               </h3>
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col h-96 overflow-y-scroll">
               {(vmState.stack || []).map((value, index) => (
                 <Badge
-                  text={JSON.stringify(value)}
+                  text={loxObjectToString(value)}
                   color={
                     index === vmState.callFrame?.stackTop ? "green" : "yellow"
                   }
@@ -471,7 +479,16 @@ function ExecutableFunction({ executable, functionName, highlight }) {
     <table>
       <tbody>
         {ops.map(([op, offset]) => (
-          <tr>
+          <tr
+            ref={(trElement) => {
+              if (trElement && offset === highlight) {
+                trElement.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+              }
+            }}
+          >
             <td>
               <Badge
                 text={op}

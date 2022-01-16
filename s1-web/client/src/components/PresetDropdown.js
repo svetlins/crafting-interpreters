@@ -8,6 +8,17 @@ function classNames(...classes) {
 }
 
 export const presetSources = [
+  {
+    title: "Bad Fib",
+    source: `
+      fun fib(n) {
+        if (n < 2) return 1;
+        return fib(n - 1) + fib(n - 2);
+      }
+
+      print fib(5);
+    `,
+  },
   { title: "Arithmetic", source: "print 1 + 2 * 3;" },
   {
     title: "Function",
@@ -67,17 +78,6 @@ export const presetSources = [
         }
 
         print outer();`,
-  },
-  {
-    title: "Bad Fib",
-    source: `
-      fun fib(n) {
-        if (n < 2) return 1;
-        return fib(n - 1) + fib(n - 2);
-      }
-
-      print fib(5);
-    `,
   },
 ];
 

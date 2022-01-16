@@ -1,6 +1,0 @@
-require 'scanner'
-require 'parser'
-require 'static_resolver'
-require 'compiler'
-require 'vm'
-require 'printers/tree_printer'

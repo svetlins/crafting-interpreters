@@ -100,7 +100,7 @@ export function createVM(executable) {
             break;
           case "LESSER":
             // eslint-disable-next-line no-self-compare
-            stack.push(stack.pop() >= stack.pop());
+            stack.push(stack.pop() > stack.pop());
             break;
           case "LOAD-CONSTANT":
             stack.push(callFrame.readConstant(callFrame.readCode()));

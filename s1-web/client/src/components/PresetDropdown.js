@@ -9,14 +9,22 @@ function classNames(...classes) {
 
 export const presetSources = [
   {
+    title: "For Loop",
+    source: `
+      for(var i = 0; i < 10; i = i + 1) {
+        print i * i;
+      }
+    `,
+  },
+  {
     title: "Bad Fib",
     source: `
       fun fib(n) {
-        if (n < 2) return 1;
+        if (n <= 2) return 1;
         return fib(n - 1) + fib(n - 2);
       }
 
-      print fib(5);
+      print fib(20);
     `,
   },
   { title: "Arithmetic", source: "print 1 + 2 * 3;" },
@@ -24,7 +32,7 @@ export const presetSources = [
     title: "Function",
     source: `
     fun fn(personName) {
-      print "Hi," + personName + "!";
+      print "Hi, " + personName + "!";
     }
 
     fn("Svetlin");

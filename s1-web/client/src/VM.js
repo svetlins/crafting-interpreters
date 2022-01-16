@@ -98,9 +98,22 @@ export function createVM(executable) {
           case "GET-LOCAL":
             stack.push(callFrame.getStackSlot(callFrame.readCode()));
             break;
+          case "SET-LOCAL":
+            callFrame.setStackSlot(
+              callFrame.readCode(),
+              stack[stack.length - 1]
+            );
+            break;
           case "LESSER":
             // eslint-disable-next-line no-self-compare
             stack.push(stack.pop() > stack.pop());
+            break;
+          case "GREATER":
+            // eslint-disable-next-line no-self-compare
+            stack.push(stack.pop() < stack.pop());
+            break;
+          case "NOT":
+            stack.push(!stack.pop());
             break;
           case "LOAD-CONSTANT":
             stack.push(callFrame.readConstant(callFrame.readCode()));
@@ -113,7 +126,9 @@ export function createVM(executable) {
             stack.push(callable);
             break;
           case "ADD":
-            stack.push(stack.pop() + stack.pop());
+            const addB = stack.pop();
+            const addA = stack.pop();
+            stack.push(addA + addB);
             break;
           case "SUBTRACT":
             const b = stack.pop();
@@ -137,6 +152,11 @@ export function createVM(executable) {
             const offsetByte2 = callFrame.readCode();
             if (!stack[stack.length - 1])
               callFrame.jump(offsetByte1, offsetByte2);
+            break;
+          case "JUMP":
+            const offsetByte12 = callFrame.readCode();
+            const offsetByte22 = callFrame.readCode();
+            callFrame.jump(offsetByte12, offsetByte22);
             break;
           case "CALL":
             const argumentCount = callFrame.readCode();

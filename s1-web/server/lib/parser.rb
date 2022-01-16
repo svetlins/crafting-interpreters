@@ -148,7 +148,7 @@ class Parser
     consume(SEMICOLON, "Expected ; after for condition")
 
     if !check(RIGHT_PAREN)
-      increment = parse_expression
+      increment = ExpressionStatement.new(parse_expression)
     end
 
     consume(RIGHT_PAREN, "Expected ) after for clauses")

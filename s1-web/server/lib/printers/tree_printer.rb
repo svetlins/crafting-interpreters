@@ -82,7 +82,16 @@ class TreePrinter
     }
   end
 
-  def visit_while_statement(statement); {name: "WHILE", attributes: {}} end
+  def visit_while_statement(while_statement)
+    {
+      name: "WHILE",
+      attributes: {},
+      children: [
+        adorn(while_statement.condition.accept(self), "CONDITION"),
+        adorn(while_statement.body.accept(self), "BODY"),
+      ]
+    }
+  end
 
   def visit_class_statement(statement); {name: "CLASS", attributes: {}} end
 

@@ -157,7 +157,7 @@ class TreePrinter
       attributes: {},
       children: [
         adorn(call_expression.callee.accept(self), "CALLEE"),
-      ] + call_expression.arguments.map { |argument| argument.accept(self) },
+      ] + call_expression.arguments.map { |argument| adorn(argument.accept(self), "ARG") },
     }
   end
 

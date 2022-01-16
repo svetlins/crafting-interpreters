@@ -316,13 +316,14 @@ function InteractiveExecution({ executable }) {
                 Stack
               </h3>
             </div>
-            <div className="flex flex-col h-96 overflow-y-scroll">
+            <div className="flex flex-col-reverse h-96 overflow-y-scroll">
               {(vmState.stack || []).map((value, index) => (
                 <Badge
                   text={loxObjectToString(value)}
                   color={
                     index === vmState.callFrame?.stackTop ? "green" : "yellow"
                   }
+                  highlight={index === vmState.stack.length - 1}
                 />
               ))}
             </div>
@@ -367,7 +368,7 @@ function SimpleToken({ tokenData }) {
   return <Badge text={tokenData.type} color="yellow" />;
 }
 
-function Badge({ text, color }) {
+function Badge({ text, color, highlight }) {
   let colorClasses;
 
   if (color === "yellow") {
@@ -394,6 +395,11 @@ function Badge({ text, color }) {
         "inline-flex items-center px-2 py-0.5 m-2 rounded text-xs font-medium",
         colorClasses
       )}
+      ref={(spanElement) => {
+        if (spanElement && highlight) {
+          spanElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }}
     >
       {text}
     </span>

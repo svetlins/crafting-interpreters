@@ -29,8 +29,12 @@ export function shortLittleEndianToInteger(byte1, byte2) {
 }
 
 export function loxObjectToString(loxObject) {
-  if (typeof loxObject === "object" && loxObject.functionName) {
-    return `fun ${loxObject.functionName}`;
+  if (typeof loxObject === "object") {
+    if (loxObject && loxObject.functionName) {
+      return `fun ${loxObject.functionName}`;
+    } else {
+      return JSON.stringify(loxObject);
+    }
   } else if (typeof loxObject === "boolean") {
     return loxObject ? "true" : "false";
   } else {

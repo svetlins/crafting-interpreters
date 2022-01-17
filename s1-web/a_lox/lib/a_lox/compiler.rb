@@ -38,7 +38,7 @@ module ALox
     end
 
     def add_constant(constant)
-      @executable.add_constant(@name, constant)
+      @executable.add_constant(constant)
     end
 
     # statements
@@ -126,13 +126,13 @@ module ALox
     end
 
     def visit_while_statement(while_statement)
-      begin_loop_offset = @executable.functions[@name][:code].size
+      begin_loop_offset = @executable.functions[@name].size
       while_statement.condition.accept(self)
       exit_loop_offset = emit_jump(Opcodes::JUMP_ON_FALSE)
       emit(Opcodes::POP)
       while_statement.body.accept(self)
       emit(Opcodes::JUMP)
-      emit_two(*[begin_loop_offset - 2 - @executable.functions[@name][:code].size].pack("s").bytes)
+      emit_two(*[begin_loop_offset - 2 - @executable.functions[@name].size].pack("s").bytes)
       @executable.patch_jump(@name, exit_loop_offset)
       emit(Opcodes::POP)
     end

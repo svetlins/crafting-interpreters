@@ -423,7 +423,7 @@ const opcodeSizes = {
 };
 
 function BytecodeTab({ executable }) {
-  const functions = Object.keys(executable);
+  const functions = Object.keys(executable.functions);
 
   return (
     <>
@@ -438,8 +438,8 @@ function BytecodeTab({ executable }) {
 }
 
 function ExecutableFunction({ executable, functionName, highlight }) {
-  const code = executable[functionName].code;
-  const constants = executable[functionName].constants;
+  const code = executable.functions[functionName];
+  const constants = executable.constants;
 
   const ops = useMemo(() => {
     const ops = [];

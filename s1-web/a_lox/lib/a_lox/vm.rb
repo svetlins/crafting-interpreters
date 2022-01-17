@@ -45,11 +45,11 @@ module ALox
 
       def read_code
         @ip += 1
-        @executable.functions[@callable.function_name][:code][@ip - 1]
+        @executable.functions[@callable.function_name][@ip - 1]
       end
 
       def read_constant(constant_index)
-        @executable.functions[@callable.function_name][:constants][constant_index]
+        @executable.constants[constant_index]
       end
 
       def get_stack_slot(offset)

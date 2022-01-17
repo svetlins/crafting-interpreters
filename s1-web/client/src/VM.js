@@ -25,15 +25,15 @@ function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
     },
     readCode() {
       ip += 1;
-      return executable[callable.functionName].code[ip - 1];
+      return executable.functions[callable.functionName][ip - 1];
     },
 
     peekCode() {
-      return executable[callable.functionName].code[ip];
+      return executable.functions[callable.functionName][ip];
     },
 
     readConstant(constantIndex) {
-      return executable[callable.functionName].constants[constantIndex];
+      return executable.constants[constantIndex];
     },
 
     getStackSlot(offset) {

@@ -1,7 +1,7 @@
 require "spec_helper"
 
 module ALox
-  RSpec.describe Compiler do
+  RSpec.xdescribe Compiler do
     def compile(source)
       tokens = Scanner.new(source).scan
       ast = Parser.new(tokens).parse

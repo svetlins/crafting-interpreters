@@ -10,7 +10,7 @@ import axios from "axios";
 import Tree from "react-d3-tree";
 import classNames from "classnames";
 
-import { loxObjectToString, pretty, shortLittleEndianToInteger } from "./utils";
+import { loxObjectToString, pretty, shortBigEndianToInteger } from "./utils";
 import { PresetDropdown, presetSources } from "./components/PresetDropdown";
 import { createVM } from "./VM";
 
@@ -464,7 +464,7 @@ function ExecutableFunction({ executable, functionName, highlight }) {
         const functionDescriptor = constants[constantIndex];
         text = `${i}: ${opcode} ( fun ${functionDescriptor.name}/${functionDescriptor.arity} )`;
       } else if (opcode === "JUMP-ON-FALSE" || opcode === "JUMP") {
-        const jumpOffset = shortLittleEndianToInteger(code[i + 1], code[i + 2]);
+        const jumpOffset = shortBigEndianToInteger(code[i + 1], code[i + 2]);
         text = `${i}: ${opcode} ( target = ${jumpOffset + i + opcodeSize})`;
       } else if (opcodeSize > 1) {
         const args = code.slice(i + 1, i + opcodeSize);

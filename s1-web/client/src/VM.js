@@ -1,4 +1,4 @@
-import { shortLittleEndianToInteger } from "./utils";
+import { shortBigEndianToInteger } from "./utils";
 
 const TOP_LEVEL_SCRIPT = {
   functionName: "__script__",
@@ -45,7 +45,7 @@ function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
     },
 
     jump(offsetByte1, offsetByte2) {
-      const offset = shortLittleEndianToInteger(offsetByte1, offsetByte2);
+      const offset = shortBigEndianToInteger(offsetByte1, offsetByte2);
       ip = ip + offset;
     },
   };

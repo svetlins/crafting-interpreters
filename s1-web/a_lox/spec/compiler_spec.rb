@@ -1,8 +1,20 @@
 require "spec_helper"
 
+
+
 module ALox
-  RSpec.xdescribe Compiler do
-    def compile(source)
+  RSpec::Matchers.define :compile_to do |expected|
+    expected_executable =
+      expected.lines
+        .map(&:chomp)
+        .map(&:strip)
+        .chunk { _1.end_with?(":") }
+        .map { _1.last }
+        .each_slice(2)
+        .map { [_1.first.first.chomp(":") ,_1.last] }
+        .to_h
+
+    match do |source|
       tokens = Scanner.new(source).scan
       ast = Parser.new(tokens).parse
       executable = Executable.new
@@ -15,8 +27,53 @@ module ALox
       Compiler.new(ast, executable).compile
 
       executable
-    end
 
+      if executable.functions.keys != expected_executable.keys
+        false
+      else
+        expected_executable.each do |function_name, ops|
+          compiled_function = executable.functions[function_name].map(&:to_s)
+
+          ops.each do |op|
+            op, *args = op.split(/\s/)
+            return false unless compiled_function.shift == op
+
+            args.each do |arg|
+              return false unless compiled_function.shift == arg
+            end
+          end
+        end
+      end
+    end
+  end
+
+  RSpec.describe Compiler do
+    it "compiles global variables" do
+      source = <<-LOX
+        var x = 1;
+        var y = 2;
+        print x;
+        print y;
+      LOX
+
+#       "LOAD-CONSTANT", 0, "DEFINE-GLOBAL", 1, "LOAD-CONSTANT", 2, "DEFINE-GLOBAL", 3, "GET-GLOBAL", 1, "PRINT", "GET-GLOBAL", 3, "PRINT", "NIL", "RETURN",
+      expect(source).to compile_to(<<-OPS)
+        __script__:
+          LOAD-CONSTANT 0
+          DEFINE-GLOBAL 1
+          LOAD-CONSTANT 2
+          DEFINE-GLOBAL 3
+          GET-GLOBAL 1
+          PRINT
+          GET-GLOBAL 3
+          PRINT
+          NIL
+          RETURN
+      OPS
+    end
+  end
+
+  RSpec.xdescribe Compiler do
     it "compiles functions" do
       executable = compile <<-LOX
         fun fn() {
@@ -32,7 +89,7 @@ module ALox
     end
 
     it "compiles global variables" do
-      executable = compile <<-LOX
+      source = <<-LOX
         var x = 1;
         var y = 2;
         print x;

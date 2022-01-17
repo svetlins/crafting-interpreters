@@ -1,52 +1,6 @@
 require "spec_helper"
 
-
-
 module ALox
-  RSpec::Matchers.define :compile_to do |expected|
-    expected_executable =
-      expected.lines
-        .map(&:chomp)
-        .map(&:strip)
-        .chunk { _1.end_with?(":") }
-        .map { _1.last }
-        .each_slice(2)
-        .map { [_1.first.first.chomp(":") ,_1.last] }
-        .to_h
-
-    match do |source|
-      tokens = Scanner.new(source).scan
-      ast = Parser.new(tokens).parse
-      executable = Executable.new
-
-      phase1 = StaticResolver::Phase1.new(error_reporter: self)
-      phase2 = StaticResolver::Phase2.new(error_reporter: self)
-      phase1.resolve(ast)
-      phase2.resolve(ast)
-
-      Compiler.new(ast, executable).compile
-
-      executable
-
-      if executable.functions.keys != expected_executable.keys
-        false
-      else
-        expected_executable.each do |function_name, ops|
-          compiled_function = executable.functions[function_name].map(&:to_s)
-
-          ops.each do |op|
-            op, *args = op.split(/\s/)
-            return false unless compiled_function.shift == op
-
-            args.each do |arg|
-              return false unless compiled_function.shift == arg
-            end
-          end
-        end
-      end
-    end
-  end
-
   RSpec.describe Compiler do
     it "compiles global variables" do
       source = <<-LOX

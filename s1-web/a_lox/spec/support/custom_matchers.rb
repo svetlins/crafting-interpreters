@@ -54,6 +54,8 @@ RSpec::Matchers.define :compile_to do |expected|
   match do |source|
     executable = compile(source)
 
+    binding.irb
+
     return false unless executable
 
     expected_executable.each do |function_name, ops|

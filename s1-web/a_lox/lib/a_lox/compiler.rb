@@ -133,7 +133,7 @@ module ALox
       emit(Opcodes::POP)
       while_statement.body.accept(self)
       emit(Opcodes::JUMP)
-      emit_two(*[begin_loop_offset - 2 - @executable.functions[@name].size].pack("s").bytes)
+      emit_two(*@executable.pack_two(begin_loop_offset - 2 - @executable.functions[@name].size))
       @executable.patch_jump(@name, exit_loop_offset)
       emit(Opcodes::POP)
     end

@@ -21,10 +21,14 @@ module ALox
     def patch_jump(function, jump_offset)
       jump = @functions[function].size - jump_offset - 2
 
-      first_byte, second_byte = [jump].pack("s>").bytes
+      first_byte, second_byte = pack_two(jump)
 
       @functions[function][jump_offset] = first_byte
       @functions[function][jump_offset + 1] = second_byte
+    end
+
+    def pack_two(short)
+      [short].pack("s>").bytes
     end
 
     def add_constant(constant)

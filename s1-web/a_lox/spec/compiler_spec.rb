@@ -81,7 +81,7 @@ RSpec.describe ALox::Compiler do
     CODE
   end
 
-  specify "if" do
+  specify "if with else" do
     source = <<-LOX
       if (true) {
         print 1;
@@ -97,12 +97,50 @@ RSpec.describe ALox::Compiler do
         POP
         LOAD-CONSTANT 0
         PRINT
-        JUMP 0 6
+        JUMP 0 4
         POP
         LOAD-CONSTANT 1
         PRINT
         NIL
         RETURN
+    CODE
+  end
+
+  specify "if without else" do
+    source = <<-LOX
+      if (true) {
+        print 1;
+      }
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        TRUE
+        JUMP-ON-FALSE 0 7
+        POP
+        LOAD-CONSTANT 0
+        PRINT
+        JUMP 0 1
+        POP
+    CODE
+  end
+
+  specify "while" do
+    source = <<-LOX
+      while (true) {
+        print 1;
+      }
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        TRUE
+        JUMP-ON-FALSE 0 7
+        POP
+        LOAD-CONSTANT 0
+        PRINT
+        JUMP 255 245
+        POP
     CODE
   end
 end

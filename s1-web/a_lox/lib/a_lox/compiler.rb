@@ -199,8 +199,16 @@ module ALox
     end
 
     def visit_literal(literal_expression)
-      constant_index = add_constant(literal_expression.value)
-      emit_two(Opcodes::LOAD_CONSTANT, constant_index)
+      if literal_expression.value == true
+        emit(Opcodes::TRUE)
+      elsif literal_expression.value == false
+        emit(Opcodes::FALSE)
+      elsif literal_expression.value == nil
+        emit(Opcodes::NIL)
+      else
+        constant_index = add_constant(literal_expression.value)
+        emit_two(Opcodes::LOAD_CONSTANT, constant_index)
+      end
     end
 
     def visit_logical(logical_expression)

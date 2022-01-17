@@ -73,7 +73,7 @@ RSpec::Matchers.define :compile_to do |expected|
           compiled_arg = compiled_function.shift
           unless compiled_arg == arg
             expectation_error =
-              "Wrong arg in #{function_name}: expected `#{arg}` at index #{index} but was `#{compiled_arg}` instead"
+              "Wrong arg for #{op} in #{function_name}: expected `#{arg}` at index #{index} but was `#{compiled_arg}` instead"
             return false
           end
         end

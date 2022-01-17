@@ -61,7 +61,7 @@ module ALox
       end
 
       def jump(offset_byte_1, ofsset_byte_2)
-        @ip += [offset_byte_1, ofsset_byte_2].map(&:chr).join.unpack1("s")
+        @ip += [offset_byte_1, ofsset_byte_2].map(&:chr).join.unpack1("s>")
       end
     end
 
@@ -127,6 +127,10 @@ module ALox
           )
         when Opcodes::NIL
           @stack.push(nil)
+        when Opcodes::TRUE
+          @stack.push(true)
+        when Opcodes::FALSE
+          @stack.push(false)
         when Opcodes::NOT
           @stack.push(falsey?(@stack.pop))
         when Opcodes::NEGATE

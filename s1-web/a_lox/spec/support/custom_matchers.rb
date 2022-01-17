@@ -1,5 +1,4 @@
 RSpec::Matchers.define :compile_to do |expected|
-
   def report_scanner_error(line, message)
     @compilation_error_type = :scanner
     @compilation_error = message
@@ -58,6 +57,7 @@ RSpec::Matchers.define :compile_to do |expected|
       .to_h
 
   expectation_error = nil
+  heap_allocations = {}
 
   match do |source|
     executable = compile(source)
@@ -82,10 +82,28 @@ RSpec::Matchers.define :compile_to do |expected|
 
         args.each do |arg|
           compiled_arg = compiled_function.shift
-          unless compiled_arg == arg
-            expectation_error =
-              "Wrong arg for #{op} in #{function_name}: expected `#{arg}` at index #{index} but was `#{compiled_arg}` instead"
-            return false
+
+          if arg.start_with?("H-")
+            variable = arg[/H-(\w+)/, 1]
+            if heap_allocations[variable]
+              if heap_allocations[variable] != compiled_arg
+                expectation_error =
+                  "Heap allocation slot for #{op} was expected to be #{heap_allocations[variable]} but was #{compiled_arg}"
+                return false
+              end
+            elsif heap_allocations.values.include?(compiled_arg)
+              expectation_error =
+                "Heap allocation slot for #{op} already seen as H-#{heap_allocations.key(compiled_arg)}"
+              return false
+            else
+              heap_allocations[variable] = compiled_arg
+            end
+          else
+            unless compiled_arg == arg
+              expectation_error =
+                "Wrong arg for #{op} in #{function_name}: expected `#{arg}` at index #{index} but was `#{compiled_arg}` instead"
+              return false
+            end
           end
         end
       end

@@ -170,4 +170,146 @@ RSpec.describe ALox::Compiler do
         POP
     CODE
   end
+
+  specify "functions" do
+    source = <<-LOX
+      fun fn() {
+        print 1;
+      }
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        LOAD-CLOSURE 1
+        DEFINE-GLOBAL 2
+        NIL
+        RETURN
+      __global__fn__:
+        LOAD-CONSTANT 0
+        PRINT
+        NIL
+        RETURN
+    CODE
+  end
+
+  specify "function parameters" do
+    source = <<-LOX
+      fun fn(x) {
+        print x;
+      }
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        LOAD-CLOSURE 0
+        DEFINE-GLOBAL 1
+        NIL
+        RETURN
+      __global__fn__:
+        GET-LOCAL 0
+        PRINT
+        NIL
+        RETURN
+    CODE
+  end
+
+  specify "function return" do
+    source = <<-LOX
+      fun fn() {
+        return 42;
+      }
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        LOAD-CLOSURE 1
+        DEFINE-GLOBAL 2
+        NIL
+        RETURN
+      __global__fn__:
+        LOAD-CONSTANT 0
+        RETURN
+    CODE
+  end
+
+  specify "function locals" do
+    source = <<-LOX
+      fun fn() {
+        var x = 1;
+        print x;
+      }
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        LOAD-CLOSURE 1
+        DEFINE-GLOBAL 2
+        NIL
+        RETURN
+      __global__fn__:
+        LOAD-CONSTANT 0
+        GET-LOCAL 0
+        PRINT
+        NIL
+        RETURN
+    CODE
+  end
+
+  specify "inner functions" do
+    source = <<-LOX
+      fun fn() {
+        fun inner() {
+          print 1;
+        }
+      }
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        LOAD-CLOSURE 2
+        DEFINE-GLOBAL 3
+        NIL
+        RETURN
+      __global__fn__:
+        LOAD-CLOSURE 1
+        NIL
+        RETURN
+      __global__fn__inner__:
+        LOAD-CONSTANT 0
+        PRINT
+        NIL
+        RETURN
+    CODE
+  end
+
+  specify "closures" do
+    source = <<-LOX
+      fun fn() {
+        var x = 42;
+
+        fun inner() {
+          print x;
+        }
+      }
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        LOAD-CLOSURE 2
+        DEFINE-GLOBAL 3
+        NIL
+        RETURN
+      __global__fn__:
+        LOAD-CONSTANT 0
+        INIT-HEAP H-XXX
+        LOAD-CLOSURE 1
+        NIL
+        RETURN
+      __global__fn__inner__:
+        GET-HEAP H-XXX
+        PRINT
+        NIL
+        RETURN
+    CODE
+  end
 end

@@ -18,11 +18,12 @@ module ALox
       end
     end
 
-    def initialize(statements, executable, name = "__script__", arity = 0)
+    def initialize(statements, executable, name = "__script__", arity = 0, error_reporter: nil)
       @statements = statements
       @executable = executable
       @name = name
       @function = FunctionDescriptor.new(name, arity)
+      @error_reporter = error_reporter
 
       executable.reset_function(name)
     end

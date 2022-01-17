@@ -93,11 +93,11 @@ RSpec.describe ALox::Compiler do
     expect(source).to compile_to <<-CODE
       __script__:
         TRUE
-        JUMP-ON-FALSE 0 7
+        JUMP-ON-FALSE +7
         POP
         LOAD-CONSTANT 0
         PRINT
-        JUMP 0 4
+        JUMP +4
         POP
         LOAD-CONSTANT 1
         PRINT
@@ -116,11 +116,11 @@ RSpec.describe ALox::Compiler do
     expect(source).to compile_to <<-CODE
       __script__:
         TRUE
-        JUMP-ON-FALSE 0 7
+        JUMP-ON-FALSE +7
         POP
         LOAD-CONSTANT 0
         PRINT
-        JUMP 0 1
+        JUMP +1
         POP
     CODE
   end
@@ -135,11 +135,38 @@ RSpec.describe ALox::Compiler do
     expect(source).to compile_to <<-CODE
       __script__:
         TRUE
-        JUMP-ON-FALSE 0 7
+        JUMP-ON-FALSE +7
         POP
         LOAD-CONSTANT 0
         PRINT
-        JUMP 255 245
+        JUMP -11
+        POP
+    CODE
+  end
+
+  specify "for" do
+    source = <<-LOX
+      for(var x = 0; x < 10; x = x + 1) {
+        print x;
+      }
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        LOAD-CONSTANT 0
+        GET-LOCAL 0
+        LOAD-CONSTANT 1
+        LESSER
+        JUMP-ON-FALSE +15
+        POP
+        GET-LOCAL 0
+        PRINT
+        GET-LOCAL 0
+        LOAD-CONSTANT 2
+        ADD
+        SET-LOCAL 0
+        POP
+        JUMP -23
         POP
     CODE
   end

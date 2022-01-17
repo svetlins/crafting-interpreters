@@ -39,6 +39,14 @@ RSpec::Matchers.define :compile_to do |expected|
     executable
   end
 
+  def process_args(args)
+    if args.count == 1 && args.first =~ (/^(\+|-)/)
+      [args.first.to_i].pack('s>').bytes.map(&:to_s)
+    else
+      args
+    end
+  end
+
   expected_executable =
     expected.lines
       .map(&:chomp)
@@ -54,8 +62,6 @@ RSpec::Matchers.define :compile_to do |expected|
   match do |source|
     executable = compile(source)
 
-    binding.irb
-
     return false unless executable
 
     expected_executable.each do |function_name, ops|
@@ -63,6 +69,9 @@ RSpec::Matchers.define :compile_to do |expected|
 
       ops.each_with_index do |op, index|
         op, *args = op.split(/\s/)
+
+        args = process_args(args)
+
         compiled_op = compiled_function.shift
 
         unless compiled_op == op

@@ -3,7 +3,7 @@ require "stringio"
 
 module ALox
   RSpec.describe VM do
-    def execute(source)
+    def execute(source, vm: nil)
       tokens = Scanner.new(source).scan
       ast = Parser.new(tokens).parse
       executable = Executable.new
@@ -17,7 +17,7 @@ module ALox
 
       stdout = StringIO.new
 
-      VM.execute(executable, out: stdout)
+      (vm || VM).execute(executable, out: stdout)
 
       stdout.tap(&:rewind).read.chomp
     end
@@ -248,28 +248,36 @@ module ALox
 
       it "does not leak" do
         source = <<-LOX
-          fun outer(x) {
-            var p = x;
+          fun program() {
+            fun outer(x) {
+              var p = x;
 
-            fun middle(y) {
-              var q = y;
+              fun middle(y) {
+                var q = y;
 
-              fun inner(r) {
-                print p * q * r;
+                fun inner(r) {
+                  print p * q * r;
+                }
+
+                return inner;
               }
 
-              return inner;
+              return middle;
             }
 
-            return middle;
+            var h1 = outer(2);
+            var h2 = outer(3);
+
+            h2(5)(7);
+            h1(11)(13);
           }
 
-          var h1 = outer(2);
-          var h2 = outer(3);
-
-          h2(5)(7);
-          h1(11)(13);
+          program();
         LOX
+
+        vm = VM.new
+
+        execute(source, vm: vm)
 
         ObjectSpace.garbage_collect
 

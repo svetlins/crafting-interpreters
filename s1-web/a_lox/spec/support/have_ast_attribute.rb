@@ -1,4 +1,4 @@
-RSpec::Matchers.define :have_slot do |expected_slot, at:|
+RSpec::Matchers.define :have_ast_attribute do |expected, at:|
   def report_scanner_error(line, message)
     @compilation_error_type = :scanner
     @compilation_error = message
@@ -40,26 +40,33 @@ RSpec::Matchers.define :have_slot do |expected_slot, at:|
   match do |source|
     ast = analyze(source)
 
-    current_node = ast
+    if ast
+      current_node = ast
 
-    at.split('.').each do |path_segment|
-      if path_segment =~ /\d+/
-        current_node = current_node[path_segment.to_i]
-      else
-        current_node = current_node.public_send(path_segment)
+      at.split('.').each do |path_segment|
+        if path_segment =~ /\d+/
+          current_node = current_node[path_segment.to_i]
+        else
+          current_node = current_node.public_send(path_segment)
+        end
       end
-    end
 
-    if current_node.allocation.slot != expected_slot
-      error = "Expected #{at} to have a stack slot #{expected_slot} but was #{current_node.allocation.slot} instead"
-      return false
+      if current_node != expected
+        error = "Expected #{at} to have #{expected} but was #{current_node} instead"
+        return false
+      else
+        return true
+      end
     else
-      return true
+      return false
     end
-
   end
 
   failure_message do |actual|
-    error
+    if @compilation_error
+      @compilation_error
+    else
+      error
+    end
   end
 end

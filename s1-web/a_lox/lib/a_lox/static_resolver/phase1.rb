@@ -14,7 +14,9 @@ module ALox
         @kind = kind
       end
 
-      attr_reader :kind
+      def kind
+        @kind
+      end
 
       def slot=(slot)
         fail unless local?
@@ -24,6 +26,16 @@ module ALox
       def slot
         return object_id if heap_allocated?
         @slot || fail
+      end
+
+      def stack_slot
+        fail unless local?
+        slot
+      end
+
+      def heap_slot
+        fail unless heap_allocated?
+        slot
       end
 
       def global?

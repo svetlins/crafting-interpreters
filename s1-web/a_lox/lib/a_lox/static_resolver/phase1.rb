@@ -14,9 +14,7 @@ module ALox
         @kind = kind
       end
 
-      def kind
-        @kind
-      end
+      attr_reader :kind
 
       def slot=(slot)
         fail unless local?

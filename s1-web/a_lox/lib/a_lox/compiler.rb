@@ -203,7 +203,7 @@ module ALox
         emit(Opcodes::TRUE)
       elsif literal_expression.value == false
         emit(Opcodes::FALSE)
-      elsif literal_expression.value == nil
+      elsif literal_expression.value.nil?
         emit(Opcodes::NIL)
       else
         constant_index = add_constant(literal_expression.value)

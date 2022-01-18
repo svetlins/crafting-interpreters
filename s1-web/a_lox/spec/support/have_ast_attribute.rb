@@ -24,7 +24,6 @@ RSpec::Matchers.define :have_ast_attribute do |expected, at:|
     return if @compilation_error
     ast = ALox::Parser.new(tokens, error_reporter: self).parse
     return if @compilation_error
-    executable = ALox::Executable.new
 
     phase1 = ALox::StaticResolver::Phase1.new(error_reporter: self)
     phase2 = ALox::StaticResolver::Phase2.new(error_reporter: self)
@@ -43,11 +42,11 @@ RSpec::Matchers.define :have_ast_attribute do |expected, at:|
     if ast
       current_node = ast
 
-      at.split('.').each do |path_segment|
-        if path_segment =~ /\d+/
-          current_node = current_node[path_segment.to_i]
+      at.split(".").each do |path_segment|
+        current_node = if /\d+/.match?(path_segment)
+          current_node[path_segment.to_i]
         else
-          current_node = current_node.public_send(path_segment)
+          current_node.public_send(path_segment)
         end
       end
 
@@ -63,10 +62,6 @@ RSpec::Matchers.define :have_ast_attribute do |expected, at:|
   end
 
   failure_message do |actual|
-    if @compilation_error
-      @compilation_error
-    else
-      error
-    end
+    @compilation_error || error
   end
 end

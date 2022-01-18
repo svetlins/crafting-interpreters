@@ -56,7 +56,6 @@ module ALox
       LOX
 
       expect(execute(source)).to eq("100.0")
-
     end
 
     it "can assign to locals" do
@@ -243,7 +242,7 @@ module ALox
       end
 
       def current_heap_values
-        ObjectSpace.each_object.select { |obj| obj.class == VM::HeapValue }
+        ObjectSpace.each_object.select { |obj| obj.instance_of?(VM::HeapValue) }
       end
 
       it "does not leak" do

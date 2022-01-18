@@ -40,7 +40,7 @@ RSpec::Matchers.define :compile_to do |expected|
 
   def process_args(args)
     if args.count == 1 && args.first =~ (/^(\+|-)/)
-      [args.first.to_i].pack('s>').bytes.map(&:to_s)
+      [args.first.to_i].pack("s>").bytes.map(&:to_s)
     else
       args
     end
@@ -53,7 +53,7 @@ RSpec::Matchers.define :compile_to do |expected|
       .chunk { _1.end_with?(":") }
       .map { _1.last }
       .each_slice(2)
-      .map { [_1.first.first.chomp(":") ,_1.last] }
+      .map { [_1.first.first.chomp(":"), _1.last] }
       .to_h
 
   expectation_error = nil
@@ -93,7 +93,7 @@ RSpec::Matchers.define :compile_to do |expected|
                   "#{heap_allocations.key(compiled_arg) ? "H-" + heap_allocations.key(compiled_arg) : compiled_arg}"
                 return false
               end
-            elsif heap_allocations.values.include?(compiled_arg)
+            elsif heap_allocations.value?(compiled_arg)
               expectation_error =
                 "Heap allocation slot for #{op} in #{function_name} already seen as H-#{heap_allocations.key(compiled_arg)}"
               return false

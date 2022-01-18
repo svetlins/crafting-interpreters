@@ -35,6 +35,8 @@ RSpec::Matchers.define :have_slot do |expected_slot, at:|
     ast
   end
 
+  error = nil
+
   match do |source|
     ast = analyze(source)
 
@@ -48,10 +50,16 @@ RSpec::Matchers.define :have_slot do |expected_slot, at:|
       end
     end
 
-    current_node.allocation.slot == expected_slot
+    if current_node.allocation.slot != expected_slot
+      error = "Expected #{at} to have a stack slot #{expected_slot} but was #{current_node.allocation.slot} instead"
+      return false
+    else
+      return true
+    end
+
   end
 
   failure_message do |actual|
-    "tough :("
+    error
   end
 end

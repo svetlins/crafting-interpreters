@@ -32,19 +32,65 @@ module ALox
       specify "nested blocks don't interfere" do
         source = <<-LOX
           {
-            var x = 1;
+            var x;
 
             {
-              var y = 2;
+              var y;
             }
 
-            var z = 3;
+            var z;
           }
         LOX
 
         expect(source).to have_slot(0, at: "0.statements.0")
         expect(source).to have_slot(1, at: "0.statements.1.statements.0")
         expect(source).to have_slot(1, at: "0.statements.2")
+      end
+
+      specify "nested block variable access" do
+        source = <<-LOX
+          {
+            var x;
+            print x;
+
+            {
+              var y;
+              print y;
+            }
+
+            var z;
+            print z;
+          }
+        LOX
+
+        expect(source).to have_slot(0, at: "0.statements.1.expression")
+        expect(source).to have_slot(1, at: "0.statements.2.statements.1.expression")
+        expect(source).to have_slot(1, at: "0.statements.4.expression")
+      end
+
+      specify "function variables are on the stack" do
+        source = <<-LOX
+          fun fn() {
+            var x;
+            var y;
+          }
+        LOX
+
+        expect(source).to have_slot(0, at: "0.body.0")
+        expect(source).to have_slot(1, at: "0.body.1")
+      end
+
+      xspecify "function parameters are on the stack" do
+        source = <<-LOX
+          fun fn(x, y) {
+            var z;
+          }
+        LOX
+
+        expect(source).to have_slot(0, at: "0.parameters.0")
+        expect(source).to have_slot(1, at: "0.parameters.1")
+
+        expect(source).to have_slot(2, at: "0.body.0")
       end
 
     #   it "works for multiple functions" do

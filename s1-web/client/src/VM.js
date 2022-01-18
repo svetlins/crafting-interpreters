@@ -147,6 +147,12 @@ export function createVM(executable) {
           case "NIL":
             stack.push(null);
             break;
+          case "TRUE":
+            stack.push(true);
+            break;
+          case "FALSE":
+            stack.push(false);
+            break;
           case "JUMP-ON-FALSE":
             const offsetByte1 = callFrame.readCode();
             const offsetByte2 = callFrame.readCode();

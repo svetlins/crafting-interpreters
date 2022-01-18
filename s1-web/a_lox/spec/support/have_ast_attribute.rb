@@ -43,11 +43,12 @@ RSpec::Matchers.define :have_ast_attribute do |expected, at:|
       current_node = ast
 
       at.split(".").each do |path_segment|
-        current_node = if /\d+/.match?(path_segment)
-          current_node[path_segment.to_i]
-        else
-          current_node.public_send(path_segment)
-        end
+        current_node =
+          if /\d+/.match?(path_segment)
+            current_node[path_segment.to_i]
+          else
+            current_node.public_send(path_segment)
+          end
       end
 
       if current_node != expected

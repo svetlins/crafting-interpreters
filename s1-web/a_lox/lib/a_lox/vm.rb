@@ -7,6 +7,8 @@ module ALox
     end
 
     class Callable
+      attr_reader :heap_view
+
       def self.top_level_script
         OpenStruct.new(
           function_name: "__script__",
@@ -27,8 +29,6 @@ module ALox
       def heap_slots
         @function_descriptor.heap_slots
       end
-
-      attr_reader :heap_view
     end
 
     class CallFrame

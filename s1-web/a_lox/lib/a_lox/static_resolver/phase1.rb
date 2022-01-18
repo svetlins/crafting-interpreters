@@ -1,6 +1,8 @@
 module ALox
   module StaticResolver
     class Allocation
+      attr_reader :kind
+
       def self.global
         @_global ||= new(:global)
       end
@@ -13,8 +15,6 @@ module ALox
         fail unless %i[global local heap_allocated].include? kind
         @kind = kind
       end
-
-      attr_reader :kind
 
       def slot=(slot)
         fail unless local?
@@ -51,6 +51,8 @@ module ALox
 
     class Phase1
       class FunctionScope
+        attr_reader :heap_usages
+
         def initialize(enclosing, global: false)
           @global = global
           @enclosing = enclosing
@@ -74,8 +76,6 @@ module ALox
         def heap_slots
           @heap_allocated
         end
-
-        attr_reader :heap_usages
 
         def add_variable(name)
           if @global && @scopes.size == 1

@@ -29,7 +29,7 @@ module ALox
 
       def visit_function_statement(function_statement)
         if function_statement.allocation.local?
-          function_statement.allocation.slot = generate_next_slot
+          function_statement.allocation.stack_slot = generate_next_slot
         end
 
         @function_scopes << function_statement.name.lexeme
@@ -40,7 +40,7 @@ module ALox
         @stack_frame = [0]
 
         function_statement.parameter_allocations.each do |parameter_allocation|
-          parameter_allocation.slot = generate_next_slot
+          parameter_allocation.stack_slot = generate_next_slot
         end
 
         resolve(function_statement.body)
@@ -58,7 +58,7 @@ module ALox
 
       def visit_var_statement(var_statement)
         if var_statement.allocation.local?
-          var_statement.allocation.slot = generate_next_slot
+          var_statement.allocation.stack_slot = generate_next_slot
         end
       end
 

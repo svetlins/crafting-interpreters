@@ -95,7 +95,7 @@ module ALox
         emit_two(Opcodes::DEFINE_GLOBAL, add_constant(var_statement.name.lexeme))
       elsif var_statement.allocation.local?
       elsif var_statement.allocation.heap_allocated?
-        emit_two(Opcodes::INIT_HEAP, var_statement.allocation.slot)
+        emit_two(Opcodes::INIT_HEAP, var_statement.allocation.heap_slot)
       else
         fail
       end
@@ -149,9 +149,9 @@ module ALox
         constant_index = add_constant(assign_expression.name.lexeme)
         emit_two(Opcodes::SET_GLOBAL, constant_index)
       elsif assign_expression.allocation.local?
-        emit_two(Opcodes::SET_LOCAL, assign_expression.allocation.slot)
+        emit_two(Opcodes::SET_LOCAL, assign_expression.allocation.stack_slot)
       elsif assign_expression.allocation.heap_allocated?
-        emit_two(Opcodes::SET_HEAP, assign_expression.allocation.slot)
+        emit_two(Opcodes::SET_HEAP, assign_expression.allocation.heap_slot)
       else
         fail
       end
@@ -162,9 +162,9 @@ module ALox
         constant_index = add_constant(variable_expression.name.lexeme)
         emit_two(Opcodes::GET_GLOBAL, constant_index)
       elsif variable_expression.allocation.local?
-        emit_two(Opcodes::GET_LOCAL, variable_expression.allocation.slot)
+        emit_two(Opcodes::GET_LOCAL, variable_expression.allocation.stack_slot)
       elsif variable_expression.allocation.heap_allocated?
-        emit_two(Opcodes::GET_HEAP, variable_expression.allocation.slot)
+        emit_two(Opcodes::GET_HEAP, variable_expression.allocation.heap_slot)
       else
         fail
       end

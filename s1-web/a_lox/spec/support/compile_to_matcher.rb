@@ -116,7 +116,19 @@ RSpec::Matchers.define :compile_to do |expected|
     if @compilation_error
       "Did not compile due to #{@compilation_error_type} error: #{@compilation_error}"
     else
-      expectation_error
+      compilation_output =
+        compile(source)
+          .functions
+          .map { |function, code| [function, "  " + code.join("\n  ")] }
+          .map { |function, code| "#{function}:\n#{code}" }
+          .join("\n")
+
+      <<~ERROR
+        #{expectation_error}
+
+        Compilation output:
+        #{compilation_output}
+      ERROR
     end
   end
 end

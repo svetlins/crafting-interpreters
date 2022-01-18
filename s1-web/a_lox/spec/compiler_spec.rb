@@ -420,4 +420,52 @@ RSpec.describe ALox::Compiler do
         RETURN
     CODE
   end
+
+  specify "closure from block" do
+    source = <<-LOX
+      fun fn(p) {
+        var x = p;
+        var fn;
+
+        {
+          fun inner() {
+            return x;
+          }
+
+          fn = inner;
+        }
+
+        return fn;
+      }
+
+      fn(1)();
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        LOAD-CLOSURE 1
+        DEFINE-GLOBAL 2
+        GET-GLOBAL 2
+        LOAD-CONSTANT 3
+        CALL 1
+        CALL 0
+        POP
+        NIL
+        RETURN
+      __global__fn__:
+        GET-LOCAL 0
+        INIT-HEAP H-XXX
+        NIL
+        LOAD-CLOSURE 0
+        GET-LOCAL 2
+        SET-LOCAL 1
+        POP
+        POP
+        GET-LOCAL 1
+        RETURN
+      __global__fn__inner__:
+        GET-HEAP H-XXX
+        RETURN
+    CODE
+  end
 end

@@ -88,12 +88,14 @@ RSpec::Matchers.define :compile_to do |expected|
             if heap_allocations[variable]
               if heap_allocations[variable] != compiled_arg
                 expectation_error =
-                  "Heap allocation slot for #{op} was expected to be #{heap_allocations[variable]} but was #{compiled_arg}"
+                  "Heap allocation in #{function_name} slot for #{op} " \
+                  "was expected to be #{arg} but was " \
+                  "#{heap_allocations.key(compiled_arg) ? "H-" + heap_allocations.key(compiled_arg) : compiled_arg}"
                 return false
               end
             elsif heap_allocations.values.include?(compiled_arg)
               expectation_error =
-                "Heap allocation slot for #{op} already seen as H-#{heap_allocations.key(compiled_arg)}"
+                "Heap allocation slot for #{op} in #{function_name} already seen as H-#{heap_allocations.key(compiled_arg)}"
               return false
             else
               heap_allocations[variable] = compiled_arg

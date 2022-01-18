@@ -39,6 +39,22 @@ RSpec.describe ALox::Compiler do
     CODE
   end
 
+  specify "global variable default initializer" do
+    source = <<-LOX
+      var x;
+      print x;
+    LOX
+
+    expect(source).to compile_to <<-CODE
+    __script__:
+      NIL
+      DEFINE-GLOBAL 0
+      GET-GLOBAL 0
+      PRINT
+      NIL
+      RETURN
+    CODE
+  end
   specify "block" do
     source = <<-LOX
       {
@@ -307,6 +323,98 @@ RSpec.describe ALox::Compiler do
         RETURN
       __global__fn__inner__:
         GET-HEAP H-XXX
+        PRINT
+        NIL
+        RETURN
+    CODE
+  end
+
+  specify "multiple closures" do
+    source = <<-LOX
+      fun fn() {
+        var x = 42;
+        var y = 43;
+
+        fun inner() {
+          print x + y;
+        }
+      }
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        LOAD-CLOSURE 3
+        DEFINE-GLOBAL 4
+        NIL
+        RETURN
+      __global__fn__:
+        LOAD-CONSTANT 0
+        INIT-HEAP H-XXX
+        LOAD-CONSTANT 1
+        INIT-HEAP H-YYY
+        LOAD-CLOSURE 2
+        NIL
+        RETURN
+      __global__fn__inner__:
+        GET-HEAP H-XXX
+        GET-HEAP H-YYY
+        ADD
+        PRINT
+        NIL
+        RETURN
+    CODE
+  end
+
+  specify "function call" do
+    source = <<-LOX
+      fun fn() {
+        print 1;
+      }
+
+      fn();
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        LOAD-CLOSURE 1
+        DEFINE-GLOBAL 2
+        GET-GLOBAL 2
+        CALL 0
+        POP
+        NIL
+        RETURN
+      __global__fn__:
+        LOAD-CONSTANT 0
+        PRINT
+        NIL
+        RETURN
+    CODE
+  end
+
+  specify "function call with parameters" do
+    source = <<-LOX
+      fun fn(x, y) {
+        print x + y;
+      }
+
+      fn(1, 2);
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __script__:
+        LOAD-CLOSURE 0
+        DEFINE-GLOBAL 1
+        GET-GLOBAL 1
+        LOAD-CONSTANT 2
+        LOAD-CONSTANT 3
+        CALL 2
+        POP
+        NIL
+        RETURN
+      __global__fn__:
+        GET-LOCAL 0
+        GET-LOCAL 1
+        ADD
         PRINT
         NIL
         RETURN

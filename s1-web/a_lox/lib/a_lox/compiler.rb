@@ -73,7 +73,7 @@ module ALox
       if return_statement.value
         return_statement.value.accept(self)
       else
-        emit(Opcodes::NIL)
+        emit(Opcodes::NIL_OP)
       end
 
       emit(Opcodes::RETURN)
@@ -88,7 +88,7 @@ module ALox
       if var_statement.initializer
         var_statement.initializer.accept(self)
       else
-        emit(Opcodes::NIL)
+        emit(Opcodes::NIL_OP)
       end
 
       if var_statement.allocation.global?
@@ -193,11 +193,11 @@ module ALox
 
     def visit_literal(literal_expression)
       if literal_expression.value == true
-        emit(Opcodes::TRUE)
+        emit(Opcodes::TRUE_OP)
       elsif literal_expression.value == false
-        emit(Opcodes::FALSE)
+        emit(Opcodes::FALSE_OP)
       elsif literal_expression.value.nil?
-        emit(Opcodes::NIL)
+        emit(Opcodes::NIL_OP)
       else
         constant_index = add_constant(literal_expression.value)
         emit_two(Opcodes::LOAD_CONSTANT, constant_index)
@@ -264,7 +264,7 @@ module ALox
     end
 
     def emit_return
-      emit(Opcodes::NIL)
+      emit(Opcodes::NIL_OP)
       emit(Opcodes::RETURN)
     end
   end

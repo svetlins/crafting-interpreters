@@ -134,11 +134,11 @@ module ALox
           @stack.push(
             call_frame.callable.heap_view[call_frame.read_code].value
           )
-        when Opcodes::NIL
+        when Opcodes::NIL_OP
           @stack.push(nil)
-        when Opcodes::TRUE
+        when Opcodes::TRUE_OP
           @stack.push(true)
-        when Opcodes::FALSE
+        when Opcodes::FALSE_OP
           @stack.push(false)
         when Opcodes::NOT
           @stack.push(falsey?(@stack.pop))

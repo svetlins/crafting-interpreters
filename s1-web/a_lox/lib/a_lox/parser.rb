@@ -346,9 +346,9 @@ module ALox
 
     def parse_primary
       if match_any?(NUMBER, STRING) then return Literal.new(previous.literal) end
-      if match_any?(FALSE) then return Literal.new(false) end
-      if match_any?(TRUE) then return Literal.new(true) end
-      if match_any?(NIL) then return Literal.new(nil) end
+      if match_any?(FALSE_TOKEN) then return Literal.new(false) end
+      if match_any?(TRUE_TOKEN) then return Literal.new(true) end
+      if match_any?(NIL_TOKEN) then return Literal.new(nil) end
       if match_any?(IDENTIFIER) then return Variable.new(previous) end
 
       if match_any?(LEFT_PAREN)

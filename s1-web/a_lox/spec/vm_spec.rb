@@ -109,7 +109,7 @@ module ALox
         fn();
       LOX
 
-      expect(execute(source)).to eq("\"nope\"\n\"preserves stack\"")
+      expect(execute(source)).to eq("nope\npreserves stack")
     end
 
     it "handles then branch of if" do
@@ -129,7 +129,7 @@ module ALox
         fn();
       LOX
 
-      expect(execute(source)).to eq("\"yep\"\n\"preserves stack\"")
+      expect(execute(source)).to eq("yep\npreserves stack")
     end
 
     it "handles while loops" do

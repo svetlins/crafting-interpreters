@@ -17,9 +17,9 @@ module ALox
     NEGATE = "NEGATE"
 
     POP = "POP"
-    TRUE = "TRUE"
-    FALSE = "FALSE"
-    NIL = "NIL"
+    TRUE_OP = "TRUE"
+    FALSE_OP = "FALSE"
+    NIL_OP = "NIL"
 
     PRINT = "PRINT"
 

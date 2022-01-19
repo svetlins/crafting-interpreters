@@ -30,11 +30,11 @@ module ALox
     OR = "OR"
     IF = "IF"
     ELSE = "ELSE"
-    TRUE = "TRUE"
-    FALSE = "FALSE"
+    TRUE_TOKEN = "TRUE"
+    FALSE_TOKEN = "FALSE"
     WHILE = "WHILE"
     FOR = "FOR"
-    NIL = "NIL"
+    NIL_TOKEN = "NIL"
     FUN = "FUN"
 
     PRINT = "PRINT"
@@ -56,15 +56,15 @@ module ALox
     KEY_WORDS = {
       "and" => AND,
       "else" => ELSE,
-      "false" => FALSE,
       "for" => FOR,
       "fun" => FUN,
       "if" => IF,
-      "nil" => NIL,
+      "nil" => NIL_TOKEN,
       "or" => OR,
       "print" => PRINT,
       "return" => RETURN,
-      "true" => TRUE,
+      "true" => TRUE_TOKEN,
+      "false" => FALSE_TOKEN,
       "var" => VAR,
       "while" => WHILE
     }

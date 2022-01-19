@@ -1,12 +1,11 @@
 #!/usr/bin/env ruby
 require "a_lox"
 require "readline"
-require "a_lox/commands/execute_source"
 
 module ALox
   class PersistentSession
     def initialize
-      @vm = VM.new
+      @vm = VM.new(error_reporter: self)
       @executable_container = ExecutableContainer.new
     end
 

@@ -80,10 +80,13 @@ module ALox
         CallFrame.new(executable, @stack, Callable.top_level_script)
       ]
 
+      @had_error = false
+
       loop do
         call_frame = call_frames.last
 
         break if call_frame.nil?
+        break if @had_error
 
         op = call_frame.read_code
 
@@ -109,7 +112,9 @@ module ALox
         when Opcodes::DEFINE_GLOBAL
           @globals[call_frame.read_constant(call_frame.read_code)] = @stack.pop
         when Opcodes::GET_GLOBAL
-          @stack.push(@globals[call_frame.read_constant(call_frame.read_code)])
+          global_name = call_frame.read_constant(call_frame.read_code)
+          error("Undefined global #{global_name}") unless @globals.has_key?(global_name)
+          @stack.push(@globals[global_name])
         when Opcodes::SET_LOCAL
           call_frame.set_stack_slot(call_frame.read_code, @stack.last)
         when Opcodes::GET_LOCAL
@@ -202,7 +207,8 @@ module ALox
       a == b # TODO
     end
 
-    def error(message, call_frames)
+    def error(message)
+      @had_error = true
       @error_reporter&.report_runtime_error(message)
     end
 

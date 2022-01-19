@@ -41,11 +41,5 @@ module ALox
       condition
       body
     end
-
-    ClassStatement = define_node do
-      name
-      superclass
-      methods
-    end
   end
 end

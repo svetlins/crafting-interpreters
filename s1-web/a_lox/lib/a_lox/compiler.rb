@@ -141,7 +141,6 @@ module ALox
     def visit_class_statement
     end
 
-    # expressions
     def visit_assign(assign_expression)
       assign_expression.value.accept(self)
 
@@ -168,12 +167,6 @@ module ALox
       else
         fail
       end
-    end
-
-    def visit_super_expression
-    end
-
-    def visit_this_expression
     end
 
     def visit_binary(binary_expression)

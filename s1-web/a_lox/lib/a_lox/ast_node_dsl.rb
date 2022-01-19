@@ -53,27 +53,6 @@ module ALox
           visitor.public_send(:"visit_#{underscore(self.class.name)}", self)
         end
 
-        define_method :inspect do
-          [
-            self.class.name,
-            "(",
-
-            [
-              *env.primary_fields.map do |field_name|
-                "#{field_name}=#{public_send(field_name) || "nil"}"
-              end,
-
-              *env.additional_fields.map do |field_name|
-                "#{field_name}=#{public_send(field_name) || "(not yet set)"}"
-              end
-            ].join(", "),
-
-            ")"
-          ].join
-        end
-
-        alias_method :to_s, :inspect
-
         private
 
         def present_fields_list(fields)

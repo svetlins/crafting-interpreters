@@ -227,15 +227,6 @@ module ALox
         end
       end
 
-      def visit_get_expression(get_expression)
-        resolve(get_expression.object)
-      end
-
-      def visit_set_expression(set_expression)
-        resolve(set_expression.value)
-        resolve(set_expression.object)
-      end
-
       def visit_grouping(grouping_expression)
         resolve(grouping_expression.expression)
       end
@@ -251,12 +242,6 @@ module ALox
 
       def visit_literal(literal_expression)
       end
-
-      def visit_this_expression(this_expression) = fail
-
-      def visit_super_expression(super_expression) = fail
-
-      def visit_class_statement(class_statement) = fail
     end
   end
 end

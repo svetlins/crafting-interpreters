@@ -39,23 +39,5 @@ module ALox
       paren
       arguments
     end
-
-    GetExpression = define_node do
-      object
-      name
-    end
-
-    SetExpression = define_node do
-      object
-      name
-      value
-    end
-
-    SuperExpression = define_node do
-      keyword
-      method_name
-    end
-
-    ThisExpression = define_node { keyword }
   end
 end

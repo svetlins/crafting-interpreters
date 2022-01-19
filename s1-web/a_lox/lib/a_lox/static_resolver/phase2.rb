@@ -15,7 +15,7 @@ module ALox
         end
       end
 
-      def generate_next_slot
+      def generate_next_stack_slot
         next_slot = @stack_frame.last
         @stack_frame[-1] = @stack_frame.last + 1
 
@@ -29,7 +29,7 @@ module ALox
 
       def visit_function_statement(function_statement)
         if function_statement.allocation.local?
-          function_statement.allocation.stack_slot = generate_next_slot
+          function_statement.allocation.stack_slot = generate_next_stack_slot
         end
 
         @function_scopes << function_statement.name.lexeme
@@ -40,7 +40,7 @@ module ALox
         @stack_frame = [0]
 
         function_statement.parameter_allocations.each do |parameter_allocation|
-          parameter_allocation.stack_slot = generate_next_slot
+          parameter_allocation.stack_slot = generate_next_stack_slot
         end
 
         resolve(function_statement.body)
@@ -58,7 +58,7 @@ module ALox
 
       def visit_var_statement(var_statement)
         if var_statement.allocation.local?
-          var_statement.allocation.stack_slot = generate_next_slot
+          var_statement.allocation.stack_slot = generate_next_stack_slot
         end
       end
 
@@ -79,10 +79,6 @@ module ALox
         while_statement.body.accept(self)
       end
 
-      def visit_class_statement
-        fail
-      end
-
       ### Expressions
       def visit_assign(*)
       end
@@ -90,19 +86,10 @@ module ALox
       def visit_variable(*)
       end
 
-      def visit_super_expression
-      end
-
-      def visit_this_expression
-      end
-
       def visit_binary(binary_expression)
-        binary_expression.left.accept(self)
-        binary_expression.right.accept(self)
       end
 
       def visit_grouping(grouping_expression)
-        grouping_expression.expression.accept(self)
       end
 
       def visit_literal(*)
@@ -112,18 +99,9 @@ module ALox
       end
 
       def visit_unary(unary_expression)
-        unary_expression.right.accept(self)
       end
 
       def visit_call(call_expression)
-        call_expression.callee.accept(self)
-        call_expression.arguments.each { |argument| argument.accept(self) }
-      end
-
-      def visit_get_expression
-      end
-
-      def visit_set_expression
       end
     end
   end

@@ -24,8 +24,6 @@ module ALox
         parse_variable_declaration
       elsif match_any?(FUN)
         parse_function_declaration(:function)
-      elsif match_any?(CLASS)
-        parse_class_declaration
       else
         parse_statement
       end
@@ -69,27 +67,6 @@ module ALox
       body = parse_block_statement
 
       FunctionStatement.new(name, parameters, body)
-    end
-
-    def parse_class_declaration
-      name = consume(IDENTIFIER, "Expected class name")
-
-      if match_any?(LESS)
-        identifier = consume(IDENTIFIER, "Expected superclass name")
-        superclass = Variable.new(identifier)
-      end
-
-      consume(LEFT_BRACE, "Expected { before class body")
-
-      methods = []
-
-      while !check(RIGHT_BRACE) && has_more?
-        methods << parse_function_declaration(:method)
-      end
-
-      consume(RIGHT_BRACE, "Expected } after class body")
-
-      ClassStatement.new(name, superclass, methods)
     end
 
     def parse_statement
@@ -219,9 +196,6 @@ module ALox
           name = expression.name
           value = parse_expression
           return Assign.new(name, value)
-        elsif expression.is_a? GetExpression
-          value = parse_expression
-          return SetExpression.new(expression.object, expression.name, value)
         else
           error(equal, "Expected variable name on left side of assignment")
         end
@@ -375,16 +349,7 @@ module ALox
       if match_any?(false) then return Literal.new(false) end
       if match_any?(true) then return Literal.new(true) end
       if match_any?(nil) then return Literal.new(nil) end
-      if match_any?(THIS) then return ThisExpression.new(previous) end
       if match_any?(IDENTIFIER) then return Variable.new(previous) end
-
-      if match_any?(SUPER)
-        keyword = previous
-        consume(DOT, "Expected . after super")
-        method_name = consume(IDENTIFIER, "Expected superclass method name")
-
-        return SuperExpression.new(keyword, method_name)
-      end
 
       if match_any?(LEFT_PAREN)
         expression = parse_expression

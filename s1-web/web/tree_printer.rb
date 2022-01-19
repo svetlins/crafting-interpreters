@@ -93,8 +93,6 @@ class TreePrinter
     }
   end
 
-  def visit_class_statement(statement) = {name: "CLASS", attributes: {}}
-
   # ---------
 
   def visit_assign(assign_expression)
@@ -160,14 +158,6 @@ class TreePrinter
       ] + call_expression.arguments.map { |argument| adorn(argument.accept(self), "ARG") }
     }
   end
-
-  def visit_get_expression(expression) = {name: "GET", attributes: {}}
-
-  def visit_set_expression(expression) = {name: "SET", attributes: {}}
-
-  def visit_super_expression(expression) = {name: "SUPER", attributes: {}}
-
-  def visit_this_expression(expression) = {name: "THIS", attributes: {}}
 
   private
 

@@ -27,7 +27,6 @@ module ALox
     NUMBER = "NUMBER"
 
     AND = "AND"
-    CLASS = "CLASS"
     ELSE = "ELSE"
     FALSE = "FALSE"
     FUN = "FUN"
@@ -38,8 +37,6 @@ module ALox
 
     PRINT = "PRINT"
     RETURN = "RETURN"
-    SUPER = "SUPER"
-    THIS = "THIS"
     TRUE = "TRUE"
     VAR = "VAR"
     WHILE = "WHILE"
@@ -58,7 +55,6 @@ module ALox
 
     KEY_WORDS = {
       "and" => AND,
-      "class" => CLASS,
       "else" => ELSE,
       "false" => false,
       "for" => FOR,
@@ -68,8 +64,6 @@ module ALox
       "or" => OR,
       "print" => PRINT,
       "return" => RETURN,
-      "super" => SUPER,
-      "this" => THIS,
       "true" => true,
       "var" => VAR,
       "while" => WHILE

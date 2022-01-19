@@ -86,22 +86,22 @@ module ALox
       def visit_variable(*)
       end
 
-      def visit_binary(binary_expression)
+      def visit_binary(*)
       end
 
-      def visit_grouping(grouping_expression)
+      def visit_grouping(*)
       end
 
       def visit_literal(*)
       end
 
-      def visit_logical
+      def visit_logical(*)
       end
 
-      def visit_unary(unary_expression)
+      def visit_unary(*)
       end
 
-      def visit_call(call_expression)
+      def visit_call(*)
       end
     end
   end

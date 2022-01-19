@@ -205,13 +205,13 @@ module ALox
     end
 
     def visit_logical(logical_expression)
-      if logical_expression.operator.lexeme == "and"
+      if logical_expression.operator.type == TokenTypes::AND
         logical_expression.left.accept(self)
         short_circuit_exit = emit_jump(Opcodes::JUMP_ON_FALSE)
         emit(Opcodes::POP) # clean up the left since there's no short circuit
         logical_expression.right.accept(self)
         @executable.patch_jump(@name, short_circuit_exit)
-      elsif logical_expression.operator.lexeme == "or"
+      elsif logical_expression.operator.type == TokenTypes::OR
         logical_expression.left.accept(self)
         else_jump = emit_jump(Opcodes::JUMP_ON_FALSE)
         end_jump = emit_jump(Opcodes::JUMP)

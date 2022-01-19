@@ -216,6 +216,8 @@ module ALox
     def lox_object_to_string(lox_object)
       if lox_object.is_a? Callable
         "fun #{lox_object.function_name}/#{lox_object.arity}"
+      elsif lox_object.nil?
+        "nil"
       else
         lox_object.to_s
       end

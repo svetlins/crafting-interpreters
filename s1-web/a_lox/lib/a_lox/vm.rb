@@ -26,6 +26,10 @@ module ALox
         @function_descriptor.name
       end
 
+      def arity
+        @function_descriptor.arity
+      end
+
       def heap_slots
         @function_descriptor.heap_slots
       end
@@ -183,7 +187,7 @@ module ALox
 
           @stack.push(result)
         when Opcodes::PRINT
-          out.puts(@stack.pop.inspect)
+          out.puts(lox_object_to_string(@stack.pop))
         when Opcodes::JUMP_ON_FALSE
           jump_offset_byte1, jump_offset_byte2 = call_frame.read_code, call_frame.read_code
           call_frame.jump(jump_offset_byte1, jump_offset_byte2) if falsey?(@stack.last)
@@ -196,8 +200,10 @@ module ALox
         print_debug_info(binding) if debug
       end
     rescue => e
-      error(e.message, call_frames)
+      error(e.message)
     end
+
+    private
 
     def falsey?(value)
       !value
@@ -205,6 +211,14 @@ module ALox
 
     def equal?(a, b)
       a == b # TODO
+    end
+
+    def lox_object_to_string(lox_object)
+      if lox_object.is_a? Callable
+        "fun #{lox_object.function_name}/#{lox_object.arity}"
+      else
+        lox_object.to_s
+      end
     end
 
     def error(message)

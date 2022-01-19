@@ -28,7 +28,7 @@ end
 
 
 def process(source)
-  executable = ALox::Executable.new
+  executable = ALox::ExecutableContainer.new
   had_error = false
 
   error_reporter = Object.new
@@ -50,9 +50,9 @@ def process(source)
   ALox::Compiler.new(ast, executable).compile unless had_error
 
   {
-    tokens: tokens.map(&:as_json),
+    tokens: tokens.map(&:serialize),
     tree: ast ? TreePrinter.new(ast).print : nil,
-    executable: executable&.as_json
+    executable: executable&.serialize
   }
 end
 

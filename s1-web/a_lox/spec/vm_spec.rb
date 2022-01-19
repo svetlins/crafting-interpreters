@@ -6,7 +6,7 @@ module ALox
     def execute(source, vm: nil)
       tokens = Scanner.new(source).scan
       ast = Parser.new(tokens).parse
-      executable = Executable.new
+      executable = ExecutableContainer.new
 
       phase1 = StaticResolver::Phase1.new(error_reporter: nil)
       phase2 = StaticResolver::Phase2.new(error_reporter: nil)

@@ -9,7 +9,7 @@ module ALox
         @name = name
       end
 
-      def as_json
+      def serialize
         {
           type: :function,
           arity: @arity,

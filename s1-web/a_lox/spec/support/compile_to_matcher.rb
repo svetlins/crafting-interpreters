@@ -24,7 +24,7 @@ RSpec::Matchers.define :compile_to do |expected|
     return if @compilation_error
     ast = ALox::Parser.new(tokens, error_reporter: self).parse
     return if @compilation_error
-    executable = ALox::Executable.new
+    executable = ALox::ExecutableContainer.new
 
     phase1 = ALox::StaticResolver::Phase1.new(error_reporter: self)
     phase2 = ALox::StaticResolver::Phase2.new(error_reporter: self)

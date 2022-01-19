@@ -30,7 +30,7 @@ module Lab
         class #{name}Visitor
         ### Statements
         #{Statement.generate_visitors}
-        
+
         ### Expressions
         #{Expression.generate_visitors}
         end
@@ -70,7 +70,7 @@ module Lab
   def compile(source)
     tokens = Scanner.new(source).scan
     ast = Parser.new(tokens).parse
-    executable = Executable.new
+    executable = ExecutableContainer.new
 
     phase1 = StaticResolver::Phase1.new(error_reporter: self)
     phase2 = StaticResolver::Phase2.new(error_reporter: self)

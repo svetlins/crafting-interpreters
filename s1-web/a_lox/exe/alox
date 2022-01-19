@@ -4,7 +4,7 @@ require "readline"
 require "a_lox/commands/execute_source"
 
 begin
-  executable = ALox::Executable.new
+  executable = ALox::ExecutableContainer.new
   vm = ALox::VM.new(error_reporter: nil) # TODO: error_reporter
 
   buffer = ""

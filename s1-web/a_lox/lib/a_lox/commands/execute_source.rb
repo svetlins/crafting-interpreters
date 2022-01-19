@@ -6,7 +6,7 @@ module ALox
       end
 
       def call(source, executable, vm)
-        executable ||= Executable.new
+        executable ||= ExecutableContainer.new
 
         @had_error = false
 

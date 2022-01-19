@@ -45,7 +45,7 @@ module ALox
   end
 
   Token = Struct.new(:type, :lexeme, :literal, :line) do
-    def as_json
+    def serialize
       to_h.merge(name: "TOKEN")
     end
   end

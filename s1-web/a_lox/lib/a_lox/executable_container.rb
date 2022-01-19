@@ -1,5 +1,5 @@
 module ALox
-  class Executable
+  class ExecutableContainer
     PLACEHOLDER = "PLACEHOLDER"
 
     attr_reader :functions, :constants
@@ -44,10 +44,10 @@ module ALox
       @functions[function].size
     end
 
-    def as_json
+    def serialize
       {
         functions: @functions,
-        constants: @constants.map { |constant| constant.respond_to?(:as_json) ? constant.as_json : constant }
+        constants: @constants.map { |constant| constant.respond_to?(:serialize) ? constant.serialize : constant }
       }
     end
   end

@@ -402,7 +402,6 @@ module ALox
       ParserError.new
     end
 
-    # Not yet utilized :shrug:
     def synchronize
       advance
       while has_more?

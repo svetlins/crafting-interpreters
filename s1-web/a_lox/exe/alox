@@ -4,6 +4,8 @@ require "readline"
 
 module ALox
   class PersistentSession
+    attr_reader :had_error
+
     def initialize
       @vm = VM.new(error_reporter: self)
       @executable_container = ExecutableContainer.new
@@ -58,8 +60,7 @@ module ALox
   end
 end
 
-
-begin
+def repl
   session = ALox::PersistentSession.new
 
   buffer = ""
@@ -83,3 +84,15 @@ rescue Interrupt
   puts
   retry
 end
+
+if ARGV.size > 2
+  puts "Usage: rlox run [source_file] or rlox lab"
+  exit(1)
+elsif ARGV.size == 1
+  session = ALox::PersistentSession.new
+  session.execute(File.read(ARGV.first))
+  exit(session.had_error ? 1 : 0)
+elsif ARGV.size == 0
+  repl
+end
+

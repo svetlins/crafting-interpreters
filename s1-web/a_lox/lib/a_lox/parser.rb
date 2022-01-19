@@ -407,7 +407,7 @@ module ALox
       advance
       while has_more?
         return if previous.type == SEMICOLON
-        return if [CLASS, FOR, FUN, IF, PRINT, RETURN, VAR, WHILE].include? peek.type
+        return if [FOR, FUN, IF, PRINT, RETURN, VAR, WHILE].include? peek.type
 
         advance
       end

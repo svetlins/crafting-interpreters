@@ -175,12 +175,12 @@ class TreePrinter
     elsif node.allocation.local?
       {
         allocation: "STACK",
-        stack_slot: node.allocation.stack_slot
+        "stack slot" => node.allocation.stack_slot
       }
     elsif node.allocation.heap_allocated?
       {
         allocation: "HEAP",
-        heap_slot: node.allocation.heap_slot
+        "heap slot" => node.allocation.heap_slot
       }
     end
   end

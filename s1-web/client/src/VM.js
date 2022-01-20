@@ -138,6 +138,11 @@ export function createVM(executable) {
           case "MULTIPLY":
             stack.push(stack.pop() * stack.pop());
             break;
+          case "DIVIDE":
+            const bd = stack.pop();
+            const ad = stack.pop();
+            stack.push(ad / bd);
+            break;
           case "PRINT":
             output.push(stack.pop().toString());
             break;
@@ -149,6 +154,9 @@ export function createVM(executable) {
             break;
           case "TRUE":
             stack.push(true);
+            break;
+          case "NEGATE":
+            stack.push(-stack.pop());
             break;
           case "FALSE":
             stack.push(false);

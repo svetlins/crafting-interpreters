@@ -15,10 +15,10 @@ import { PresetDropdown, presetSources } from "./components/PresetDropdown";
 import { createVM } from "./VM";
 
 const tabs = [
+  { name: "Execute", icon: ChevronRightIcon },
   { name: "Tokens", icon: CubeIcon },
   { name: "AST", icon: DotsVerticalIcon },
   { name: "Bytecode", icon: CogIcon },
-  { name: "Execute", icon: ChevronRightIcon },
 ];
 
 const analyzeUrl = process.env.REACT_APP_ANALYZE_ENDPOINT_URL || "/api/analyze";
@@ -26,7 +26,7 @@ const analyzeUrl = process.env.REACT_APP_ANALYZE_ENDPOINT_URL || "/api/analyze";
 export default function App() {
   const [source, setSource] = useState(pretty(presetSources[0].source));
 
-  const [currentTab, setCurrentTab] = useState("Tokens");
+  const [currentTab, setCurrentTab] = useState("Execute");
   const [tokens, setTokens] = useState([]);
   const [tree, setTree] = useState(null);
   const [executable, setExecutable] = useState(null);
@@ -56,35 +56,9 @@ export default function App() {
       <div className="h-full flex">
         {/* Content area */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <header className="w-full">
-            <div className="relative z-10 flex-shrink-0 h-16 bg-white border-b border-gray-200 shadow-sm flex">
-              <button
-                type="button"
-                className="border-r border-gray-200 px-4 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 md:hidden"
-              >
-                <MenuAlt2Icon className="h-6 w-6" aria-hidden="true" />
-              </button>
-              <div className="flex-1 flex justify-between px-4 sm:px-6">
-                <div className="flex-1 flex"></div>
-                <div className="ml-2 flex items-center space-x-4 sm:ml-6 sm:space-x-6">
-                  <button
-                    type="button"
-                    className="flex bg-indigo-600 p-1 rounded-full items-center justify-center text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    <DotsHorizontalIcon
-                      className="h-6 w-6"
-                      aria-hidden="true"
-                    />
-                    <span className="sr-only">Add file</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </header>
-
           {/* Main content */}
           <div className="flex-1 flex items-stretch overflow-hidden">
-            <main className="overflow-y-auto resize-x w-4/12">
+            <main className="overflow-y-auto resize-x w-3/12">
               {/* Primary column */}
               <section
                 aria-labelledby="primary-heading"
@@ -231,13 +205,11 @@ function InteractiveExecution({ executable }) {
     return null;
   }
 
-  console.log(vmState.stack);
-
   return (
-    <div className="min-w-[700px] overflow-scroll">
+    <div className="min-w-[900px] overflow-scroll">
       <div className="flex flex-row">
         <button
-          className="btn m-2"
+          className="btn my-4 mx-2 ml-4"
           disabled={vmState.terminated}
           type="button"
           onClick={() => {
@@ -247,7 +219,7 @@ function InteractiveExecution({ executable }) {
           Step
         </button>
         <button
-          className="btn m-2"
+          className="btn my-4 mx-2"
           disabled={vmState.terminated}
           type="button"
           onClick={() => {
@@ -263,24 +235,24 @@ function InteractiveExecution({ executable }) {
           Run to completion
         </button>
         <button
-          className="btn m-2"
+          className="btn my-4 mx-2"
           type="button"
           onClick={() => setVMState(vm.reset())}
         >
           Reset
         </button>
       </div>
-      <div className="flex flex-col m-2">
+      <div className="flex flex-col m-4">
         <div className="flex flex-row items-start">
-          <div className="flex-1">
+          <div className="flex-1 mr-8">
             <div className="pb-5 border-b border-gray-200">
               <h3 className="text-lg leading-6 font-medium text-gray-900">
                 Call Stack / Code
               </h3>
             </div>
-            <div className="h-96 overflow-y-scroll">
+            <div className="h-96 overflow-y-scroll pt-4">
               {vmState.callFrames.map((callFrame) => (
-                <div className="font-mono m-2">
+                <div className="font-mono m-4">
                   {callFrame.functionName}@{callFrame.ip()}
                 </div>
               ))}
@@ -292,18 +264,21 @@ function InteractiveExecution({ executable }) {
             </div>
           </div>
 
-          <div className="flex-1">
-            <div className="pb-5 border-b border-gray-200">
+          <div className="flex-1 mr-8">
+            <div className="flex flex-col pb-5 border-b border-gray-200 overflow-y-scroll">
               <h3 className="text-lg leading-6 font-medium text-gray-900">
                 Globals
               </h3>
             </div>
-            <div className="h-96 overflow-y-scroll">
+            <div className="h-96 overflow-y-scroll flex flex-col pt-4">
               {Object.entries(vmState.globals || {}).map(
-                ([globalName, globalValue]) => (
+                ([globalName, globalValue], index) => (
                   <Badge
                     text={`${globalName} = ${loxObjectToString(globalValue)}`}
                     color="purple"
+                    highlight={
+                      index === Object.keys(vmState?.globals).length - 1
+                    }
                   />
                 )
               )}
@@ -316,12 +291,12 @@ function InteractiveExecution({ executable }) {
                 Stack
               </h3>
             </div>
-            <div className="flex flex-col-reverse h-96 overflow-y-scroll">
+            <div className="flex flex-col-reverse h-96 overflow-y-scroll pt-4">
               {(vmState.stack || []).map((value, index) => (
                 <Badge
                   text={loxObjectToString(value)}
                   color={
-                    index === vmState.callFrame?.stackTop ? "green" : "yellow"
+                    index === vmState.callFrame?.stackTop - 1 ? "red" : "yellow"
                   }
                   highlight={index === vmState.stack.length - 1}
                 />
@@ -329,7 +304,7 @@ function InteractiveExecution({ executable }) {
             </div>
           </div>
         </div>
-        <code className="block bg-gray-100 font-mono m-2 p-2">
+        <code className="block bg-gray-100 font-mono m-4 mt-8 p-2">
           {vmState.output.length > 0
             ? vmState.output.map((line) => <div>{line}</div>)
             : "no output"}

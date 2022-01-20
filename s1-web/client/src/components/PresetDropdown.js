@@ -17,6 +17,36 @@ export const presetSources = [
     `,
   },
   {
+    title: "Newton",
+    source: `
+      fun abs(n) {
+        if (n > 0) {
+          return n;
+        } else {
+          return -n;
+        }
+      }
+
+      fun squareRoot(n) {
+        var x = n;
+        var root = n;
+
+        while (true) {
+            root = 0.5 * (x + (n / x));
+
+            if (abs(root - x) < 0.000001) {
+                return root;
+            }
+
+            x = root;
+        }
+      }
+
+      print squareRoot(2);
+      print squareRoot(9);
+    `,
+  },
+  {
     title: "Bad Fib",
     source: `
       fun fib(n) {

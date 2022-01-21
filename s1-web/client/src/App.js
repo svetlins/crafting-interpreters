@@ -7,12 +7,14 @@ import {
 } from "@heroicons/react/solid";
 import axios from "axios";
 import classNames from "classnames";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Tree from "react-d3-tree";
+import { Badge } from "./Badge";
 import { PresetDropdown, presetSources } from "./components/PresetDropdown";
 import ErrorNotice from "./ErrorNotice";
-import { loxObjectToString, shortBigEndianToInteger } from "./utils";
+import { loxObjectToString } from "./utils";
 import { createVM } from "./VM";
+import { ExecutableFunction } from "./ExecutableFunction";
 
 const tabs = [
   { name: "Execute", icon: ChevronRightIcon },
@@ -27,9 +29,7 @@ export default function App() {
   const [source, setSource] = useState(presetSources[0].source);
 
   const [currentTab, setCurrentTab] = useState("Execute");
-  const [tokens, setTokens] = useState([]);
-  const [tree, setTree] = useState(null);
-  const [executable, setExecutable] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState([]);
 
@@ -49,9 +49,7 @@ export default function App() {
           if (response.data.errors) {
             setErrors(response.data.errors);
           } else {
-            setExecutable(response.data.executable);
-            setTokens(response.data.tokens);
-            setTree(response.data.tree);
+            setAnalysisResult(response.data);
           }
         }, Math.max(500, new Date() - startedAt));
       })
@@ -87,7 +85,7 @@ export default function App() {
                     <div className="mb-2">
                       <PresetDropdown
                         onChange={(presetSource) => {
-                          setTokens([]);
+                          setAnalysisResult(null);
                           setSource(presetSource);
                         }}
                       />
@@ -142,13 +140,21 @@ export default function App() {
                 </nav>
               </div>
 
-              {tokens.length > 0 ? (
-                <AnalysisResult
-                  tokens={tokens}
-                  tree={tree}
-                  executable={executable}
-                  currentTab={currentTab}
-                />
+              {analysisResult ? (
+                <>
+                  {currentTab === "Execute" && (
+                    <ExecutionTab executable={analysisResult.executable} />
+                  )}
+                  {currentTab === "Tokens" && (
+                    <TokensTab tokens={analysisResult.tokens} />
+                  )}
+                  {currentTab === "AST" && (
+                    <ASTTab tree={analysisResult.tree} />
+                  )}
+                  {currentTab === "Bytecode" && (
+                    <BytecodeTab executable={analysisResult.executable} />
+                  )}
+                </>
               ) : (
                 <div className="self-center my-auto text-4xl text-gray-400 font-light italic">
                   Hit analyze to populate
@@ -165,60 +171,6 @@ export default function App() {
         </div>
       </div>
     </>
-  );
-}
-
-function AnalysisResult({ tokens, tree, executable, currentTab }) {
-  return (
-    <>
-      {currentTab === "Execute" && <ExecutionTab executable={executable} />}
-      {currentTab === "Tokens" && <TokensTab tokens={tokens} />}
-      {currentTab === "AST" && <ASTTab tree={tree} />}
-      {currentTab === "Bytecode" && <BytecodeTab executable={executable} />}
-    </>
-  );
-}
-
-function TokensTab({ tokens }) {
-  return (
-    <div>
-      {tokens.map((token) => {
-        if (
-          token.type === "STRING" ||
-          token.type === "NUMBER" ||
-          token.type === "IDENTIFIER"
-        ) {
-          return (
-            <Badge
-              text={`${token.type} (${token.literal || token.lexeme})`}
-              color="green"
-            />
-          );
-        } else {
-          return <Badge text={token.type} color="yellow" />;
-        }
-      })}
-    </div>
-  );
-}
-
-function ASTTab({ tree }) {
-  return (
-    <div className="w-full flex-1">
-      <div className="h-full">
-        {tree ? (
-          <Tree
-            data={tree}
-            initialDepth={1}
-            orientation="horizontal"
-            pathFunc="step"
-            translate={{ x: 200, y: 350 }}
-          />
-        ) : (
-          <span className="">Empty</span>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -282,8 +234,8 @@ function ExecutionTab({ executable }) {
               </h3>
             </div>
             <div className="h-96 overflow-y-scroll pt-2">
-              {vmState.callFrames.map((callFrame) => (
-                <div className="font-mono m-4">
+              {vmState.callFrames.map((callFrame, index) => (
+                <div className="font-mono m-4" key={index}>
                   {callFrame.functionName}@{callFrame.ip()}
                 </div>
               ))}
@@ -352,59 +304,48 @@ function ExecutionTab({ executable }) {
   );
 }
 
-function Badge({ text, color, highlight }) {
-  let colorClasses;
-
-  if (color === "yellow") {
-    colorClasses = [`bg-yellow-100`, `text-yellow-800`];
-  } else if (color === "green") {
-    colorClasses = [`bg-green-100`, `text-green-800`];
-  } else if (color === "red") {
-    colorClasses = [`bg-red-100`, `text-red-800`];
-  } else if (color === "blue") {
-    colorClasses = [`bg-blue-100`, `text-blue-800`];
-  } else if (color === "indigo") {
-    colorClasses = [`bg-indigo-100`, `text-indigo-800`];
-  } else if (color === "purple") {
-    colorClasses = [`bg-purple-100`, `text-purple-800`];
-  } else if (color === "pink") {
-    colorClasses = [`bg-pink-100`, `text-pink-800`];
-  } else {
-    throw "uknown color";
-  }
-
+function TokensTab({ tokens }) {
   return (
-    <span
-      className={classNames(
-        "inline-flex items-center px-2 py-0.5 m-2 rounded text-xs font-medium",
-        colorClasses
-      )}
-      ref={(spanElement) => {
-        if (spanElement && highlight) {
-          spanElement.scrollIntoView({ behavior: "smooth", block: "center" });
+    <div>
+      {tokens.map((token) => {
+        if (
+          token.type === "STRING" ||
+          token.type === "NUMBER" ||
+          token.type === "IDENTIFIER"
+        ) {
+          return (
+            <Badge
+              text={`${token.type} (${token.literal || token.lexeme})`}
+              color="green"
+            />
+          );
+        } else {
+          return <Badge text={token.type} color="yellow" />;
         }
-      }}
-    >
-      {text}
-    </span>
+      })}
+    </div>
   );
 }
 
-const opcodeSizes = {
-  "LOAD-CONSTANT": 2,
-  "LOAD-CLOSURE": 2,
-  "DEFINE-GLOBAL": 2,
-  "SET-GLOBAL": 2,
-  "GET-GLOBAL": 2,
-  "SET-LOCAL": 2,
-  "GET-LOCAL": 2,
-  "INIT-HEAP": 2,
-  "SET-HEAP": 2,
-  "GET-HEAP": 2,
-  "JUMP-ON-FALSE": 3,
-  CALL: 2,
-  JUMP: 3,
-};
+function ASTTab({ tree }) {
+  return (
+    <div className="w-full flex-1">
+      <div className="h-full">
+        {tree ? (
+          <Tree
+            data={tree}
+            initialDepth={1}
+            orientation="horizontal"
+            pathFunc="step"
+            translate={{ x: 200, y: 350 }}
+          />
+        ) : (
+          <span className="">Empty</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function BytecodeTab({ executable }) {
   const functions = Object.keys(executable.functions);
@@ -418,65 +359,5 @@ function BytecodeTab({ executable }) {
         </div>
       ))}
     </>
-  );
-}
-
-function ExecutableFunction({ executable, functionName, highlight }) {
-  const code = executable.functions[functionName];
-  const constants = executable.constants;
-
-  const ops = useMemo(() => {
-    const ops = [];
-    for (let i = 0; i < code.length; i++) {
-      const opStart = i;
-      const opcode = code[i];
-      const opcodeSize = opcodeSizes[opcode] || 1;
-      let text;
-
-      if (
-        opcode === "LOAD-CONSTANT" ||
-        opcode === "DEFINE-GLOBAL" ||
-        opcode === "SET-GLOBAL" ||
-        opcode === "GET-GLOBAL"
-      ) {
-        const constantIndex = code[i + 1];
-        text = `${opcode} ( $${constantIndex} = ${JSON.stringify(
-          constants[constantIndex]
-        )})`;
-      } else if (opcode === "LOAD-CLOSURE") {
-        const constantIndex = code[i + 1];
-        const functionDescriptor = constants[constantIndex];
-        text = `${opcode} ( fun ${functionDescriptor.name}/${functionDescriptor.arity} )`;
-      } else if (opcode === "JUMP-ON-FALSE" || opcode === "JUMP") {
-        const jumpOffset = shortBigEndianToInteger(code[i + 1], code[i + 2]);
-        text = `${opcode} ( target = ${jumpOffset + i + opcodeSize})`;
-      } else if (opcodeSize > 1) {
-        const args = code.slice(i + 1, i + opcodeSize);
-        text = `${opcode} ( arg = ${args.join(", ")})`;
-      } else {
-        text = `${opcode}`;
-      }
-
-      i += opcodeSize - 1;
-
-      ops.push([text, opStart]);
-    }
-
-    return ops;
-  }, [code, constants]);
-
-  return (
-    <div className="flex flex-col items-start">
-      {ops.map(([op, offset]) => (
-        <div className="truncate">
-          <span className="text-xs ml-4">{offset}: </span>
-          <Badge
-            text={op}
-            color={offset === highlight ? "red" : "blue"}
-            highlight={offset === highlight}
-          />
-        </div>
-      ))}
-    </div>
   );
 }

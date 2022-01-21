@@ -7,7 +7,7 @@ import {
 } from "@heroicons/react/solid";
 import axios from "axios";
 import classNames from "classnames";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Tree from "react-d3-tree";
 import { PresetDropdown, presetSources } from "./components/PresetDropdown";
 import ErrorNotice from "./ErrorNotice";
@@ -79,8 +79,11 @@ export default function App() {
                 className="relative min-w-0 flex-1 h-full flex flex-col lg:order-last"
               >
                 {/* Content */}
-                <div className="h-full m-3">
-                  <form className="h-full" onSubmit={submitSource}>
+                <div className="h-full p-3">
+                  <form
+                    className="h-full flex flex-col"
+                    onSubmit={submitSource}
+                  >
                     <div className="mb-2">
                       <PresetDropdown
                         onChange={(presetSource) => {
@@ -93,13 +96,13 @@ export default function App() {
                       spellCheck={false}
                       name="comment"
                       id="comment"
-                      className="h-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-indigo-300 border-4 resize-none rounded-md font-mono"
+                      className="flex-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-indigo-300 border-4 resize-none rounded-md font-mono"
                       value={source}
                       onChange={(e) => setSource(e.target.value)}
                     />
                     <button
                       type="submit"
-                      className="absolute bottom-4 right-6 btn"
+                      className="absolute bottom-8 right-8 btn"
                     >
                       Analyze
                     </button>
@@ -207,19 +210,16 @@ function Content({ tokens, tree, executable, currentTab }) {
 function InteractiveExecution({ executable }) {
   const [vmState, setVMState] = useState();
 
-  const vm = useMemo(() => {
-    return createVM(executable);
-  }, [executable]);
+  const vm = useRef();
 
   useEffect(() => {
-    setVMState(vm.reset());
-  }, [vm, executable]);
+    vm.current = createVM(executable);
+    setVMState(vm.current.reset());
+  }, [executable]);
 
   if (vmState === undefined) {
     return null;
   }
-
-  // console.log(vmState);
 
   return (
     <div className="min-w-[900px] overflow-scroll">
@@ -229,7 +229,7 @@ function InteractiveExecution({ executable }) {
           disabled={vmState.terminated}
           type="button"
           onClick={() => {
-            setVMState(vm.step());
+            setVMState(vm.current.step());
           }}
         >
           Step
@@ -242,7 +242,7 @@ function InteractiveExecution({ executable }) {
             let terminated = false;
 
             while (!terminated) {
-              const intermediateVMState = vm.step();
+              const intermediateVMState = vm.current.step();
               terminated = intermediateVMState.terminated;
               if (terminated) setVMState(intermediateVMState);
             }
@@ -253,7 +253,7 @@ function InteractiveExecution({ executable }) {
         <button
           className="btn my-4 mx-2"
           type="button"
-          onClick={() => setVMState(vm.reset())}
+          onClick={() => setVMState(vm.current.reset())}
         >
           Reset
         </button>

@@ -25,14 +25,10 @@ function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
     },
     readCode() {
       ip += 1;
-      console.log(callable.functionName);
-      console.log(executable.functions);
       return executable.functions[callable.functionName][ip - 1];
     },
 
     peekCode() {
-      console.log(callable.functionName);
-      console.log(executable.functions);
       return executable.functions[callable.functionName][ip];
     },
 
@@ -53,6 +49,10 @@ function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
       ip = ip + offset;
     },
   };
+}
+
+function falsey(loxValue) {
+  return !loxValue;
 }
 
 export function createVM(executable) {
@@ -108,14 +108,18 @@ export function createVM(executable) {
               stack[stack.length - 1]
             );
             break;
-          case "LESSER":
-            // eslint-disable-next-line no-self-compare
-            stack.push(stack.pop() > stack.pop());
+          case "LESSER": {
+            const b = stack.pop();
+            const a = stack.pop();
+            stack.push(a < b);
             break;
-          case "GREATER":
-            // eslint-disable-next-line no-self-compare
-            stack.push(stack.pop() < stack.pop());
+          }
+          case "GREATER": {
+            const b = stack.pop();
+            const a = stack.pop();
+            stack.push(a > b);
             break;
+          }
           case "NOT":
             stack.push(!stack.pop());
             break;
@@ -129,24 +133,30 @@ export function createVM(executable) {
             const callable = createCallable(functionDescriptor, {});
             stack.push(callable);
             break;
-          case "ADD":
-            const addB = stack.pop();
-            const addA = stack.pop();
-            stack.push(addA + addB);
+          case "ADD": {
+            const b = stack.pop();
+            const a = stack.pop();
+            stack.push(a + b);
             break;
-          case "SUBTRACT":
+          }
+          case "SUBTRACT": {
             const b = stack.pop();
             const a = stack.pop();
             stack.push(a - b);
             break;
-          case "MULTIPLY":
-            stack.push(stack.pop() * stack.pop());
+          }
+          case "MULTIPLY": {
+            const b = stack.pop();
+            const a = stack.pop();
+            stack.push(a * b);
             break;
-          case "DIVIDE":
-            const bd = stack.pop();
-            const ad = stack.pop();
-            stack.push(ad / bd);
+          }
+          case "DIVIDE": {
+            const b = stack.pop();
+            const a = stack.pop();
+            stack.push(a / b);
             break;
+          }
           case "PRINT":
             output.push(stack.pop().toString());
             break;
@@ -168,7 +178,7 @@ export function createVM(executable) {
           case "JUMP-ON-FALSE":
             const offsetByte1 = callFrame.readCode();
             const offsetByte2 = callFrame.readCode();
-            if (!stack[stack.length - 1])
+            if (falsey(stack[stack.length - 1]))
               callFrame.jump(offsetByte1, offsetByte2);
             break;
           case "JUMP":
@@ -195,15 +205,8 @@ export function createVM(executable) {
             const result = stack.pop();
             callFrames.pop();
 
-            console.log(
-              JSON.stringify(stack),
-              stack.length - callFrame.stackTop + 1
-            );
-
-            while (stack.length > 0 && stack.length > callFrame.stackTop - 1) {
+            while (stack.length > 0 && stack.length >= callFrame.stackTop)
               stack.pop();
-              console.log("POP", JSON.stringify(stack));
-            }
 
             if (callFrames.length > 0) {
               callFrame = callFrames[callFrames.length - 1];

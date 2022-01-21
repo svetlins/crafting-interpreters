@@ -248,6 +248,20 @@ module ALox
       expect(execute(source)).to eq("11.0\n21.0\n121.0")
     end
 
+    specify "self use of heap variable" do
+      source = <<-LOX
+        fun fn() {
+          var c = 1;
+          fun inner() { return c; }
+          print c;
+        }
+
+        fn();
+      LOX
+
+      expect(execute(source)).to eq("1.0")
+    end
+
     context "(memory leaks)" do
       around do |example|
         GC.disable

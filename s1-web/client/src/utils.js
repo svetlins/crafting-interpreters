@@ -7,7 +7,7 @@ export function shortBigEndianToInteger(byte1, byte2) {
 export function loxObjectToString(loxObject) {
   if (typeof loxObject === "object") {
     if (loxObject && loxObject.functionName) {
-      return `fun ${loxObject.functionName}`;
+      return `fun ${loxObject.functionName}/${loxObject.arity}`;
     } else {
       return JSON.stringify(loxObject);
     }

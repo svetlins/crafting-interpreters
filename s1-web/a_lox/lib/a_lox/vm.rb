@@ -104,7 +104,7 @@ module ALox
             function_descriptor.heap_usages.map do |heap_usage|
               [
                 heap_usage,
-                call_frame.callable.heap_view[heap_usage] || call_frame.heap_slots.fetch(heap_usage)
+                call_frame.callable.heap_view[heap_usage] || call_frame.heap_slots[heap_usage]
               ]
             end.to_h
 
@@ -131,8 +131,12 @@ module ALox
           heap_slot = call_frame.read_code
           call_frame.heap_slots.fetch(heap_slot).value = @stack.pop
         when Opcodes::GET_HEAP
+          heap_slot = call_frame.read_code
           @stack.push(
-            call_frame.callable.heap_view[call_frame.read_code].value
+            (
+              call_frame.callable.heap_view[heap_slot] ||
+              call_frame.heap_slots.fetch(heap_slot)
+            ).value
           )
         when Opcodes::NIL_OP
           @stack.push(nil)

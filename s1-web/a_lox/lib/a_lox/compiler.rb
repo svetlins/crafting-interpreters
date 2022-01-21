@@ -13,7 +13,10 @@ module ALox
         {
           type: :function,
           arity: @arity,
-          name: @name
+          name: @name,
+
+          heap_slots: @heap_slots,
+          heap_usages: @heap_usages,
         }
       end
     end

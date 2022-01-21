@@ -9,7 +9,8 @@ const TOP_LEVEL_SCRIPT = {
 function createCallable(functionDescriptor, heapView) {
   return {
     functionName: functionDescriptor.name,
-    heapSlots: functionDescriptor.slots,
+    heapSlots: functionDescriptor.heap_slots,
+    arity: functionDescriptor.arity,
     heapView: heapView,
   };
 }
@@ -20,6 +21,8 @@ function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
   return {
     stackTop,
     functionName: callable.functionName,
+    callable,
+    heapSlots,
     ip() {
       return ip;
     },
@@ -68,7 +71,7 @@ export function createVM(executable) {
     stack = [];
     globals = {};
 
-    callFrame = createCallFrame(executable, stack, TOP_LEVEL_SCRIPT, [], 0);
+    callFrame = createCallFrame(executable, stack, TOP_LEVEL_SCRIPT, {}, 0);
     callFrames = [callFrame];
 
     return {
@@ -108,6 +111,29 @@ export function createVM(executable) {
               stack[stack.length - 1]
             );
             break;
+          case "INIT-HEAP": {
+            const heapSlot = callFrame.readCode();
+            callFrame.heapSlots[heapSlot].value = stack.pop();
+            break;
+          }
+          case "SET-HEAP": {
+            const heapSlot = callFrame.readCode();
+            (
+              callFrame.callable.heapView[heapSlot] ||
+              callFrame.heapSlots[heapSlot]
+            ).value = stack[stack.length - 1];
+            break;
+          }
+          case "GET-HEAP": {
+            const heapSlot = callFrame.readCode();
+            stack.push(
+              (
+                callFrame.callable.heapView[heapSlot] ||
+                callFrame.heapSlots[heapSlot]
+              ).value
+            );
+            break;
+          }
           case "LESSER": {
             const b = stack.pop();
             const a = stack.pop();
@@ -130,7 +156,18 @@ export function createVM(executable) {
             const functionDescriptor = callFrame.readConstant(
               callFrame.readCode()
             );
-            const callable = createCallable(functionDescriptor, {});
+
+            console.log(functionDescriptor);
+
+            const heapView = Object.fromEntries(
+              functionDescriptor.heap_usages.map((heapUsage) => [
+                heapUsage,
+                callFrame.callable.heapView[heapUsage] ||
+                  callFrame.heapSlots[heapUsage],
+              ])
+            );
+
+            const callable = createCallable(functionDescriptor, heapView);
             stack.push(callable);
             break;
           case "ADD": {
@@ -186,21 +223,26 @@ export function createVM(executable) {
             const offsetByte22 = callFrame.readCode();
             callFrame.jump(offsetByte12, offsetByte22);
             break;
-          case "CALL":
+          case "CALL": {
             const argumentCount = callFrame.readCode();
-            const callable2 = stack[stack.length - argumentCount - 1];
+            const callable = stack[stack.length - argumentCount - 1];
+
+            const heapSlots = Object.fromEntries(
+              callable.heapSlots.map((heapSlot) => [heapSlot, {}])
+            );
 
             const newCallFrame = createCallFrame(
               executable,
               stack,
-              callable2,
-              [],
+              callable,
+              heapSlots,
               stack.length - argumentCount
             );
 
             callFrames.push(newCallFrame);
             callFrame = newCallFrame;
             break;
+          }
           case "RETURN":
             const result = stack.pop();
             callFrames.pop();

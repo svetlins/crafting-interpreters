@@ -8,8 +8,8 @@ module ALox
       ast = Parser.new(tokens).parse
       executable = ExecutableContainer.new
 
-      phase1 = StaticResolver::Phase1.new(error_reporter: nil)
-      phase2 = StaticResolver::Phase2.new(error_reporter: nil)
+      phase1 = StaticResolver::Phase1.new
+      phase2 = StaticResolver::Phase2.new
       phase1.resolve(ast)
       phase2.resolve(ast)
 

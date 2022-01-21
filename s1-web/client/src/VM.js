@@ -18,17 +18,22 @@ function createCallable(functionDescriptor, heapView) {
 function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
   let ip = 0;
 
+  function readCode() {
+    ip += 1;
+    return executable.functions[callable.functionName][ip - 1];
+  }
+
   return {
     stackTop,
     functionName: callable.functionName,
     callable,
     heapSlots,
+    readCode,
     ip() {
       return ip;
     },
-    readCode() {
-      ip += 1;
-      return executable.functions[callable.functionName][ip - 1];
+    readShort() {
+      return shortBigEndianToInteger(readCode(), readCode());
     },
 
     peekCode() {
@@ -47,9 +52,8 @@ function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
       stack[stackTop + offset] = value;
     },
 
-    jump(offsetByte1, offsetByte2) {
-      const offset = shortBigEndianToInteger(offsetByte1, offsetByte2);
-      ip = ip + offset;
+    jump(offset) {
+      ip += offset;
     },
   };
 }
@@ -112,12 +116,12 @@ export function createVM(executable) {
             );
             break;
           case "INIT-HEAP": {
-            const heapSlot = callFrame.readCode();
+            const heapSlot = callFrame.readShort();
             callFrame.heapSlots[heapSlot].value = stack.pop();
             break;
           }
           case "SET-HEAP": {
-            const heapSlot = callFrame.readCode();
+            const heapSlot = callFrame.readShort();
             (
               callFrame.callable.heapView[heapSlot] ||
               callFrame.heapSlots[heapSlot]
@@ -125,7 +129,7 @@ export function createVM(executable) {
             break;
           }
           case "GET-HEAP": {
-            const heapSlot = callFrame.readCode();
+            const heapSlot = callFrame.readShort();
             stack.push(
               (
                 callFrame.callable.heapView[heapSlot] ||
@@ -213,15 +217,11 @@ export function createVM(executable) {
             stack.push(false);
             break;
           case "JUMP-ON-FALSE":
-            const offsetByte1 = callFrame.readCode();
-            const offsetByte2 = callFrame.readCode();
-            if (falsey(stack[stack.length - 1]))
-              callFrame.jump(offsetByte1, offsetByte2);
+            const offset = callFrame.readShort();
+            if (falsey(stack[stack.length - 1])) callFrame.jump(offset);
             break;
           case "JUMP":
-            const offsetByte12 = callFrame.readCode();
-            const offsetByte22 = callFrame.readCode();
-            callFrame.jump(offsetByte12, offsetByte22);
+            callFrame.jump(callFrame.readShort());
             break;
           case "CALL": {
             const argumentCount = callFrame.readCode();

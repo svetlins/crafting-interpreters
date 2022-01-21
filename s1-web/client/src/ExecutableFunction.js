@@ -10,9 +10,9 @@ const opcodeSizes = {
   "GET-GLOBAL": 2,
   "SET-LOCAL": 2,
   "GET-LOCAL": 2,
-  "INIT-HEAP": 2,
-  "SET-HEAP": 2,
-  "GET-HEAP": 2,
+  "INIT-HEAP": 3,
+  "SET-HEAP": 3,
+  "GET-HEAP": 3,
   "JUMP-ON-FALSE": 3,
   CALL: 2,
   JUMP: 3,
@@ -47,6 +47,13 @@ export function ExecutableFunction({ executable, functionName, highlight }) {
       } else if (opcode === "JUMP-ON-FALSE" || opcode === "JUMP") {
         const jumpOffset = shortBigEndianToInteger(code[i + 1], code[i + 2]);
         text = `${opcode} ( target = ${jumpOffset + i + opcodeSize})`;
+      } else if (
+        opcode === "INIT-HEAP" ||
+        opcode === "GET-HEAP" ||
+        opcode === "SET-HEAP"
+      ) {
+        const heapSlot = shortBigEndianToInteger(code[i + 1], code[i + 2]);
+        text = `${opcode} ( heapSlot = ${heapSlot})`;
       } else if (opcodeSize > 1) {
         const args = code.slice(i + 1, i + opcodeSize);
         text = `${opcode} ( arg = ${args.join(", ")})`;

@@ -98,7 +98,8 @@ module ALox
         emit_two(Opcodes::DEFINE_GLOBAL, add_constant(var_statement.name.lexeme))
       elsif var_statement.allocation.local?
       elsif var_statement.allocation.heap_allocated?
-        emit_two(Opcodes::INIT_HEAP, var_statement.allocation.heap_slot)
+        emit(Opcodes::INIT_HEAP)
+        emit_two(*@executable.pack_two(var_statement.allocation.heap_slot))
       else
         fail
       end
@@ -153,7 +154,8 @@ module ALox
       elsif assign_expression.allocation.local?
         emit_two(Opcodes::SET_LOCAL, assign_expression.allocation.stack_slot)
       elsif assign_expression.allocation.heap_allocated?
-        emit_two(Opcodes::SET_HEAP, assign_expression.allocation.heap_slot)
+        emit(Opcodes::SET_HEAP)
+        emit_two(*@executable.pack_two(assign_expression.allocation.heap_slot))
       else
         fail
       end
@@ -166,7 +168,8 @@ module ALox
       elsif variable_expression.allocation.local?
         emit_two(Opcodes::GET_LOCAL, variable_expression.allocation.stack_slot)
       elsif variable_expression.allocation.heap_allocated?
-        emit_two(Opcodes::GET_HEAP, variable_expression.allocation.heap_slot)
+        emit(Opcodes::GET_HEAP)
+        emit_two(*@executable.pack_two(variable_expression.allocation.heap_slot))
       else
         fail
       end
@@ -241,12 +244,6 @@ module ALox
       call_expression.arguments.each { |arg| arg.accept(self) }
 
       emit_two(Opcodes::CALL, call_expression.arguments.count)
-    end
-
-    def visit_get_expression
-    end
-
-    def visit_set_expression
     end
 
     def emit(opcode)

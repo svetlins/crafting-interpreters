@@ -52,6 +52,10 @@ module ALox
         @executable.functions[@callable.function_name][@ip - 1]
       end
 
+      def read_short
+        [read_code, read_code].map(&:chr).join.unpack1("s>")
+      end
+
       def read_constant(constant_index)
         @executable.constants[constant_index]
       end
@@ -64,8 +68,8 @@ module ALox
         @stack[@stack_top + offset] = value
       end
 
-      def jump(offset_byte_1, ofsset_byte_2)
-        @ip += [offset_byte_1, ofsset_byte_2].map(&:chr).join.unpack1("s>")
+      def jump(location)
+        @ip += location
       end
     end
 
@@ -124,14 +128,14 @@ module ALox
         when Opcodes::GET_LOCAL
           @stack.push(call_frame.get_stack_slot(call_frame.read_code))
         when Opcodes::SET_HEAP
-          heap_slot = call_frame.read_code
+          heap_slot = call_frame.read_short
           heap_value = call_frame.callable.heap_view[heap_slot] || call_frame.heap_slots.fetch(heap_slot)
           heap_value.value = @stack.last
         when Opcodes::INIT_HEAP
-          heap_slot = call_frame.read_code
+          heap_slot = call_frame.read_short
           call_frame.heap_slots.fetch(heap_slot).value = @stack.pop
         when Opcodes::GET_HEAP
-          heap_slot = call_frame.read_code
+          heap_slot = call_frame.read_short
           @stack.push(
             (
               call_frame.callable.heap_view[heap_slot] ||
@@ -198,10 +202,10 @@ module ALox
         when Opcodes::PRINT
           out.puts(lox_object_to_string(@stack.pop))
         when Opcodes::JUMP_ON_FALSE
-          jump_offset_byte1, jump_offset_byte2 = call_frame.read_code, call_frame.read_code
-          call_frame.jump(jump_offset_byte1, jump_offset_byte2) if falsey?(@stack.last)
+          location = call_frame.read_short
+          call_frame.jump(location) if falsey?(@stack.last)
         when Opcodes::JUMP
-          call_frame.jump(call_frame.read_code, call_frame.read_code)
+          call_frame.jump(call_frame.read_short)
         else
           fail op.inspect
         end

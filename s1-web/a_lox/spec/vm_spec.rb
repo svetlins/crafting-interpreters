@@ -155,24 +155,38 @@ module ALox
       expect(execute(source)).to eq("1.0\n2.0\n3.0")
     end
 
-    context "(binary ops)" do
-      specify { expect(execute("print 1 > 2;")).to eq("false") }
-      specify { expect(execute("print 3 > 2;")).to eq("true") }
-      specify { expect(execute("print 1 >= 2;")).to eq("false") }
-      specify { expect(execute("print 2 > 2;")).to eq("false") }
-      specify { expect(execute("print 2 >= 2;")).to eq("true") }
+    context "(binary operations)" do
+      specify("small > big") { expect(execute("print 1 > 2;")).to eq("false") }
+      specify("big > small") { expect(execute("print 3 > 2;")).to eq("true") }
+      specify("small >= big") { expect(execute("print 1 >= 2;")).to eq("false") }
+      specify("same > same") { expect(execute("print 2 > 2;")).to eq("false") }
+      specify("same >= same") { expect(execute("print 2 >= 2;")).to eq("true") }
 
-      specify { expect(execute("print 1 < 0;")).to eq("false") }
-      specify { expect(execute("print -1 < 0;")).to eq("true") }
-      specify { expect(execute("print 1 <= 0;")).to eq("false") }
-      specify { expect(execute("print 0 < 0;")).to eq("false") }
-      specify { expect(execute("print 0 <= 0;")).to eq("true") }
+      specify("big < small") { expect(execute("print 1 < 0;")).to eq("false") }
+      specify("small < big") { expect(execute("print -1 < 0;")).to eq("true") }
+      specify("big <= small") { expect(execute("print 1 <= 0;")).to eq("false") }
+      specify("same < same") { expect(execute("print 0 < 0;")).to eq("false") }
+      specify("same <= same") { expect(execute("print 0 <= 0;")).to eq("true") }
 
-      specify { expect(execute("print -5;")).to eq("-5.0") }
-      specify { expect(execute("print !true;")).to eq("false") }
+      specify("t and t") { expect(execute("print true and true;")).to eq("true")}
+      specify("t and f") { expect(execute("print true and false;")).to eq("false")}
+      specify("f and t") { expect(execute("print false and true;")).to eq("false")}
+      specify("f and f") { expect(execute("print false and false;")).to eq("false")}
 
-      specify { expect(execute("print 5 != 5;")).to eq("false") }
-      specify { expect(execute("print 5 != 6;")).to eq("true") }
+      specify("t or t") { expect(execute("print true or true;")).to eq("true")}
+      specify("t or f") { expect(execute("print true or false;")).to eq("true")}
+      specify("f or t") { expect(execute("print false or true;")).to eq("true")}
+      specify("f or f") { expect(execute("print false or false;")).to eq("false")}
+
+      specify("x != x") { expect(execute("print 5 != 5;")).to eq("false") }
+      specify("x != y") { expect(execute("print 5 != 6;")).to eq("true") }
+    end
+
+    context "(unary operations)" do
+      specify("-x") { expect(execute("print -5;")).to eq("-5.0") }
+      specify("--x") { expect(execute("print --5;")).to eq("5.0") }
+      specify("!x") { expect(execute("print !true;")).to eq("false") }
+      specify("!!x") { expect(execute("print !!true;")).to eq("true") }
     end
 
     it "arithmetic precedence" do

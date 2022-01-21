@@ -8,7 +8,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CONSTANT 0
         DEFINE-GLOBAL 1
         GET-GLOBAL 1
@@ -26,7 +26,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         NIL
         DEFINE-GLOBAL 0
         LOAD-CONSTANT 1
@@ -46,7 +46,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-    __script__:
+    __toplevel__:
       NIL
       DEFINE-GLOBAL 0
       GET-GLOBAL 0
@@ -64,7 +64,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CONSTANT 0
         GET-LOCAL 0
         PRINT
@@ -84,7 +84,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         NIL
         LOAD-CONSTANT 0
         SET-LOCAL 0
@@ -107,7 +107,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         TRUE
         JUMP-ON-FALSE +7
         POP
@@ -130,7 +130,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         TRUE
         JUMP-ON-FALSE +7
         POP
@@ -149,7 +149,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         TRUE
         JUMP-ON-FALSE +7
         POP
@@ -168,7 +168,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CONSTANT 0
         GET-LOCAL 0
         LOAD-CONSTANT 1
@@ -195,7 +195,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CLOSURE 1
         DEFINE-GLOBAL 2
         NIL
@@ -216,7 +216,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CLOSURE 0
         DEFINE-GLOBAL 1
         NIL
@@ -237,7 +237,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CLOSURE 1
         DEFINE-GLOBAL 2
         NIL
@@ -257,7 +257,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CLOSURE 1
         DEFINE-GLOBAL 2
         NIL
@@ -281,7 +281,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CLOSURE 2
         DEFINE-GLOBAL 3
         NIL
@@ -310,7 +310,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CLOSURE 2
         DEFINE-GLOBAL 3
         NIL
@@ -342,7 +342,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CLOSURE 3
         DEFINE-GLOBAL 4
         NIL
@@ -375,7 +375,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CLOSURE 1
         DEFINE-GLOBAL 2
         GET-GLOBAL 2
@@ -401,7 +401,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CLOSURE 0
         DEFINE-GLOBAL 1
         GET-GLOBAL 1
@@ -442,7 +442,7 @@ RSpec.describe ALox::Compiler do
     LOX
 
     expect(source).to compile_to <<-CODE
-      __script__:
+      __toplevel__:
         LOAD-CLOSURE 1
         DEFINE-GLOBAL 2
         GET-GLOBAL 2

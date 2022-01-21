@@ -49,9 +49,9 @@ export default function App() {
           if (response.data.errors) {
             setErrors(response.data.errors);
           } else {
+            setExecutable(response.data.executable);
             setTokens(response.data.tokens);
             setTree(response.data.tree);
-            setExecutable(response.data.executable);
           }
         }, Math.max(500, new Date() - startedAt));
       })
@@ -143,11 +143,11 @@ export default function App() {
               </div>
 
               {tokens.length > 0 ? (
-                <Content
+                <AnalysisResult
                   tokens={tokens}
                   tree={tree}
-                  currentTab={currentTab}
                   executable={executable}
+                  currentTab={currentTab}
                 />
               ) : (
                 <div className="self-center my-auto text-4xl text-gray-400 font-light italic">
@@ -168,46 +168,61 @@ export default function App() {
   );
 }
 
-function Content({ tokens, tree, executable, currentTab }) {
+function AnalysisResult({ tokens, tree, executable, currentTab }) {
   return (
     <>
-      {currentTab === "Tokens" && (
-        <div>
-          {tokens.map((token) => (
-            <TokenView tokenData={token} />
-          ))}
-        </div>
-      )}
-
-      {currentTab === "AST" && (
-        <div className="w-full flex-1">
-          <div className="h-full">
-            {tree ? (
-              <Tree
-                data={tree}
-                initialDepth={1}
-                orientation="horizontal"
-                pathFunc="step"
-                translate={{ x: 200, y: 350 }}
-              />
-            ) : (
-              <span className="">Empty</span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {currentTab === "Bytecode" && executable && (
-        <BytecodeTab executable={executable} />
-      )}
-      {currentTab === "Execute" && executable && (
-        <InteractiveExecution executable={executable} />
-      )}
+      {currentTab === "Execute" && <ExecutionTab executable={executable} />}
+      {currentTab === "Tokens" && <TokensTab tokens={tokens} />}
+      {currentTab === "AST" && <ASTTab tree={tree} />}
+      {currentTab === "Bytecode" && <BytecodeTab executable={executable} />}
     </>
   );
 }
 
-function InteractiveExecution({ executable }) {
+function TokensTab({ tokens }) {
+  return (
+    <div>
+      {tokens.map((token) => {
+        if (
+          token.type === "STRING" ||
+          token.type === "NUMBER" ||
+          token.type === "IDENTIFIER"
+        ) {
+          return (
+            <Badge
+              text={`${token.type} (${token.literal || token.lexeme})`}
+              color="green"
+            />
+          );
+        } else {
+          return <Badge text={token.type} color="yellow" />;
+        }
+      })}
+    </div>
+  );
+}
+
+function ASTTab({ tree }) {
+  return (
+    <div className="w-full flex-1">
+      <div className="h-full">
+        {tree ? (
+          <Tree
+            data={tree}
+            initialDepth={1}
+            orientation="horizontal"
+            pathFunc="step"
+            translate={{ x: 200, y: 350 }}
+          />
+        ) : (
+          <span className="">Empty</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ExecutionTab({ executable }) {
   const [vmState, setVMState] = useState();
 
   const vm = useRef();
@@ -335,35 +350,6 @@ function InteractiveExecution({ executable }) {
       </div>
     </div>
   );
-}
-
-function TokenView({ tokenData }) {
-  let Component;
-
-  if (
-    tokenData.type === "STRING" ||
-    tokenData.type === "NUMBER" ||
-    tokenData.type === "IDENTIFIER"
-  ) {
-    Component = ValueToken;
-  } else {
-    Component = SimpleToken;
-  }
-
-  return <Component tokenData={tokenData} />;
-}
-
-function ValueToken({ tokenData }) {
-  return (
-    <Badge
-      text={`${tokenData.type} (${tokenData.literal || tokenData.lexeme})`}
-      color="green"
-    />
-  );
-}
-
-function SimpleToken({ tokenData }) {
-  return <Badge text={tokenData.type} color="yellow" />;
 }
 
 function Badge({ text, color, highlight }) {

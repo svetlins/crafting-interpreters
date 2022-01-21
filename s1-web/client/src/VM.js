@@ -1,7 +1,7 @@
 import { shortBigEndianToInteger } from "./utils";
 
 const TOP_LEVEL_SCRIPT = {
-  functionName: "__script__",
+  functionName: "__toplevel__",
   heapSlots: [],
   heapView: [],
 };

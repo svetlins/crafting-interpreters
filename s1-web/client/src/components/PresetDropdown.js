@@ -9,15 +9,12 @@ function classNames(...classes) {
 
 export const presetSources = [
   {
-    title: "For Loop",
-    source: `for(var i = 0; i < 10; i = i + 1) {
-  print i * i;
-}
-    `,
-  },
-  {
     title: "Newton",
-    source: `fun abs(n) {
+    source: `// Newton's square root method
+
+var DELTA = 0.000001;
+
+fun abs(n) {
   if (n > 0) {
     return n;
   } else {
@@ -26,22 +23,30 @@ export const presetSources = [
 }
 
 fun squareRoot(n) {
-  var x = n;
-  var root = n;
+  var approximation = n;
+  var root;
 
   while (true) {
-      root = 0.5 * (x + (n / x));
+      root = 0.5 * (approximation + (n / approximation));
 
-      if (abs(root - x) < 0.000001) {
+      if (abs(root - approximation) < DELTA) {
           return root;
       }
 
-      x = root;
+      approximation = root;
   }
 }
 
 print squareRoot(2);
 print squareRoot(9);
+`,
+  },
+  {
+    title: "For Loop",
+    source: `// For Loop
+for(var i = 0; i < 10; i = i + 1) {
+  print i * i;
+}
     `,
   },
   {

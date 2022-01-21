@@ -18,7 +18,7 @@ module ALox
       end
     end
 
-    def initialize(statements, executable, name = "__script__", arity = 0, error_reporter: nil)
+    def initialize(statements, executable, name = "__toplevel__", arity = 0, error_reporter: nil)
       @statements = statements
       @executable = executable
       @name = name

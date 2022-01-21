@@ -11,7 +11,7 @@ module ALox
 
       def self.top_level_script
         OpenStruct.new(
-          function_name: "__script__",
+          function_name: "__toplevel__",
           heap_slots: [],
           heap_view: {}
         )

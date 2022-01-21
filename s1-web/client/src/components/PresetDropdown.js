@@ -10,112 +10,116 @@ function classNames(...classes) {
 export const presetSources = [
   {
     title: "For Loop",
-    source: `
-      for(var i = 0; i < 10; i = i + 1) {
-        print i * i;
-      }
+    source: `for(var i = 0; i < 10; i = i + 1) {
+  print i * i;
+}
     `,
   },
   {
     title: "Newton",
-    source: `
-      fun abs(n) {
-        if (n > 0) {
-          return n;
-        } else {
-          return -n;
-        }
+    source: `fun abs(n) {
+  if (n > 0) {
+    return n;
+  } else {
+    return -n;
+  }
+}
+
+fun squareRoot(n) {
+  var x = n;
+  var root = n;
+
+  while (true) {
+      root = 0.5 * (x + (n / x));
+
+      if (abs(root - x) < 0.000001) {
+          return root;
       }
 
-      fun squareRoot(n) {
-        var x = n;
-        var root = n;
+      x = root;
+  }
+}
 
-        while (true) {
-            root = 0.5 * (x + (n / x));
-
-            if (abs(root - x) < 0.000001) {
-                return root;
-            }
-
-            x = root;
-        }
-      }
-
-      print squareRoot(2);
-      print squareRoot(9);
+print squareRoot(2);
+print squareRoot(9);
     `,
   },
   {
     title: "Bad Fib",
-    source: `
-      fun fib(n) {
-        if (n <= 2) return 1;
-        return fib(n - 1) + fib(n - 2);
-      }
+    source: `fun fib(n) {
+  if (n <= 2) return 1;
+  return fib(n - 1) + fib(n - 2);
+}
 
-      print fib(20);
+print fib(20);
     `,
   },
   { title: "Arithmetic", source: "print 1 + 2 * 3;" },
   {
     title: "Function",
-    source: `
-    fun fn(personName) {
-      print "Hi, " + personName + "!";
-    }
+    source: `fun fn(personName) {
+  print "Hi, " + personName + "!";
+}
 
-    fn("Svetlin");
+fn("Svetlin");
   `,
   },
   {
+    title: "First-class functions",
+    source: `fun doSomethingOn3(something) {
+  return something(3);
+}
+
+fun cube(x) { return x * x * x; }
+
+print doSomethingOn3(cube);
+   `,
+  },
+  {
     title: "If",
-    source: `
-    if (1 + 2 > 3) {
-      print "Oh, yes";
-      print "It's true!";
-    } else {
-      print ":( it's false";
-      print "Unfortunately ;(";
-    }
+    source: `if (1 + 2 > 3) {
+  print "Oh, yes";
+  print "It's true!";
+} else {
+  print ":( it's false";
+  print "Unfortunately ;(";
+}
   `,
   },
   {
     title: "Block",
     source: `var global = 100;
 
-  {
-    var block1 = "dummy";
-    var block2 = 32 + 42;
-    var block3 = 200;
-    print block2 + block3;
+{
+  var block1 = "dummy";
+  var block2 = 32 + 42;
+  var block3 = 200;
+  print block2 + block3;
 
-    block1 = 100;
-  }`,
+  block1 = 100;
+}`,
   },
   {
     title: "Closure",
-    source: `
-      var global = 69;
+    source: `fun makeCounter() {
+  var count = 0;
 
-      fun outer() {
-        var closedOver = 666;
+  fun counter() {
+    count = count + 1;
+    return count - 1;
+  }
 
-          fun doStuff(firstParam, secondParam) {
-            var local = firstParam + secondParam;
-            if (global + closedOver + local > 2) {
-              local = local + 1;
-              return local;
-            } else {
-              closedOver = closedOver + 1;
-              return closedOver;
-            }
-          }
+  return counter;
+}
 
-          print doStuff(1,2);
-        }
+var firstCounter = makeCounter();
+var secondCounter = makeCounter();
 
-        print outer();`,
+print firstCounter();
+print firstCounter();
+print firstCounter();
+print secondCounter();
+    `,
   },
 ];
 

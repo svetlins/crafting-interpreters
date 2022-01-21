@@ -25,10 +25,14 @@ function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
     },
     readCode() {
       ip += 1;
+      console.log(callable.functionName);
+      console.log(executable.functions);
       return executable.functions[callable.functionName][ip - 1];
     },
 
     peekCode() {
+      console.log(callable.functionName);
+      console.log(executable.functions);
       return executable.functions[callable.functionName][ip];
     },
 
@@ -190,7 +194,17 @@ export function createVM(executable) {
           case "RETURN":
             const result = stack.pop();
             callFrames.pop();
-            stack = stack.slice(0, callFrame.stackTop - 1);
+
+            console.log(
+              JSON.stringify(stack),
+              stack.length - callFrame.stackTop + 1
+            );
+
+            while (stack.length > 0 && stack.length > callFrame.stackTop - 1) {
+              stack.pop();
+              console.log("POP", JSON.stringify(stack));
+            }
+
             if (callFrames.length > 0) {
               callFrame = callFrames[callFrames.length - 1];
               stack.push(result);

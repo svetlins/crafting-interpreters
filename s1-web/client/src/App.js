@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
-import { MenuAlt2Icon, DotsHorizontalIcon } from "@heroicons/react/outline";
+import { DotsHorizontalIcon } from "@heroicons/react/outline";
 import {
+  ChevronRightIcon,
+  CogIcon,
   CubeIcon,
   DotsVerticalIcon,
-  CogIcon,
-  ChevronRightIcon,
 } from "@heroicons/react/solid";
 import axios from "axios";
-import Tree from "react-d3-tree";
 import classNames from "classnames";
-
-import { loxObjectToString, pretty, shortBigEndianToInteger } from "./utils";
+import { useEffect, useMemo, useState } from "react";
+import Tree from "react-d3-tree";
 import { PresetDropdown, presetSources } from "./components/PresetDropdown";
+import ErrorNotice from "./ErrorNotice";
+import { loxObjectToString, shortBigEndianToInteger } from "./utils";
 import { createVM } from "./VM";
 
 const tabs = [
@@ -24,31 +24,42 @@ const tabs = [
 const analyzeUrl = process.env.REACT_APP_ANALYZE_ENDPOINT_URL || "/api/analyze";
 
 export default function App() {
-  const [source, setSource] = useState(pretty(presetSources[0].source));
+  const [source, setSource] = useState(presetSources[0].source);
 
   const [currentTab, setCurrentTab] = useState("Execute");
   const [tokens, setTokens] = useState([]);
   const [tree, setTree] = useState(null);
   const [executable, setExecutable] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState([]);
 
   function submitSource(event) {
-    prettifySource();
     setLoading(true);
     const startedAt = new Date();
-    axios.post(analyzeUrl, { source }).then((response) => {
-      setTimeout(() => {
-        setLoading(false);
-        setTokens(response.data.tokens);
-        setTree(response.data.tree);
-        setExecutable(response.data.executable);
-      }, Math.max(1500, new Date() - startedAt));
-    });
-    event.preventDefault();
-  }
+    axios
+      .post(analyzeUrl, { source })
+      .then((response) => {
+        if (!response.data.errors) {
+          setErrors([]);
+        }
 
-  function prettifySource() {
-    setSource(pretty(source));
+        setTimeout(() => {
+          setLoading(false);
+
+          if (response.data.errors) {
+            setErrors(response.data.errors);
+          } else {
+            setTokens(response.data.tokens);
+            setTree(response.data.tree);
+            setExecutable(response.data.executable);
+          }
+        }, Math.max(500, new Date() - startedAt));
+      })
+      .catch(() => {
+        setLoading(false);
+        setErrors(["Server Error"]);
+      });
+    event.preventDefault();
   }
 
   return (
@@ -56,6 +67,9 @@ export default function App() {
       <div className="h-full flex">
         {/* Content area */}
         <div className="flex-1 flex flex-col overflow-hidden">
+          {errors.length > 0 && (
+            <ErrorNotice errors={errors} onClose={() => setErrors([])} />
+          )}
           {/* Main content */}
           <div className="flex-1 flex items-stretch overflow-hidden">
             <main className="overflow-y-auto resize-x w-3/12">
@@ -71,7 +85,7 @@ export default function App() {
                       <PresetDropdown
                         onChange={(presetSource) => {
                           setTokens([]);
-                          setSource(pretty(presetSource));
+                          setSource(presetSource);
                         }}
                       />
                     </div>
@@ -205,6 +219,8 @@ function InteractiveExecution({ executable }) {
     return null;
   }
 
+  // console.log(vmState);
+
   return (
     <div className="min-w-[900px] overflow-scroll">
       <div className="flex flex-row">
@@ -250,7 +266,7 @@ function InteractiveExecution({ executable }) {
                 Call Stack / Code
               </h3>
             </div>
-            <div className="h-96 overflow-y-scroll pt-4">
+            <div className="h-96 overflow-y-scroll pt-2">
               {vmState.callFrames.map((callFrame) => (
                 <div className="font-mono m-4">
                   {callFrame.functionName}@{callFrame.ip()}
@@ -270,16 +286,23 @@ function InteractiveExecution({ executable }) {
                 Globals
               </h3>
             </div>
-            <div className="h-96 overflow-y-scroll flex flex-col pt-4">
+            <div className="h-96 overflow-y-scroll flex flex-col items-start pt-2">
               {Object.entries(vmState.globals || {}).map(
                 ([globalName, globalValue], index) => (
-                  <Badge
-                    text={`${globalName} = ${loxObjectToString(globalValue)}`}
-                    color="purple"
-                    highlight={
-                      index === Object.keys(vmState?.globals).length - 1
-                    }
-                  />
+                  <span>
+                    <Badge
+                      text={globalName}
+                      color="purple"
+                      highlight={
+                        index === Object.keys(vmState?.globals).length - 1
+                      }
+                    />
+                    <span className="text-xs">=</span>
+                    <Badge
+                      text={loxObjectToString(globalValue)}
+                      color="yellow"
+                    />
+                  </span>
                 )
               )}
             </div>
@@ -291,7 +314,7 @@ function InteractiveExecution({ executable }) {
                 Stack
               </h3>
             </div>
-            <div className="flex flex-col-reverse h-96 overflow-y-scroll pt-4">
+            <div className="flex flex-col-reverse items-start h-96 overflow-y-scroll pt-2">
               {(vmState.stack || []).map((value, index) => (
                 <Badge
                   text={loxObjectToString(value)}
@@ -431,21 +454,21 @@ function ExecutableFunction({ executable, functionName, highlight }) {
         opcode === "GET-GLOBAL"
       ) {
         const constantIndex = code[i + 1];
-        text = `${i}: ${opcode} ( $${constantIndex} = ${JSON.stringify(
+        text = `${opcode} ( $${constantIndex} = ${JSON.stringify(
           constants[constantIndex]
         )})`;
       } else if (opcode === "LOAD-CLOSURE") {
         const constantIndex = code[i + 1];
         const functionDescriptor = constants[constantIndex];
-        text = `${i}: ${opcode} ( fun ${functionDescriptor.name}/${functionDescriptor.arity} )`;
+        text = `${opcode} ( fun ${functionDescriptor.name}/${functionDescriptor.arity} )`;
       } else if (opcode === "JUMP-ON-FALSE" || opcode === "JUMP") {
         const jumpOffset = shortBigEndianToInteger(code[i + 1], code[i + 2]);
-        text = `${i}: ${opcode} ( target = ${jumpOffset + i + opcodeSize})`;
+        text = `${opcode} ( target = ${jumpOffset + i + opcodeSize})`;
       } else if (opcodeSize > 1) {
         const args = code.slice(i + 1, i + opcodeSize);
-        text = `${i}: ${opcode} ( arg = ${args.join(", ")})`;
+        text = `${opcode} ( arg = ${args.join(", ")})`;
       } else {
-        text = `${i}: ${opcode}`;
+        text = `${opcode}`;
       }
 
       i += opcodeSize - 1;
@@ -457,28 +480,17 @@ function ExecutableFunction({ executable, functionName, highlight }) {
   }, [code, constants]);
 
   return (
-    <table>
-      <tbody>
-        {ops.map(([op, offset]) => (
-          <tr
-            ref={(trElement) => {
-              if (trElement && offset === highlight) {
-                trElement.scrollIntoView({
-                  behavior: "smooth",
-                  block: "center",
-                });
-              }
-            }}
-          >
-            <td>
-              <Badge
-                text={op}
-                color={offset === highlight ? "red" : "yellow"}
-              />
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="flex flex-col items-start">
+      {ops.map(([op, offset]) => (
+        <div className="truncate">
+          <span className="text-xs ml-4">{offset}: </span>
+          <Badge
+            text={op}
+            color={offset === highlight ? "red" : "blue"}
+            highlight={offset === highlight}
+          />
+        </div>
+      ))}
+    </div>
   );
 }

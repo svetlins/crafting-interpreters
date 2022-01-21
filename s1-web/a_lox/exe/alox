@@ -55,7 +55,7 @@ module ALox
       @executable_container = ExecutableContainer.new
     end
 
-    def execute(source)
+    def execute(source, debug:)
       @had_error = false
 
       tokens = Scanner.new(source, error_reporter: self).scan
@@ -74,7 +74,7 @@ module ALox
 
       return if @had_error
 
-      @vm.execute(@executable_container)
+      @vm.execute(@executable_container, debug: debug)
     end
 
     def report_scanner_error(line, message)
@@ -111,14 +111,19 @@ def repl
 
   buffer = ""
 
+  debug_mode = false
+
   Readline.pre_input_hook = lambda do
     Readline.insert_text("  " * [buffer.count("{") - buffer.count("}"), 0].max)
     Readline.redisplay
   end
 
   while (line = Readline.readline(buffer.empty? ? "> " : "| ", true)&.chomp)
-    if line.empty?
-      session.execute(buffer)
+    if line == '\debug'
+      debug_mode = !debug_mode
+      puts "Debug #{debug_mode ? "on" : "off"}"
+    elsif line.empty?
+      session.execute(buffer, debug: debug_mode)
       buffer = ""
     else
       buffer += line

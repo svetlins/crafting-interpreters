@@ -173,16 +173,21 @@ module ALox
         when Opcodes::CALL
           argument_count = call_frame.read_code
           callable = @stack[-argument_count - 1]
-          heap_slots =
-            callable.heap_slots.map { |slot| [slot, HeapValue.new] }.to_h
 
-          call_frames << CallFrame.new(
-            executable,
-            @stack,
-            callable,
-            heap_slots,
-            @stack.size - argument_count
-          )
+          if callable.is_a? Callable
+            heap_slots =
+              callable.heap_slots.map { |slot| [slot, HeapValue.new] }.to_h
+
+            call_frames << CallFrame.new(
+              executable,
+              @stack,
+              callable,
+              heap_slots,
+              @stack.size - argument_count
+            )
+          else
+            error("#{lox_object_to_string(callable)} is not callable")
+          end
         when Opcodes::RETURN
           result = @stack.pop
           call_frames.pop
@@ -203,8 +208,8 @@ module ALox
 
         print_debug_info(binding) if debug
       end
-    rescue => e
-      error(e.message)
+    # rescue => e
+    #   error(e.message)
     end
 
     private

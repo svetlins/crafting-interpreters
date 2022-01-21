@@ -117,7 +117,12 @@ class TreePrinter
     }
   end
 
-  def visit_grouping(expression) = {name: "GROUP", attributes: {}}
+  def visit_grouping(grouping_expression)
+    {
+      name: "GROUP",
+      children: [grouping_expression.expression.accept(self)]
+    }
+  end
 
   def visit_literal(literal_expression)
     {

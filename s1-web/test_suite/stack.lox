@@ -1,0 +1,15 @@
+fun other(a, b, c) {
+  return a + b + c;
+}
+
+fun fn() {
+  var x = 40;
+  other(1,2,3);
+  var y = 60;
+
+  return x + y;
+}
+
+print fn();
+
+// => 100.0

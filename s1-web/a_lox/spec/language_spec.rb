@@ -30,7 +30,7 @@ module ALox
         expected_output =
           source
             .lines
-            .select { _1.start_with?("// => ") }
+            .select { _1.include?("// => ") }
             .map { _1[/\/\/ => (.*)/, 1] }
             .join("\n")
 

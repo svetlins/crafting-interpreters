@@ -1,0 +1,27 @@
+var DELTA = 0.000001;
+
+fun abs(n) {
+  if (n > 0) {
+    return n;
+  } else {
+    return -n;
+  }
+}
+
+fun squareRoot(n) {
+  var approximation = n;
+  var root;
+
+  while (true) {
+      root = 0.5 * (approximation + (n / approximation));
+
+      if (abs(root - approximation) < DELTA) {
+          return root;
+      }
+
+      approximation = root;
+  }
+}
+
+print squareRoot(9); // => 3.0
+print squareRoot(144); // => 12.0

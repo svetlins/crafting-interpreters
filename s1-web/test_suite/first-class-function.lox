@@ -1,0 +1,7 @@
+fun doSomethingOn3(something) {
+  return something(3);
+}
+
+fun cube(x) { return x * x * x; }
+
+print doSomethingOn3(cube); // => 27.0

@@ -1,0 +1,16 @@
+fun fn() {
+  if(1 == 2) {
+    print "yes";
+  } else {
+    print "no";
+  }
+
+  var x = "preserves stack";
+
+  print x;
+}
+
+fn();
+
+// => no
+// => preserves stack

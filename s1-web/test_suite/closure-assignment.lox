@@ -1,0 +1,16 @@
+fun outer(x) {
+  var p = x;
+
+  fun inner(r) {
+    p = p + r;
+    return p;
+  }
+
+  return inner;
+}
+
+var agg = outer(1);
+
+print agg(1); // => 2.0
+print agg(10); // => 12.0
+print agg(100); // => 112.0

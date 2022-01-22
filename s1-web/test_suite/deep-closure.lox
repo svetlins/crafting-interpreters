@@ -1,0 +1,17 @@
+fun outer() {
+  var p = 2;
+
+  fun middle() {
+    var q = 3;
+
+    fun inner() {
+      return p * q;
+    }
+
+    return inner;
+  }
+
+  return middle;
+}
+
+print outer()()(); // => 6.0

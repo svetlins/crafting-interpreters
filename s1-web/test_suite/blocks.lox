@@ -1,0 +1,14 @@
+fun fn() {
+  {
+    var x = 1;
+    print x;
+  }
+
+  var y = 2;
+  print y;
+}
+
+fn();
+
+// => 1.0
+// => 2.0

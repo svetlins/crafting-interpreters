@@ -1,0 +1,7 @@
+fun fn() {
+  var c = 1;
+  fun inner() { return c; }
+  return c;
+}
+
+print fn(); // => 1.0

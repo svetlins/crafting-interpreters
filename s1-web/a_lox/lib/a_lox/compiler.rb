@@ -99,7 +99,7 @@ module ALox
       elsif var_statement.allocation.local?
       elsif var_statement.allocation.heap_allocated?
         emit(Opcodes::INIT_HEAP)
-        emit_two(*@executable.pack_two(var_statement.allocation.heap_slot))
+        emit_two(*BinaryUtils.pack_short(var_statement.allocation.heap_slot))
       else
         fail
       end
@@ -137,7 +137,7 @@ module ALox
       emit(Opcodes::POP)
       while_statement.body.accept(self)
       emit(Opcodes::JUMP)
-      emit_two(*@executable.pack_two(begin_loop_offset - 2 - @executable.functions[@name].size))
+      emit_two(*BinaryUtils.pack_short(begin_loop_offset - 2 - @executable.functions[@name].size))
       @executable.patch_jump(@name, exit_loop_offset)
       emit(Opcodes::POP)
     end
@@ -155,7 +155,7 @@ module ALox
         emit_two(Opcodes::SET_LOCAL, assign_expression.allocation.stack_slot)
       elsif assign_expression.allocation.heap_allocated?
         emit(Opcodes::SET_HEAP)
-        emit_two(*@executable.pack_two(assign_expression.allocation.heap_slot))
+        emit_two(*BinaryUtils.pack_short(assign_expression.allocation.heap_slot))
       else
         fail
       end
@@ -169,7 +169,7 @@ module ALox
         emit_two(Opcodes::GET_LOCAL, variable_expression.allocation.stack_slot)
       elsif variable_expression.allocation.heap_allocated?
         emit(Opcodes::GET_HEAP)
-        emit_two(*@executable.pack_two(variable_expression.allocation.heap_slot))
+        emit_two(*BinaryUtils.pack_short(variable_expression.allocation.heap_slot))
       else
         fail
       end

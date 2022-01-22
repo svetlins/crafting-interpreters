@@ -53,7 +53,7 @@ module ALox
       end
 
       def read_short
-        [read_code, read_code].map(&:chr).join.unpack1("s>")
+        BinaryUtils.unpack_short(read_code, read_code)
       end
 
       def read_constant(constant_index)

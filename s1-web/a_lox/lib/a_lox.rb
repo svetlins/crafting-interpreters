@@ -13,6 +13,7 @@ require_relative "a_lox/executable_container"
 require_relative "a_lox/compiler"
 require_relative "a_lox/opcodes"
 require_relative "a_lox/vm"
+require_relative "a_lox/binary_utils"
 
 module ALox
   class Error < StandardError; end

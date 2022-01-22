@@ -40,7 +40,7 @@ RSpec::Matchers.define :compile_to do |expected|
 
   def process_args(args)
     if args.count == 1 && args.first =~ (/^(\+|-)/)
-      [args.first.to_i].pack("s>").bytes.map(&:to_s)
+      ALox::BinaryUtils.pack_short(args.first.to_i).map(&:to_s)
     else
       args
     end

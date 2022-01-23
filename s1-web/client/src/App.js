@@ -13,7 +13,7 @@ import { Badge } from "./Badge";
 import { PresetDropdown, presetSources } from "./components/PresetDropdown";
 import ErrorNotice from "./ErrorNotice";
 import { loxValueInspect } from "./utils";
-import { createVM } from "./VM";
+import { VM } from "./VM";
 import { ExecutableFunction } from "./ExecutableFunction";
 
 const tabs = [
@@ -180,8 +180,8 @@ function ExecutionTab({ executable }) {
   const vm = useRef();
 
   useEffect(() => {
-    vm.current = createVM(executable);
-    setVMState(vm.current.reset());
+    vm.current = new VM(executable);
+    setVMState(vm.current.currentState());
   }, [executable]);
 
   if (vmState === undefined) {
@@ -196,7 +196,8 @@ function ExecutionTab({ executable }) {
           disabled={vmState.terminated}
           type="button"
           onClick={() => {
-            setVMState(vm.current.step());
+            vm.current.step();
+            setVMState(vm.current.currentState());
           }}
         >
           Step
@@ -206,7 +207,8 @@ function ExecutionTab({ executable }) {
           disabled={vmState.terminated}
           type="button"
           onClick={() => {
-            setVMState(vm.current.run());
+            vm.current.run();
+            setVMState(vm.current.currentState());
           }}
         >
           Run to completion
@@ -214,7 +216,10 @@ function ExecutionTab({ executable }) {
         <button
           className="btn my-4 mx-2"
           type="button"
-          onClick={() => setVMState(vm.current.reset())}
+          onClick={() => {
+            vm.current.reset();
+            setVMState(vm.current.currentState());
+          }}
         >
           Reset
         </button>
@@ -235,8 +240,8 @@ function ExecutionTab({ executable }) {
               ))}
               <ExecutableFunction
                 executable={executable}
-                functionName={vmState.callFrame.functionName}
-                highlight={vmState.callFrame.ip()}
+                functionName={vmState.callFrame?.functionName || "__toplevel__"}
+                highlight={vmState.callFrame?.ip()}
               />
             </div>
           </div>

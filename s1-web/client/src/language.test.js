@@ -1,7 +1,7 @@
 /* eslint-disable jest/valid-title */
 import fs from "fs";
 import child_process from "child_process";
-import { createVM } from "./VM";
+import { VM } from "./VM";
 
 fs.readdirSync("../test_suite").forEach((file) => {
   test(file, (done) => {
@@ -21,9 +21,9 @@ fs.readdirSync("../test_suite").forEach((file) => {
         return;
       }
 
-      const vm = createVM(JSON.parse(stdout));
-      vm.run();
       try {
+        const vm = new VM(JSON.parse(stdout));
+        vm.run();
         expect(vm.output.join("\n")).toBe(expectedOutput);
         done();
       } catch (error) {

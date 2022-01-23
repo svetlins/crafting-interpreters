@@ -16,7 +16,7 @@ module ALox
           name: @name,
 
           heap_slots: @heap_slots,
-          heap_usages: @heap_usages,
+          heap_usages: @heap_usages
         }
       end
     end

@@ -84,7 +84,7 @@ RSpec::Matchers.define :compile_to do |expected|
           compiled_arg = compiled_function.shift
 
           if arg.start_with?("H-")
-            compiled_arg = [compiled_arg.to_i, compiled_function.shift.to_i].map(&:chr).join.unpack1('s>')
+            compiled_arg = [compiled_arg.to_i, compiled_function.shift.to_i].map(&:chr).join.unpack1("s>")
 
             variable = arg[/H-(\w+)/, 1]
             if heap_allocations[variable]

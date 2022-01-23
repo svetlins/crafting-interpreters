@@ -212,8 +212,6 @@ module ALox
 
         print_debug_info(binding) if debug
       end
-    # rescue => e
-    #   error(e.message)
     end
 
     private

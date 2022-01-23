@@ -12,7 +12,7 @@ import Tree from "react-d3-tree";
 import { Badge } from "./Badge";
 import { PresetDropdown, presetSources } from "./components/PresetDropdown";
 import ErrorNotice from "./ErrorNotice";
-import { loxObjectToString } from "./utils";
+import { loxValueInspect } from "./utils";
 import { createVM } from "./VM";
 import { ExecutableFunction } from "./ExecutableFunction";
 
@@ -206,13 +206,7 @@ function ExecutionTab({ executable }) {
           disabled={vmState.terminated}
           type="button"
           onClick={() => {
-            let terminated = false;
-
-            while (!terminated) {
-              const intermediateVMState = vm.current.step();
-              terminated = intermediateVMState.terminated;
-              if (terminated) setVMState(intermediateVMState);
-            }
+            setVMState(vm.current.run());
           }}
         >
           Run to completion
@@ -265,10 +259,7 @@ function ExecutionTab({ executable }) {
                       }
                     />
                     <span className="text-xs">=</span>
-                    <Badge
-                      text={loxObjectToString(globalValue)}
-                      color="yellow"
-                    />
+                    <Badge text={loxValueInspect(globalValue)} color="yellow" />
                   </span>
                 )
               )}
@@ -284,7 +275,7 @@ function ExecutionTab({ executable }) {
             <div className="flex flex-col-reverse items-start h-96 overflow-y-scroll pt-2">
               {(vmState.stack || []).map((value, index) => (
                 <Badge
-                  text={loxObjectToString(value)}
+                  text={loxValueInspect(value)}
                   color={
                     index === vmState.callFrame?.stackTop - 1 ? "red" : "yellow"
                   }

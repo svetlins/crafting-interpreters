@@ -21,6 +21,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "jest-test": "jest",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -42,7 +43,9 @@
     ]
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.16.11",
     "autoprefixer": "^10.4.0",
+    "jest": "^27.4.7",
     "postcss": "^8.4.4",
     "tailwindcss": "^3.0.1"
   }

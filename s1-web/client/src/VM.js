@@ -1,4 +1,4 @@
-import { shortBigEndianToInteger } from "./utils";
+import { loxValueToString, shortBigEndianToInteger } from "./utils";
 
 const TOP_LEVEL_SCRIPT = {
   functionName: "__toplevel__",
@@ -62,6 +62,10 @@ function falsey(loxValue) {
   return !loxValue;
 }
 
+function equal(firstLoxValue, secondLoxValue) {
+  return firstLoxValue === secondLoxValue;
+}
+
 export function createVM(executable) {
   let output;
   let stack;
@@ -93,6 +97,23 @@ export function createVM(executable) {
 
   return {
     reset,
+    callFrames,
+    output,
+    run() {
+      while (callFrames.length > 0) {
+        this.step();
+      }
+
+      return {
+        output,
+        stack,
+        globals,
+        callFrames,
+        callFrame,
+        nextOp: callFrame?.peekCode(),
+        terminated: callFrames.length === 0,
+      };
+    },
     step() {
       callFrame = callFrames[callFrames.length - 1];
 
@@ -105,6 +126,9 @@ export function createVM(executable) {
             break;
           case "GET-GLOBAL":
             stack.push(globals[callFrame.readConstant(callFrame.readCode())]);
+            break;
+          case "SET-GLOBAL":
+            globals[callFrame.readConstant(callFrame.readCode())] = stack.pop();
             break;
           case "GET-LOCAL":
             stack.push(callFrame.getStackSlot(callFrame.readCode()));
@@ -138,6 +162,12 @@ export function createVM(executable) {
             );
             break;
           }
+          case "EQUAL": {
+            const b = stack.pop();
+            const a = stack.pop();
+            stack.push(equal(a, b));
+            break;
+          }
           case "LESSER": {
             const b = stack.pop();
             const a = stack.pop();
@@ -160,8 +190,6 @@ export function createVM(executable) {
             const functionDescriptor = callFrame.readConstant(
               callFrame.readCode()
             );
-
-            console.log(functionDescriptor);
 
             const heapView = Object.fromEntries(
               functionDescriptor.heap_usages.map((heapUsage) => [
@@ -199,7 +227,7 @@ export function createVM(executable) {
             break;
           }
           case "PRINT":
-            output.push(stack.pop().toString());
+            output.push(loxValueToString(stack.pop()));
             break;
           case "POP":
             stack.pop();

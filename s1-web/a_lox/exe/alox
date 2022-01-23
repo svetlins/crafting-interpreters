@@ -55,7 +55,7 @@ module ALox
       @executable_container = ExecutableContainer.new
     end
 
-    def execute(source, debug:)
+    def compile(source, debug:)
       @had_error = false
 
       tokens = Scanner.new(source, error_reporter: self).scan
@@ -71,6 +71,14 @@ module ALox
       return if @had_error
 
       Compiler.new(ast, @executable_container).compile
+
+      return if @had_error
+
+      @executable_container
+    end
+
+    def execute(source, debug:)
+      compile(source, debug: debug)
 
       return if @had_error
 
@@ -136,14 +144,25 @@ rescue Interrupt
   retry
 end
 
-if ARGV.size > 2
-  puts "Usage: rlox run [source_file] or rlox lab"
-  exit(1)
+if ARGV.size == 2 && ARGV[0] == "-c"
+  require "json"
+
+  session = ALox::PersistentSession.new
+  executable = session.compile(File.read(ARGV.last), debug: false)
+
+  if session.had_error
+    exit(1)
+  else
+    puts executable.serialize.to_json
+  end
 elsif ARGV.size == 1
   session = ALox::PersistentSession.new
   session.execute(File.read(ARGV.first))
   exit(session.had_error ? 1 : 0)
 elsif ARGV.size == 0
   repl
+else
+  puts "Usage: alox [source_file]"
+  exit(1)
 end
 

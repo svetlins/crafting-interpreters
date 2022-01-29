@@ -1,0 +1,1 @@
+{"executable":{"functions":{"__toplevel__":["LOAD-CONSTANT",0,"LOAD-CONSTANT",1,"LOAD-CONSTANT",2,"MULTIPLY","ADD","PRINT","NIL","RETURN"]},"constants":[1.0,2.0,3.0]},"expected_output":"7.0"}

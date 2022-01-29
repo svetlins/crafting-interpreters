@@ -1,0 +1,1 @@
+{"executable":{"functions":{"__toplevel__":["TRUE","JUMP-ON-FALSE",0,2,"POP","TRUE","PRINT","TRUE","JUMP-ON-FALSE",0,2,"POP","FALSE","PRINT","FALSE","JUMP-ON-FALSE",0,2,"POP","TRUE","PRINT","FALSE","JUMP-ON-FALSE",0,2,"POP","FALSE","PRINT","NIL","RETURN"]},"constants":[]},"expected_output":"true\nfalse\nfalse\nfalse"}

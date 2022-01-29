@@ -1,28 +1,24 @@
 # ALox
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/a_lox`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Ruby implemenation of (a subset of) the Lox language. This gem includes a parser, static analyzer, compiler and a VM, as well as a REPL tying them all together
 
 ## Installation
-
-Add this line to your application's Gemfile:
-
-```ruby
-gem 'a_lox'
-```
-
-And then execute:
-
-    $ bundle install
-
-Or install it yourself as:
 
     $ gem install a_lox
 
 ## Usage
 
-TODO: Write usage instructions here
+### As a library:
+
+Make use of `ALox::Parser`, `ALox::StaticResolver::Phase1`, `ALox::StaticResolver::Phase2`, `ALox::Compiler`, `ALox::VM`. [Example code]](exe/alox)
+
+### As a binary
+
+```
+alox # runs a REPL
+alox file_name.lox # executes a Lox program
+alox -c file_name.lox # outputs bytecode of a Lox program
+```
 
 ## Development
 

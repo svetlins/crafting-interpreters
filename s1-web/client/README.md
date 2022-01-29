@@ -1,3 +1,5 @@
+A small React app that provides an interface for inspecting output and step by step execution of my implementation of a compiler for the Lox language.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

@@ -1,4 +1,4 @@
-This is an implementation of (a subset of) the Lox language as described in [Crafting Interpreters](https://craftinginterpreters.com/). It is implemented in a slightly different approach by building on the tree-walker interpreter from the first part of the book but adding bytecode compilation and interpretation from the second part as additional steps. The reason for this is entirely about me getting a better grasp at ideas which are more obscure when presented as part of a single-pass parser-compiler as is done in the second part of the book.
+This is an implementation of (a subset of) the Lox language as described in [Crafting Interpreters](https://craftinginterpreters.com/). It is implemented in a slightly different approach by building on the tree-walker interpreter from the first part of the book but adding bytecode compilation and interpretation from the second part. The reason for this is entirely about me getting a better grasp at ideas which are more obscure when presented as part of a single-pass parser-compiler as is done in the second part of the book.
 
 Currently there are also other notable changes:
 
@@ -14,6 +14,6 @@ This repo contains:
 - [A Sinatra API that wraps the compilation results in a web process](web/README.md)
 - [A single-page application for the web interface](client/README.md)
   - [Demo](https://lox-analyzer.svetlins.net)
-- [A bunch of annotated Lox programs used to verify different VMs](test_sutie/README.md)
+- [A bunch of annotated Lox programs used to verify different VMs](test_suite/README.md)
 
-Currently there are two VMs: one in the Ruby gem and one in the web interface but my plan is to add other as an exercize in more-efficient languages.
+Currently there are two VMs: one in the Ruby gem and one in the web interface but my plan is to add other writte in more-efficient languages as an exercize.

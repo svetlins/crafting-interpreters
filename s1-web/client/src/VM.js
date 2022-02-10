@@ -1,4 +1,4 @@
-import { loxValueToString, shortBigEndianToInteger } from "./utils";
+import { loxValueToString, shortLittleEndianToInteger } from "./utils";
 
 const TOP_LEVEL_SCRIPT = {
   functionName: "__toplevel__",
@@ -39,7 +39,7 @@ function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
       return ip;
     },
     readShort() {
-      return shortBigEndianToInteger(this.readCode(), this.readCode());
+      return shortLittleEndianToInteger(this.readCode(), this.readCode());
     },
 
     peekCode() {

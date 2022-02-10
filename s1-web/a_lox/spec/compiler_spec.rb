@@ -55,6 +55,7 @@ RSpec.describe ALox::Compiler do
       RETURN
     CODE
   end
+
   specify "block" do
     source = <<-LOX
       {

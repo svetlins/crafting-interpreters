@@ -15,6 +15,7 @@ import ErrorNotice from "./ErrorNotice";
 import { loxValueInspect } from "./utils";
 import { VM } from "./VM";
 import { ExecutableFunction } from "./ExecutableFunction";
+import ALox from "./ALox";
 
 const tabs = [
   { name: "Execute", icon: ChevronRightIcon },
@@ -34,6 +35,16 @@ export default function App() {
   const [errors, setErrors] = useState([]);
 
   function submitSource(event) {
+    event.preventDefault();
+
+    const result = JSON.parse(ALox.analyze(source));
+    if (result.errors) {
+      setErrors(result.errors);
+    } else {
+      setAnalysisResult(result);
+    }
+    return;
+
     setLoading(true);
     const startedAt = new Date();
     axios

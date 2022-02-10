@@ -64,9 +64,9 @@ module ALox
 
         def underscore(camel_cased_word)
           word = camel_cased_word.split("::").last
-          word.gsub!(/([A-Z]+)(?=[A-Z][a-z])|([a-z\d])(?=[A-Z])/) { ($1 || $2) << "_" }
-          word.tr!("-", "_")
-          word.downcase!
+          word = word.gsub(/([A-Z]+)(?=[A-Z][a-z])|([a-z\d])(?=[A-Z])/) { ($1 || $2) + "_" }
+          word = word.tr("-", "_")
+          word = word.downcase
           word
         end
       end

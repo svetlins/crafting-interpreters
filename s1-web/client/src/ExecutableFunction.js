@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Badge } from "./Badge";
-import { shortBigEndianToInteger } from "./utils";
+import { shortLittleEndianToInteger } from "./utils";
 
 const opcodeSizes = {
   "LOAD-CONSTANT": 2,
@@ -45,14 +45,14 @@ export function ExecutableFunction({ executable, functionName, highlight }) {
         const functionDescriptor = constants[constantIndex];
         text = `${opcode} ( fun ${functionDescriptor.name}/${functionDescriptor.arity} )`;
       } else if (opcode === "JUMP-ON-FALSE" || opcode === "JUMP") {
-        const jumpOffset = shortBigEndianToInteger(code[i + 1], code[i + 2]);
+        const jumpOffset = shortLittleEndianToInteger(code[i + 1], code[i + 2]);
         text = `${opcode} ( target = ${jumpOffset + i + opcodeSize})`;
       } else if (
         opcode === "INIT-HEAP" ||
         opcode === "GET-HEAP" ||
         opcode === "SET-HEAP"
       ) {
-        const heapSlot = shortBigEndianToInteger(code[i + 1], code[i + 2]);
+        const heapSlot = shortLittleEndianToInteger(code[i + 1], code[i + 2]);
         text = `${opcode} ( heapSlot = ${heapSlot})`;
       } else if (opcodeSize > 1) {
         const args = code.slice(i + 1, i + opcodeSize);

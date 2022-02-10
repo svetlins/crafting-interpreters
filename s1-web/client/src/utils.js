@@ -1,4 +1,4 @@
-export function shortBigEndianToInteger(byte1, byte2) {
+export function shortLittleEndianToInteger(byte2, byte1) {
   let value = (byte1 << 8) + byte2;
   if (value > 2 ** 15) value = -1 * (2 ** 16 - value);
   return value;

@@ -7,7 +7,7 @@ domains:
 name: lox
 region: fra
 static_sites:
-  - build_command: npm run build
+  - build_command: DISABLE_ESLINT_PLUGIN=true npm run build
     environment_slug: node-js
     github:
       branch: master

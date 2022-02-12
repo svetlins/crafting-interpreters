@@ -1,11 +1,9 @@
-import { DotsHorizontalIcon } from "@heroicons/react/outline";
 import {
   ChevronRightIcon,
   CogIcon,
   CubeIcon,
   DotsVerticalIcon,
 } from "@heroicons/react/solid";
-import axios from "axios";
 import classNames from "classnames";
 import { useEffect, useRef, useState } from "react";
 import Tree from "react-d3-tree";
@@ -24,14 +22,11 @@ const tabs = [
   { name: "Bytecode", icon: CogIcon },
 ];
 
-const analyzeUrl = process.env.REACT_APP_ANALYZE_ENDPOINT_URL || "/api/analyze";
-
 export default function App() {
   const [source, setSource] = useState(presetSources[0].source);
 
   const [currentTab, setCurrentTab] = useState("Execute");
   const [analysisResult, setAnalysisResult] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState([]);
 
   function submitSource(event) {
@@ -41,34 +36,9 @@ export default function App() {
     if (result.errors) {
       setErrors(result.errors);
     } else {
+      setErrors([]);
       setAnalysisResult(result);
     }
-    return;
-
-    setLoading(true);
-    const startedAt = new Date();
-    axios
-      .post(analyzeUrl, { source })
-      .then((response) => {
-        if (!response.data.errors) {
-          setErrors([]);
-        }
-
-        setTimeout(() => {
-          setLoading(false);
-
-          if (response.data.errors) {
-            setErrors(response.data.errors);
-          } else {
-            setAnalysisResult(response.data);
-          }
-        }, Math.max(500, new Date() - startedAt));
-      })
-      .catch(() => {
-        setLoading(false);
-        setErrors(["Server Error"]);
-      });
-    event.preventDefault();
   }
 
   return (
@@ -169,12 +139,6 @@ export default function App() {
               ) : (
                 <div className="self-center my-auto text-4xl text-gray-400 font-light italic">
                   Hit analyze to populate
-                </div>
-              )}
-
-              {loading && (
-                <div className="w-full h-full opacity-50 bg-gray-300 absolute flex items-center justify-center">
-                  <DotsHorizontalIcon className="h-12" />
                 </div>
               )}
             </aside>

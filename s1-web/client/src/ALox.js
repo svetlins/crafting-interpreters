@@ -1,4 +1,4 @@
-require("alox");
+require("./vendor/alox");
 
 const Opal = window.Opal;
 

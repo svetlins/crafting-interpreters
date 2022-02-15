@@ -51,8 +51,6 @@ module ALox
             var x = 2;
             var y = 3;
           }
-
-          fn();
         LOX
 
         ast = analyze(source)
@@ -62,7 +60,7 @@ module ALox
         expect(ast).to have_ast_attribute2(:local, at: '1.statements.0.allocation.kind')
         expect(ast).to have_ast_attribute2(0, at: '1.statements.0.allocation.slot')
 
-        expect(ast).to have_ast_attribute2(2, at: '1.locals_count')
+        expect(ast).to have_ast_attribute2(2, at: '1.locals.count')
       end
 
       it 'does function blocks' do
@@ -99,7 +97,50 @@ module ALox
         expect(ast).to have_ast_attribute2(:local, at: '1.body.2.allocation.kind')
         expect(ast).to have_ast_attribute2(1, at: '1.body.2.allocation.slot')
 
-        expect(ast).to have_ast_attribute2(2, at: '1.body.1.locals_count')
+        expect(ast).to have_ast_attribute2(2, at: '1.body.1.locals.count')
+      end
+
+      it 'does upvalues' do
+        source = <<-LOX
+          fun outer() {
+            var x = 1;
+
+            fun inner() {
+              print x;
+            }
+          }
+        LOX
+
+        ast = analyze(source)
+
+        expect(ast).to have_ast_attribute2(:local, at: '0.body.0.allocation.kind')
+        expect(ast).to have_ast_attribute2(true, at: '0.body.0.allocation.captured')
+        expect(ast).to have_ast_attribute2(:upvalue, at: '0.body.1.body.0.expression.allocation.kind')
+        expect(ast).to have_ast_attribute2(0, at: '0.body.1.body.0.expression.allocation.slot')
+      end
+
+      it 'does deep upvalues' do
+        source = <<-LOX
+          fun outer() {
+            var x = 1;
+
+            fun middle() {
+              fun inner() {
+                print x;
+              }
+            }
+          }
+        LOX
+
+        ast = analyze(source)
+
+        expect(ast).to have_ast_attribute2(:local, at: '0.body.0.allocation.kind')
+        expect(ast).to have_ast_attribute2(true, at: '0.body.0.allocation.captured')
+        expect(ast).to have_ast_attribute2(:upvalue, at: '0.body.1.body.0.body.0.expression.allocation.kind')
+        expect(ast).to have_ast_attribute2(0, at: '0.body.1.body.0.body.0.expression.allocation.slot')
+
+        expect(ast).to have_ast_attribute2(true, at: '0.body.1.upvalues.0.local')
+        expect(ast).to have_ast_attribute2(false, at: '0.body.1.body.0.upvalues.0.local')
       end
     end
   end

@@ -10,7 +10,7 @@ module ALox
       name
       parameters
       body
-      additional :allocation, :full_name, :parameter_allocations, :heap_slots, :heap_usages
+      additional :allocation, :full_name, :parameter_allocations, :heap_slots, :heap_usages, :upvalues
     end
 
     ReturnStatement = define_node do
@@ -29,6 +29,7 @@ module ALox
     BlockStatement = define_node do
       statements
       additional :locals_count
+      additional :locals
     end
 
     IfStatement = define_node do

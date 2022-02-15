@@ -1,16 +1,23 @@
 module ALox
   module StaticResolver
     class Upvalues
-      Allocation = Struct.new(:name, :kind, :slot) do
-        def self.global; new(nil, :global, nil); end
-        def self.local(name:, slot:); new(name, :local, slot); end
-        def global?; kind == :global; end
+      Variable = Struct.new(:name, :kind, :slot, :depth) do
+        attr_accessor :captured
+        def self.global = new(nil, :global, nil)
+        def self.local(name:, slot:, depth:) = new(name, :local, slot, depth)
+        def self.upvalue(name:, slot:) = new(name, :upvalue, slot, nil)
+        def global? = kind == :global
       end
 
+      Upvalue = Struct.new(:slot, :local)
+
       class FunctionScope
+        attr_reader :upvalues
+
         def initialize(enclosing: nil)
           @enclosing = enclosing
-          @blocks = [[]]
+          @locals = []
+          @current_depth = 0
           @upvalues = []
         end
 
@@ -19,46 +26,82 @@ module ALox
         end
 
         def begin_block
-          @blocks << []
+          @current_depth += 1
         end
 
         def end_block
-          @blocks.pop
-        end
+          @current_depth -= 1
 
-        def current_block
-          @blocks.last
-        end
+          block_variables = @locals.select { _1.depth > @current_depth }
 
-        def heap_slots
-          @heap_allocated
+          @locals.reject! { _1.depth > @current_depth }
+
+          block_variables
         end
 
         def add_variable(name)
-          return Allocation.global if top_level? && @blocks.size == 1
+          return Variable.global if top_level? && @current_depth == 0
 
-          allocation = Allocation.local(name: name, slot: @blocks.flatten.count)
+          variable = Variable.local(name: name, slot: @locals.count, depth: @current_depth)
 
-          @blocks.last << allocation
+          @locals << variable
 
-          allocation
+          variable
         end
 
+        # fn outer(x, y)
+        #   fn middle [1, true]
+        #     fn inner [0, false]
+        #       return y
         def resolve_variable(name)
           local = find_local(name)
 
-          return local if find_local(name)
+          return local if local
 
-          Allocation.global
+          if @enclosing # ? maybe not needed to if
+            upvalue_slot, is_local = @enclosing.find_upvalue(name)
+
+            upvalue_index = add_upvalue(upvalue_slot, local: is_local)
+
+            return Variable.upvalue(name: name, slot: upvalue_index)
+          end
+
+          Variable.global
         end
 
         def find_local(name)
-          @blocks.reverse_each do |block|
-            local = block.detect { |variable| variable.name == name }
-            return local if local
+          @locals.detect { |local| local.name == name }
+        end
+
+        def find_upvalue(name)
+          local = find_local(name)
+
+          if local
+            local.captured = true
+            return [local.slot, true]
           end
 
-          nil
+          if @enclosing
+            up_upvalue_slot, is_local = @enclosing.find_upvalue(name)
+
+            add_upvalue(up_upvalue_slot, local: is_local) if up_upvalue_slot
+
+            [up_upvalue_slot, false]
+          end
+
+          [nil, false]
+        end
+
+        def add_upvalue(upvalue, local:)
+          new_upvalue = Upvalue.new(upvalue, local)
+
+          @upvalues.each_with_index do |upvalue, index|
+            return index if upvalue == new_upvalue
+          end
+
+          @upvalues << new_upvalue
+
+          @upvalues.count - 1
         end
       end
 
@@ -82,7 +125,7 @@ module ALox
       def visit_block_statement(block_statement)
         @function_scopes.last.begin_block
         resolve(block_statement.statements)
-        block_statement.locals_count = @function_scopes.last.end_block.size
+        block_statement.locals = @function_scopes.last.end_block
       end
 
       def visit_var_statement(var_statement)
@@ -116,6 +159,8 @@ module ALox
           end
 
         resolve(function_statement.body)
+
+        function_statement.upvalues = @function_scopes.last.upvalues
 
         @function_scopes.pop
       end

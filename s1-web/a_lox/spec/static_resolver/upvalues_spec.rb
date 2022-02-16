@@ -141,6 +141,9 @@ module ALox
 
         expect(ast).to have_ast_attribute2(true, at: '0.body.1.upvalues.0.local')
         expect(ast).to have_ast_attribute2(false, at: '0.body.1.body.0.upvalues.0.local')
+
+        expect(ast).to have_ast_attribute2(true, at: '0.body.1.upvalues.0.local')
+        expect(ast).to have_ast_attribute2(false, at: '0.body.1.body.0.upvalues.0.local')
       end
     end
   end

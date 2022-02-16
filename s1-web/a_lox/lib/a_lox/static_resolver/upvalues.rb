@@ -6,7 +6,10 @@ module ALox
         def self.global = new(nil, :global, nil)
         def self.local(name:, slot:, depth:) = new(name, :local, slot, depth)
         def self.upvalue(name:, slot:) = new(name, :upvalue, slot, nil)
+
         def global? = kind == :global
+        def local? = kind == :local
+        def upvalue? = kind == :upvalue
       end
 
       Upvalue = Struct.new(:slot, :local)
@@ -61,9 +64,11 @@ module ALox
           if @enclosing # ? maybe not needed to if
             upvalue_slot, is_local = @enclosing.find_upvalue(name)
 
-            upvalue_index = add_upvalue(upvalue_slot, local: is_local)
+            if upvalue_slot
+              upvalue_index = add_upvalue(upvalue_slot, local: is_local)
 
-            return Variable.upvalue(name: name, slot: upvalue_index)
+              return Variable.upvalue(name: name, slot: upvalue_index)
+            end
           end
 
           Variable.global
@@ -84,9 +89,11 @@ module ALox
           if @enclosing
             up_upvalue_slot, is_local = @enclosing.find_upvalue(name)
 
-            add_upvalue(up_upvalue_slot, local: is_local) if up_upvalue_slot
+            if up_upvalue_slot
+              add_upvalue(up_upvalue_slot, local: is_local)
 
-            [up_upvalue_slot, false]
+              return [up_upvalue_slot, false]
+            end
           end
 
           [nil, false]

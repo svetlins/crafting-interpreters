@@ -144,7 +144,7 @@ module ALox
             Callable.new(function_descriptor, upvalues)
           )
         when Opcodes::SET_GLOBAL
-          @globals[call_frame.read_constant(call_frame.read_code)] = @stack.pop
+          @globals[call_frame.read_constant(call_frame.read_code)] = @stack.last
         when Opcodes::DEFINE_GLOBAL
           @globals[call_frame.read_constant(call_frame.read_code)] = @stack.pop
         when Opcodes::GET_GLOBAL

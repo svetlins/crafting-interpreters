@@ -4,46 +4,46 @@ require "readline"
 
 WELCOME_MESSAGE = <<~WELCOME
   Variables:
-    > var foo;
-    > var foo = 42;
+    var foo;
+    var foo = 42;
 
   Output:
-    > print foo;
-    > print foo * foo;
+    print foo;
+    print foo * foo;
 
   Conditional:
-    > if (69 > 42) {
-    |   print "69 is greater than 42";
-    | } else {
-    |   print "69 is not greater than 42";
-    | }
+    if (69 > 42) {
+      print "69 is greater than 42";
+    } else {
+      print "69 is not greater than 42";
+    }
 
-  While loop:
-    > while (x < 10) {
-    |   print (x + 5) * x;
-    | }
+ While loop:
+    while (x < 10) {
+      print (x + 5) * x;
+    }
 
   For loop;
-    > for (var i = 0; i < 10; i = i + i) {
-    |   print i;
-    | }
+    for (var i = 0; i < 10; i = i + i) {
+      print i;
+    }
 
   Functions:
-    > fun fn(n) {
-    |   return n * n;
-    | }
+    fun fn(n) {
+      return n * n;
+    }
 
   Closures:
-    > fun makeCounter() {
-    |   var count = 0;
-    |
-    |   fun counter() {
-    |     count = count + 1;
-    |     return count - 1;
-    |   }
-    |
-    |   return counter;
-    | }
+    fun makeCounter() {
+      var count = 0;
+
+      fun counter() {
+        count = count + 1;
+        return count - 1;
+      }
+
+      return counter;
+    }
 WELCOME
 
 module ALox

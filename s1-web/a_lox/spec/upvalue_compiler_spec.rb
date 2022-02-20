@@ -17,28 +17,28 @@ module ALox
       LOX
 
       expect(source).to compile_to2 <<-CODE
-      __toplevel__:
-        LOAD-CLOSURE 4
-        DEFINE-GLOBAL 5
-        NIL
-        RETURN
-      outer:
-        LOAD-CONSTANT 0
-        LOAD-CLOSURE 3
-        NIL
-        RETURN
-      middle:
-        LOAD-CLOSURE 2
-        NIL
-        RETURN
-      inner:
-        GET-UPVALUE 0
-        PRINT
-        LOAD-CONSTANT 1
-        SET-UPVALUE 0
-        POP
-        NIL
-        RETURN
+        __toplevel__:
+          LOAD-CLOSURE 4
+          DEFINE-GLOBAL 5
+          NIL
+          RETURN
+        outer:
+          LOAD-CONSTANT 0
+          LOAD-CLOSURE 3
+          NIL
+          RETURN
+        middle:
+          LOAD-CLOSURE 2
+          NIL
+          RETURN
+        inner:
+          GET-UPVALUE 0
+          PRINT
+          LOAD-CONSTANT 1
+          SET-UPVALUE 0
+          POP
+          NIL
+          RETURN
       CODE
     end
 
@@ -58,28 +58,28 @@ module ALox
       LOX
 
       expect(source).to compile_to2 <<-CODE
-      __toplevel__:
-        LOAD-CLOSURE 4
-        DEFINE-GLOBAL 5
-        NIL
-        RETURN
-      outer:
-        LOAD-CONSTANT 0
-        LOAD-CONSTANT 1
-        LOAD-CLOSURE 3
-        NIL
-        RETURN
-      middle:
-        LOAD-CLOSURE 2
-        NIL
-        RETURN
-      inner:
-        GET-UPVALUE 0
-        POP
-        GET-UPVALUE 1
-        PRINT
-        NIL
-        RETURN
+        __toplevel__:
+          LOAD-CLOSURE 4
+          DEFINE-GLOBAL 5
+          NIL
+          RETURN
+        outer:
+          LOAD-CONSTANT 0
+          LOAD-CONSTANT 1
+          LOAD-CLOSURE 3
+          NIL
+          RETURN
+        middle:
+          LOAD-CLOSURE 2
+          NIL
+          RETURN
+        inner:
+          GET-UPVALUE 0
+          POP
+          GET-UPVALUE 1
+          PRINT
+          NIL
+          RETURN
       CODE
     end
   end

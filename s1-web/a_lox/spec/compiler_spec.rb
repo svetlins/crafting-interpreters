@@ -56,7 +56,7 @@ RSpec.describe ALox::Compiler do
     CODE
   end
 
-  specify "block" do
+  specify "global block" do
     source = <<-LOX
       {
         var x = 1;
@@ -75,7 +75,7 @@ RSpec.describe ALox::Compiler do
     CODE
   end
 
-  specify "assignment in block" do
+  specify "assignment in global block" do
     source = <<-LOX
       {
         var x;
@@ -139,6 +139,8 @@ RSpec.describe ALox::Compiler do
         PRINT
         JUMP +1
         POP
+        NIL
+        RETURN
     CODE
   end
 
@@ -158,6 +160,8 @@ RSpec.describe ALox::Compiler do
         PRINT
         JUMP -11
         POP
+        NIL
+        RETURN
     CODE
   end
 
@@ -185,10 +189,13 @@ RSpec.describe ALox::Compiler do
         POP
         JUMP -23
         POP
+        POP # why this pop?
+        NIL
+        RETURN
     CODE
   end
 
-  specify "functions" do
+  specify "function" do
     source = <<-LOX
       fun fn() {
         print 1;
@@ -209,7 +216,7 @@ RSpec.describe ALox::Compiler do
     CODE
   end
 
-  specify "function parameters" do
+  specify "function parameter" do
     source = <<-LOX
       fun fn(x) {
         print x;
@@ -246,10 +253,12 @@ RSpec.describe ALox::Compiler do
       __global__fn__:
         LOAD-CONSTANT 0
         RETURN
+        NIL
+        RETURN
     CODE
   end
 
-  specify "function locals" do
+  specify "function local" do
     source = <<-LOX
       fun fn() {
         var x = 1;
@@ -272,7 +281,7 @@ RSpec.describe ALox::Compiler do
     CODE
   end
 
-  specify "inner functions" do
+  specify "inner function" do
     source = <<-LOX
       fun fn() {
         fun inner() {
@@ -299,7 +308,7 @@ RSpec.describe ALox::Compiler do
     CODE
   end
 
-  specify "closures" do
+  specify "closure" do
     source = <<-LOX
       fun fn() {
         var x = 42;
@@ -318,7 +327,8 @@ RSpec.describe ALox::Compiler do
         RETURN
       __global__fn__:
         LOAD-CONSTANT 0
-        LOAD-CLOSURE 1 1 0
+        LOAD-CLOSURE 1
+          LOCAL 0
         NIL
         RETURN
       __global__fn__inner__:
@@ -329,11 +339,11 @@ RSpec.describe ALox::Compiler do
     CODE
   end
 
-  specify "multiple closures" do
+  specify "multiple closure" do
     source = <<-LOX
       fun fn() {
-        var x = 42;
-        var y = 43;
+        var x = 1;
+        var y = 2;
 
         fun inner() {
           print x + y;
@@ -350,7 +360,9 @@ RSpec.describe ALox::Compiler do
       __global__fn__:
         LOAD-CONSTANT 0
         LOAD-CONSTANT 1
-        LOAD-CLOSURE 2 1 0 1 1
+        LOAD-CLOSURE 2
+          LOCAL 0
+          LOCAL 1
         NIL
         RETURN
       __global__fn__inner__:
@@ -360,6 +372,84 @@ RSpec.describe ALox::Compiler do
         PRINT
         NIL
         RETURN
+    CODE
+  end
+
+  specify 'deep closure' do
+    source = <<-LOX
+      fun outer() {
+        var x = 1;
+
+        fun middle() {
+          fun inner() {
+            print x;
+          }
+
+          return inner;
+        }
+      }
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __toplevel__:
+        LOAD-CLOSURE 3
+        DEFINE-GLOBAL 4
+        NIL
+        RETURN
+      __global__outer__:
+        LOAD-CONSTANT 0
+        LOAD-CLOSURE 2
+          LOCAL 0
+        NIL
+        RETURN
+      __global__outer__middle__:
+        LOAD-CLOSURE 1
+          UPVALUE 0
+        GET-LOCAL 0
+        RETURN
+        NIL
+        RETURN
+      __global__outer__middle__inner__:
+        GET-UPVALUE 0
+        PRINT
+        NIL
+        RETURN
+    CODE
+
+  end
+
+  specify 'global block closure' do
+    source = <<-LOX
+      var fn;
+      {
+        var x = 1;
+        fun inner() {
+          return x;
+        }
+
+        fn = inner;
+      }
+    LOX
+
+    expect(source).to compile_to <<-CODE
+      __toplevel__:
+        NIL
+        DEFINE-GLOBAL 0
+        LOAD-CONSTANT 1
+        LOAD-CLOSURE 2
+          LOCAL 0
+        GET-LOCAL 1
+        SET-GLOBAL 0
+        POP
+        CLOSE-UPVALUE
+        POP
+        NIL
+        RETURN
+      __global__inner__:
+       GET-UPVALUE 0
+       RETURN
+       NIL
+       RETURN
     CODE
   end
 
@@ -421,8 +511,7 @@ RSpec.describe ALox::Compiler do
 
   specify "closure from block" do
     source = <<-LOX
-      fun fn(p) {
-        var x = p;
+      fun fn(x) {
         var fn;
 
         {
@@ -451,17 +540,21 @@ RSpec.describe ALox::Compiler do
         NIL
         RETURN
       __global__fn__:
-        GET-LOCAL 0
         NIL
-        LOAD-CLOSURE 0 1 1
-        GET-LOCAL 3
-        SET-LOCAL 2
-        POP
-        POP
+        LOAD-CLOSURE 0
+          LOCAL 0
         GET-LOCAL 2
+        SET-LOCAL 1
+        POP
+        POP
+        GET-LOCAL 1
+        RETURN
+        NIL
         RETURN
       __global__fn__inner__:
         GET-UPVALUE 0
+        RETURN
+        NIL
         RETURN
     CODE
   end

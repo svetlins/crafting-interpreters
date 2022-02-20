@@ -19,7 +19,7 @@ module ALox
     Dir["#{File.dirname(__FILE__)}/../../test_suite/**/*.lox"].each do |test_file|
       test_name = File.basename(test_file).chomp(".lox")
 
-      specify "(#{test_name})" do
+      specify "(#{test_name} prog)" do
         source = File.read(test_file)
 
         expected_output =

@@ -24,11 +24,13 @@ module ALox
           RETURN
         __global__outer__:
           LOAD-CONSTANT 0
-          LOAD-CLOSURE 3 1 1
+          LOAD-CLOSURE 3
+            LOCAL 1
           NIL
           RETURN
         __global__outer__middle__:
-          LOAD-CLOSURE 2 0 0
+          LOAD-CLOSURE 2
+            UPVALUE 0
           NIL
           RETURN
         __global__outer__middle__inner__:
@@ -65,11 +67,15 @@ module ALox
         __global__outer__:
           LOAD-CONSTANT 0
           LOAD-CONSTANT 1
-          LOAD-CLOSURE 3 1 0 1 1
+          LOAD-CLOSURE 3
+            LOCAL 0
+            LOCAL 1
           NIL
           RETURN
         __global__outer__middle__:
-          LOAD-CLOSURE 2 0 0 0 1
+          LOAD-CLOSURE 2
+            UPVALUE 0
+            UPVALUE 1
           NIL
           RETURN
         __global__outer__middle__inner__:

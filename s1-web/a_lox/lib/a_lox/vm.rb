@@ -107,6 +107,7 @@ module ALox
 
       @had_error = false
 
+
       loop do
         call_frame = call_frames.last
 
@@ -143,7 +144,7 @@ module ALox
             Callable.new(function_descriptor, upvalues)
           )
         when Opcodes::SET_GLOBAL
-          @stack.push(@globals[call_frame.read_constant(call_frame.read_code)] = @stack.pop)
+          @globals[call_frame.read_constant(call_frame.read_code)] = @stack.pop
         when Opcodes::DEFINE_GLOBAL
           @globals[call_frame.read_constant(call_frame.read_code)] = @stack.pop
         when Opcodes::GET_GLOBAL
@@ -169,6 +170,7 @@ module ALox
         when Opcodes::NEGATE
           @stack.push(-@stack.pop)
         when Opcodes::POP
+          fail 'corrupted stack' if @stack.empty?
           @stack.pop
         when Opcodes::ADD
           b, a = @stack.pop, @stack.pop

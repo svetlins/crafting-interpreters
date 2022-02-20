@@ -43,8 +43,19 @@ RSpec::Matchers.define :compile_to do |expected|
     end
   end
 
+  def translate_closure_upvalue_directives(op)
+    if op == 'LOCAL'
+      '1'
+    elsif op == 'UPVALUE'
+      '0'
+    else
+      op
+    end
+  end
+
   expected_executable =
     expected.lines
+      .map { _1[/^([^#]+)#?/, 1] } # strip comments
       .map(&:chomp)
       .map(&:strip)
       .chunk { _1.end_with?(":") }
@@ -61,11 +72,17 @@ RSpec::Matchers.define :compile_to do |expected|
     return false unless executable
 
     expected_executable.each do |function_name, ops|
+      if !executable.functions.has_key?(function_name)
+        expectation_error = "Expected function #{function_name} not in compiled output"
+        return false
+      end
+
       compiled_function = executable.functions[function_name].map(&:to_s)
 
       ops.each_with_index do |op, index|
         op, *args = op.split(/\s/)
 
+        op   = translate_closure_upvalue_directives(op)
         args = unpack_jump_offset(args)
 
         compiled_op = compiled_function.shift
@@ -85,6 +102,11 @@ RSpec::Matchers.define :compile_to do |expected|
             return false
           end
         end
+      end
+
+      if compiled_function.any?
+        expectation_error = 'Unexpected rest of program'
+        return false
       end
     end
   end

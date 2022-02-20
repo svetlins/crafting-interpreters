@@ -59,6 +59,10 @@ module ALox
 
       emit_two(Opcodes::LOAD_CLOSURE, add_constant(function))
 
+      function_statement.upvalues.each do |upvalue|
+        emit_two(upvalue.local ? 1 : 0, upvalue.slot)
+      end
+
       if function_statement.allocation.global?
         constant_index = add_constant(function_statement.name.lexeme)
         emit_two(Opcodes::DEFINE_GLOBAL, constant_index)

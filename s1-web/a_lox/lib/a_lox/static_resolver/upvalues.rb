@@ -90,9 +90,9 @@ module ALox
             up_upvalue_slot, is_local = @enclosing.find_upvalue(name)
 
             if up_upvalue_slot
-              add_upvalue(up_upvalue_slot, local: is_local)
+              xxx_slot = add_upvalue(up_upvalue_slot, local: is_local)
 
-              return [up_upvalue_slot, false]
+              return [xxx_slot, false]
             end
           end
 

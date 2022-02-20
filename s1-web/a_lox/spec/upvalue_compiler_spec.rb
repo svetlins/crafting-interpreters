@@ -4,7 +4,7 @@ module ALox
   RSpec.describe UpvalueCompiler do
     it "does something" do
       source = <<-LOX
-        fun outer() {
+        fun outer(y) {
           var x = 1;
 
           fun middle() {
@@ -24,11 +24,11 @@ module ALox
           RETURN
         outer:
           LOAD-CONSTANT 0
-          LOAD-CLOSURE 3
+          LOAD-CLOSURE 3 1 1
           NIL
           RETURN
         middle:
-          LOAD-CLOSURE 2
+          LOAD-CLOSURE 2 0 0
           NIL
           RETURN
         inner:
@@ -50,8 +50,7 @@ module ALox
 
           fun middle() {
             fun inner() {
-              x;
-              print y;
+              return x + y;
             }
           }
         }
@@ -66,18 +65,18 @@ module ALox
         outer:
           LOAD-CONSTANT 0
           LOAD-CONSTANT 1
-          LOAD-CLOSURE 3
+          LOAD-CLOSURE 3 1 0 1 1
           NIL
           RETURN
         middle:
-          LOAD-CLOSURE 2
+          LOAD-CLOSURE 2 0 0 0 1
           NIL
           RETURN
         inner:
           GET-UPVALUE 0
-          POP
           GET-UPVALUE 1
-          PRINT
+          ADD
+          RETURN
           NIL
           RETURN
       CODE

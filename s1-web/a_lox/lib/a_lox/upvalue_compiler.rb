@@ -9,11 +9,16 @@ module ALox
         @upvalues = upvalues
       end
 
+      def upvalue_count
+        @upvalues.count
+      end
+
       def serialize
         {
           type: :function,
           arity: @arity,
           name: @name,
+          upvalue_count: upvalue_count,
         }
       end
     end

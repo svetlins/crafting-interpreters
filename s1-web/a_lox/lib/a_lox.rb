@@ -18,6 +18,7 @@ require_relative "a_lox/binary_utils"
 
 require_relative "a_lox/static_resolver/upvalues"
 require_relative "a_lox/upvalue_compiler"
+require_relative "a_lox/upvalue_vm"
 
 module ALox
   class Error < StandardError; end

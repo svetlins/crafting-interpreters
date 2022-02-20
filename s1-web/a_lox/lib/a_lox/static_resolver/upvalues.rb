@@ -15,9 +15,10 @@ module ALox
       Upvalue = Struct.new(:slot, :local)
 
       class FunctionScope
-        attr_reader :upvalues
+        attr_reader :upvalues, :name
 
-        def initialize(enclosing: nil)
+        def initialize(name, enclosing: nil)
+          @name = name
           @enclosing = enclosing
           @locals = []
           @current_depth = 0
@@ -113,7 +114,7 @@ module ALox
       end
 
       def initialize(error_reporter: nil)
-        @function_scopes = [FunctionScope.new]
+        @function_scopes = [FunctionScope.new('global')]
         @error_reporter = error_reporter
       end
 
@@ -158,7 +159,10 @@ module ALox
         function_statement.allocation =
           @function_scopes.last.add_variable(function_statement.name.lexeme)
 
-        @function_scopes << FunctionScope.new(enclosing: @function_scopes.last)
+        @function_scopes << FunctionScope.new(
+          function_statement.name.lexeme,
+          enclosing: @function_scopes.last
+        )
 
         function_statement.parameter_allocations =
           function_statement.parameters.map do |parameter|
@@ -168,6 +172,7 @@ module ALox
         resolve(function_statement.body)
 
         function_statement.upvalues = @function_scopes.last.upvalues
+        function_statement.full_name = '__' + @function_scopes.map(&:name).join('__') + '__'
 
         @function_scopes.pop
       end

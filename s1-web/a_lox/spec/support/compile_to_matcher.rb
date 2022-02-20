@@ -26,10 +26,7 @@ RSpec::Matchers.define :compile_to do |expected|
     return if @compilation_error
     executable = ALox::ExecutableContainer.new
 
-    phase1 = ALox::StaticResolver::Phase1.new(error_reporter: self)
-    phase2 = ALox::StaticResolver::Phase2.new(error_reporter: self)
-    phase1.resolve(ast)
-    phase2.resolve(ast)
+    ALox::StaticResolver::Upvalues.new(error_reporter: self).resolve(ast)
     return if @compilation_error
 
     ALox::Compiler.new(ast, executable, error_reporter: self).compile
@@ -38,7 +35,7 @@ RSpec::Matchers.define :compile_to do |expected|
     executable
   end
 
-  def process_args(args)
+  def unpack_jump_offset(args)
     if args.count == 1 && args.first =~ (/^(\+|-)/)
       ALox::BinaryUtils.pack_short(args.first.to_i).map(&:to_s)
     else
@@ -57,7 +54,6 @@ RSpec::Matchers.define :compile_to do |expected|
       .to_h
 
   expectation_error = nil
-  heap_allocations = {}
 
   match do |source|
     executable = compile(source)
@@ -70,7 +66,7 @@ RSpec::Matchers.define :compile_to do |expected|
       ops.each_with_index do |op, index|
         op, *args = op.split(/\s/)
 
-        args = process_args(args)
+        args = unpack_jump_offset(args)
 
         compiled_op = compiled_function.shift
 
@@ -83,31 +79,10 @@ RSpec::Matchers.define :compile_to do |expected|
         args.each do |arg|
           compiled_arg = compiled_function.shift
 
-          if arg.start_with?("H-")
-            compiled_arg = [compiled_arg.to_i, compiled_function.shift.to_i].map(&:chr).join.unpack1("s")
-
-            variable = arg[/H-(\w+)/, 1]
-            if heap_allocations[variable]
-              if heap_allocations[variable] != compiled_arg
-                expectation_error =
-                  "Heap allocation in #{function_name} slot for #{op} " \
-                  "was expected to be #{arg} but was " \
-                  "#{heap_allocations.key(compiled_arg) ? "H-" + heap_allocations.key(compiled_arg) : compiled_arg}"
-                return false
-              end
-            elsif heap_allocations.value?(compiled_arg)
-              expectation_error =
-                "Heap allocation slot for #{op} in #{function_name} already seen as H-#{heap_allocations.key(compiled_arg)}"
-              return false
-            else
-              heap_allocations[variable] = compiled_arg
-            end
-          else
-            unless compiled_arg == arg
-              expectation_error =
-                "Wrong arg for #{op} in #{function_name}: expected `#{arg}` at index #{index} but was `#{compiled_arg}` instead"
-              return false
-            end
+          unless compiled_arg == arg
+            expectation_error =
+              "Wrong arg for #{op} in #{function_name}: expected `#{arg}` at index #{index} but was `#{compiled_arg}` instead"
+            return false
           end
         end
       end

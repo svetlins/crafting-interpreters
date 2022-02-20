@@ -28,13 +28,7 @@ class CompilationEnvironment
 
       throw :error if @errors.any?
 
-      phase1 = ALox::StaticResolver::Phase1.new(error_reporter: self)
-      phase1.resolve(ast)
-
-      throw :error if @errors.any?
-
-      phase2 = ALox::StaticResolver::Phase2.new(error_reporter: self)
-      phase2.resolve(ast)
+      ALox::StaticResolver::Upvalues.new(error_reporter: self).resolve(ast)
 
       throw :error if @errors.any?
 

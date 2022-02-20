@@ -1,12 +1,16 @@
 module ALox
   class Compiler
     class FunctionDescriptor
-      attr_accessor :heap_slots, :heap_usages
       attr_reader :arity, :name
 
-      def initialize(name, arity)
+      def initialize(name, arity, upvalues)
         @arity = arity
         @name = name
+        @upvalues = upvalues
+      end
+
+      def upvalue_count
+        @upvalues.count
       end
 
       def serialize
@@ -14,18 +18,16 @@ module ALox
           type: :function,
           arity: @arity,
           name: @name,
-
-          heap_slots: @heap_slots,
-          heap_usages: @heap_usages
+          upvalue_count: upvalue_count,
         }
       end
     end
 
-    def initialize(statements, executable, name = "__toplevel__", arity = 0, error_reporter: nil)
+    def initialize(statements, executable, name = "__toplevel__", arity = 0, upvalues = [], error_reporter: nil)
       @statements = statements
       @executable = executable
       @name = name
-      @function = FunctionDescriptor.new(name, arity)
+      @function = FunctionDescriptor.new(name, arity, upvalues)
       @error_reporter = error_reporter
 
       executable.reset_function(name)
@@ -56,13 +58,15 @@ module ALox
         function_statement.body,
         @executable,
         function_statement.full_name,
-        function_statement.parameters.count
+        function_statement.parameters.count,
+        function_statement.upvalues,
       ).compile
 
-      function.heap_slots = function_statement.heap_slots
-      function.heap_usages = function_statement.heap_usages
-
       emit_two(Opcodes::LOAD_CLOSURE, add_constant(function))
+
+      function_statement.upvalues.each do |upvalue|
+        emit_two(upvalue.local ? 1 : 0, upvalue.slot)
+      end
 
       if function_statement.allocation.global?
         constant_index = add_constant(function_statement.name.lexeme)
@@ -97,9 +101,7 @@ module ALox
       if var_statement.allocation.global?
         emit_two(Opcodes::DEFINE_GLOBAL, add_constant(var_statement.name.lexeme))
       elsif var_statement.allocation.local?
-      elsif var_statement.allocation.heap_allocated?
-        emit(Opcodes::INIT_HEAP)
-        emit_two(*BinaryUtils.pack_short(var_statement.allocation.heap_slot))
+        # no-op, stack slot should match :fingers-crossed:
       else
         fail
       end
@@ -110,7 +112,13 @@ module ALox
         statement.accept(self)
       end
 
-      block_statement.locals_count.times { emit(Opcodes::POP) }
+      block_statement.locals.each do |local|
+        if local.captured
+          emit(Opcodes::CLOSE_UPVALUE)
+        else
+          emit(Opcodes::POP)
+        end
+      end
     end
 
     def visit_if_statement(if_statement)
@@ -152,10 +160,9 @@ module ALox
         constant_index = add_constant(assign_expression.name.lexeme)
         emit_two(Opcodes::SET_GLOBAL, constant_index)
       elsif assign_expression.allocation.local?
-        emit_two(Opcodes::SET_LOCAL, assign_expression.allocation.stack_slot)
-      elsif assign_expression.allocation.heap_allocated?
-        emit(Opcodes::SET_HEAP)
-        emit_two(*BinaryUtils.pack_short(assign_expression.allocation.heap_slot))
+        emit_two(Opcodes::SET_LOCAL, assign_expression.allocation.slot)
+      elsif assign_expression.allocation.upvalue?
+        emit_two(Opcodes::SET_UPVALUE, assign_expression.allocation.slot)
       else
         fail
       end
@@ -166,10 +173,9 @@ module ALox
         constant_index = add_constant(variable_expression.name.lexeme)
         emit_two(Opcodes::GET_GLOBAL, constant_index)
       elsif variable_expression.allocation.local?
-        emit_two(Opcodes::GET_LOCAL, variable_expression.allocation.stack_slot)
-      elsif variable_expression.allocation.heap_allocated?
-        emit(Opcodes::GET_HEAP)
-        emit_two(*BinaryUtils.pack_short(variable_expression.allocation.heap_slot))
+        emit_two(Opcodes::GET_LOCAL, variable_expression.allocation.slot)
+      elsif variable_expression.allocation.upvalue?
+        emit_two(Opcodes::GET_UPVALUE, variable_expression.allocation.slot)
       else
         fail
       end

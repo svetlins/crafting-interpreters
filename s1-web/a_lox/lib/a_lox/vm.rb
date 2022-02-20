@@ -2,24 +2,19 @@ require "ostruct"
 
 module ALox
   class VM
-    class HeapValue
-      attr_accessor :value
-    end
-
     class Callable
-      attr_reader :heap_view
-
       def self.top_level_script
         OpenStruct.new(
           function_name: "__toplevel__",
-          heap_slots: [],
-          heap_view: {}
+          upvalues: []
         )
       end
 
-      def initialize(function_descriptor, heap_view)
+      attr_reader :upvalues
+
+      def initialize(function_descriptor, upvalues)
         @function_descriptor = function_descriptor
-        @heap_view = heap_view
+        @upvalues = upvalues
       end
 
       def function_name
@@ -29,20 +24,15 @@ module ALox
       def arity
         @function_descriptor.arity
       end
-
-      def heap_slots
-        @function_descriptor.heap_slots
-      end
     end
 
     class CallFrame
-      attr_reader :callable, :heap_slots, :stack_top
+      attr_reader :callable, :stack_top
 
-      def initialize(executable, stack, callable, heap_slots = [], stack_top = 0)
+      def initialize(executable, stack, callable, stack_top = 0)
         @executable = executable
         @stack = stack
         @callable = callable
-        @heap_slots = heap_slots
         @ip = 0
         @stack_top = stack_top
       end
@@ -73,6 +63,31 @@ module ALox
       end
     end
 
+    class Upvalue
+      attr_reader :pointer
+
+      def initialize(pointer, stack)
+        @pointer = pointer
+        @stack = stack
+      end
+
+      def close!
+        @value = @stack[pointer]
+      end
+
+      def value
+        @value || @stack[pointer]
+      end
+
+      def set_value(new_value)
+        if defined? @value
+          @value = new_value
+        else
+          @stack[pointer] = new_value
+        end
+      end
+    end
+
     def self.execute(executable, out: $stdout, debug: false)
       new.execute(executable, out: out, debug: debug)
     end
@@ -87,6 +102,8 @@ module ALox
       call_frames = [
         CallFrame.new(executable, @stack, Callable.top_level_script)
       ]
+
+      open_upvalues = []
 
       @had_error = false
 
@@ -104,16 +121,26 @@ module ALox
         when Opcodes::LOAD_CLOSURE
           function_descriptor = call_frame.read_constant(call_frame.read_code)
 
-          heap_view =
-            function_descriptor.heap_usages.map do |heap_usage|
-              [
-                heap_usage,
-                call_frame.callable.heap_view[heap_usage] || call_frame.heap_slots[heap_usage]
-              ]
-            end.to_h
+          upvalues =
+            function_descriptor.upvalue_count.times.map do |upvalue_description|
+              is_local, slot = call_frame.read_code, call_frame.read_code
+
+              if is_local == 1
+                new_upvalue =
+                  open_upvalues.detect { _1.pointer == call_frame.stack_top + slot } ||
+                    Upvalue.new(call_frame.stack_top + slot, @stack)
+
+                open_upvalues << new_upvalue
+                open_upvalues.sort_by! { -(_1.pointer) }
+
+                new_upvalue
+              else
+                call_frame.callable.upvalues[slot]
+              end
+            end
 
           @stack.push(
-            Callable.new(function_descriptor, heap_view)
+            Callable.new(function_descriptor, upvalues)
           )
         when Opcodes::SET_GLOBAL
           @stack.push(@globals[call_frame.read_constant(call_frame.read_code)] = @stack.pop)
@@ -127,21 +154,10 @@ module ALox
           call_frame.set_stack_slot(call_frame.read_code, @stack.last)
         when Opcodes::GET_LOCAL
           @stack.push(call_frame.get_stack_slot(call_frame.read_code))
-        when Opcodes::SET_HEAP
-          heap_slot = call_frame.read_short
-          heap_value = call_frame.callable.heap_view[heap_slot] || call_frame.heap_slots.fetch(heap_slot)
-          heap_value.value = @stack.last
-        when Opcodes::INIT_HEAP
-          heap_slot = call_frame.read_short
-          call_frame.heap_slots.fetch(heap_slot).value = @stack.pop
-        when Opcodes::GET_HEAP
-          heap_slot = call_frame.read_short
-          @stack.push(
-            (
-              call_frame.callable.heap_view[heap_slot] ||
-              call_frame.heap_slots.fetch(heap_slot)
-            ).value
-          )
+        when Opcodes::GET_UPVALUE
+          @stack.push(call_frame.callable.upvalues[call_frame.read_code].value)
+        when Opcodes::SET_UPVALUE
+          call_frame.callable.upvalues[call_frame.read_code].set_value(@stack.last)
         when Opcodes::NIL_OP
           @stack.push(nil)
         when Opcodes::TRUE_OP
@@ -179,14 +195,10 @@ module ALox
           callable = @stack[-argument_count - 1]
 
           if callable.is_a? Callable
-            heap_slots =
-              callable.heap_slots.map { |slot| [slot, HeapValue.new] }.to_h
-
             call_frames << CallFrame.new(
               executable,
               @stack,
               callable,
-              heap_slots,
               @stack.size - argument_count
             )
           else
@@ -194,11 +206,22 @@ module ALox
           end
         when Opcodes::RETURN
           result = @stack.pop
+
+          while open_upvalues.count > 0 && open_upvalues.first.pointer >= call_frame.stack_top
+            upvalue = open_upvalues.shift
+            upvalue.close!
+          end
+
           call_frames.pop
 
           @stack[0..-1] = @stack[0...call_frame.stack_top - 1]
 
           @stack.push(result)
+        when Opcodes::CLOSE_UPVALUE
+          open_upvalues.detect { _1.pointer == @stack.size - 1 }&.tap do |upvalue|
+            upvalue = open_upvalues.shift
+            upvalue.close!
+          end
         when Opcodes::PRINT
           out.puts(lox_object_to_string(@stack.pop))
         when Opcodes::JUMP_ON_FALSE
@@ -212,6 +235,10 @@ module ALox
 
         print_debug_info(binding) if debug
       end
+
+      @stack.pop
+
+      fail 'corrupted open upvalues' if open_upvalues.any?
     end
 
     private

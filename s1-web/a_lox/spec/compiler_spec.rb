@@ -318,12 +318,11 @@ RSpec.describe ALox::Compiler do
         RETURN
       __global__fn__:
         LOAD-CONSTANT 0
-        INIT-HEAP H-XXX
-        LOAD-CLOSURE 1
+        LOAD-CLOSURE 1 1 0
         NIL
         RETURN
       __global__fn__inner__:
-        GET-HEAP H-XXX
+        GET-UPVALUE 0
         PRINT
         NIL
         RETURN
@@ -350,15 +349,13 @@ RSpec.describe ALox::Compiler do
         RETURN
       __global__fn__:
         LOAD-CONSTANT 0
-        INIT-HEAP H-XXX
         LOAD-CONSTANT 1
-        INIT-HEAP H-YYY
-        LOAD-CLOSURE 2
+        LOAD-CLOSURE 2 1 0 1 1
         NIL
         RETURN
       __global__fn__inner__:
-        GET-HEAP H-XXX
-        GET-HEAP H-YYY
+        GET-UPVALUE 0
+        GET-UPVALUE 1
         ADD
         PRINT
         NIL
@@ -455,17 +452,16 @@ RSpec.describe ALox::Compiler do
         RETURN
       __global__fn__:
         GET-LOCAL 0
-        INIT-HEAP H-XXX
         NIL
-        LOAD-CLOSURE 0
+        LOAD-CLOSURE 0 1 1
+        GET-LOCAL 3
+        SET-LOCAL 2
+        POP
+        POP
         GET-LOCAL 2
-        SET-LOCAL 1
-        POP
-        POP
-        GET-LOCAL 1
         RETURN
       __global__fn__inner__:
-        GET-HEAP H-XXX
+        GET-UPVALUE 0
         RETURN
     CODE
   end

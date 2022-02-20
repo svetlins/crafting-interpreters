@@ -8,11 +8,7 @@ module ALox
       ast = Parser.new(tokens).parse
       executable = ExecutableContainer.new
 
-      phase1 = StaticResolver::Phase1.new
-      phase2 = StaticResolver::Phase2.new
-      phase1.resolve(ast)
-      phase2.resolve(ast)
-
+      StaticResolver::Upvalues.new.resolve(ast)
       Compiler.new(ast, executable).compile
 
       stdout = StringIO.new
@@ -22,7 +18,7 @@ module ALox
       stdout.tap(&:rewind).read.chomp
     end
 
-    context "(memory leaks)" do
+    xcontext "(memory leaks)" do
       around do |example|
         GC.disable
         example.run

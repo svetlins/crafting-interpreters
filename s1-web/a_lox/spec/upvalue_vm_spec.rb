@@ -2,18 +2,18 @@ require "spec_helper"
 require "stringio"
 
 module ALox
-  RSpec.describe UpvalueVM do
+  RSpec.describe VM do
     def execute(source, vm: nil)
       tokens = Scanner.new(source).scan
       ast = Parser.new(tokens).parse
       executable = ExecutableContainer.new
 
       StaticResolver::Upvalues.new.resolve(ast)
-      UpvalueCompiler.new(ast, executable).compile
+      Compiler.new(ast, executable).compile
 
       stdout = StringIO.new
 
-      (vm || UpvalueVM).execute(executable, out: stdout)
+      (vm || VM).execute(executable, out: stdout)
 
       stdout.tap(&:rewind).read.chomp
     end
@@ -165,6 +165,73 @@ module ALox
       LOX
 
       expect(execute(source)).to eq('42.0')
+    end
+
+    it "yes regression" do
+      source = <<-LOX
+        fun fn(x, y, z) {
+          fun inner() {
+            print x;
+            fun inner1() {
+              fun inner2() {
+                fun inner3() {
+                  fun inner4() {
+                    return x * y * z;
+                  }
+
+                  return inner4;
+                }
+                return inner3;
+              }
+              return inner2;
+            }
+            return inner1;
+          }
+
+          return inner;
+        }
+
+        print fn(1, 2, 3)()()()()();
+      LOX
+
+      expect(execute(source)).to eq("1.0\n6.0")
+    end
+
+    it "yes regression 2" do
+      source = <<-LOX
+        fun outer() {
+          var pad1 = 1;
+          var pad2 = 2;
+
+          fun fn(x, y, z) {
+            fun inner() {
+              print x;
+              fun inner1() {
+                fun inner2() {
+                  fun inner3() {
+                    fun inner4() {
+                      return x * y * z;
+                    }
+
+                    return inner4;
+                  }
+                  return inner3;
+                }
+                return inner2;
+              }
+              return inner1;
+            }
+
+            return inner;
+          }
+
+          print fn(1, 2, 3)()()()()();
+        }
+
+        outer();
+      LOX
+
+      expect(execute(source)).to eq("1.0\n6.0")
     end
   end
 end

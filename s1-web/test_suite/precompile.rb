@@ -13,10 +13,7 @@ def compile(source)
   executable_container = ALox::ExecutableContainer.new
   tokens = ALox::Scanner.new(source).scan
   ast = ALox::Parser.new(tokens).parse
-  phase1 = ALox::StaticResolver::Phase1.new
-  phase1.resolve(ast)
-  phase2 = ALox::StaticResolver::Phase2.new
-  phase2.resolve(ast)
+  ALox::StaticResolver::Upvalues.new.resolve(ast)
 
   ALox::Compiler.new(ast, executable_container).compile
 

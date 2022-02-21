@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Badge } from "./Badge";
 import { shortLittleEndianToInteger } from "./utils";
+import classNames from "classnames";
 
 const opcodeSizes = {
   "LOAD-CONSTANT": 2,
@@ -10,6 +11,8 @@ const opcodeSizes = {
   "GET-GLOBAL": 2,
   "SET-LOCAL": 2,
   "GET-LOCAL": 2,
+  "SET-UPVALUE": 2,
+  "GET-UPVALUE": 2,
   "INIT-HEAP": 3,
   "SET-HEAP": 3,
   "GET-HEAP": 3,
@@ -40,10 +43,6 @@ export function ExecutableFunction({ executable, functionName, highlight }) {
         text = `${opcode} ( $${constantIndex} = ${JSON.stringify(
           constants[constantIndex]
         )})`;
-      } else if (opcode === "LOAD-CLOSURE") {
-        const constantIndex = code[i + 1];
-        const functionDescriptor = constants[constantIndex];
-        text = `${opcode} ( fun ${functionDescriptor.name}/${functionDescriptor.arity} )`;
       } else if (opcode === "JUMP-ON-FALSE" || opcode === "JUMP") {
         const jumpOffset = shortLittleEndianToInteger(code[i + 1], code[i + 2]);
         text = `${opcode} ( target = ${jumpOffset + i + opcodeSize})`;
@@ -61,9 +60,32 @@ export function ExecutableFunction({ executable, functionName, highlight }) {
         text = `${opcode}`;
       }
 
-      i += opcodeSize - 1;
+      if (opcode === "LOAD-CLOSURE") {
+        // special case because variable length
+        const constantIndex = code[i + 1];
+        const functionDescriptor = constants[constantIndex];
+        text = `${opcode} ( fun ${functionDescriptor.name}/${functionDescriptor.arity} )`;
 
-      ops.push([text, opStart]);
+        ops.push([text, opStart]);
+        for (
+          let upvalueIndex = 0;
+          upvalueIndex < functionDescriptor.upvalue_count;
+          upvalueIndex++
+        ) {
+          ops.push([
+            `${code[i + 2 + upvalueIndex * 2] === 1 ? "LOCAL" : "UPVALUE"}(${
+              code[i + 2 + upvalueIndex * 2 + 1]
+            })`,
+            null,
+            true,
+          ]);
+        }
+
+        i += opcodeSize + functionDescriptor.upvalue_count * 2 - 1;
+      } else {
+        ops.push([text, opStart]);
+        i += opcodeSize - 1;
+      }
     }
 
     return ops;
@@ -71,14 +93,16 @@ export function ExecutableFunction({ executable, functionName, highlight }) {
 
   return (
     <div className="flex flex-col items-start">
-      {ops.map(([op, offset]) => (
+      {ops.map(([op, offset, indent]) => (
         <div className="truncate" key={offset}>
-          <span className="text-xs ml-4">{offset}: </span>
-          <Badge
-            text={op}
-            color={offset === highlight ? "red" : "blue"}
-            highlight={offset === highlight}
-          />
+          {offset !== null && <span className="text-xs ml-4">{offset}: </span>}
+          <span className={classNames({ "ml-12": indent })}>
+            <Badge
+              text={op}
+              color={offset === highlight ? "red" : "blue"}
+              highlight={offset === highlight}
+            />
+          </span>
         </div>
       ))}
     </div>

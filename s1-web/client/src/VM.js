@@ -2,8 +2,6 @@ import { loxValueToString, shortLittleEndianToInteger } from "./utils";
 
 const TOP_LEVEL_SCRIPT = {
   functionName: "__toplevel__",
-  heapSlots: [],
-  heapView: [],
 };
 
 function falsey(loxValue) {
@@ -14,23 +12,20 @@ function equal(firstLoxValue, secondLoxValue) {
   return firstLoxValue === secondLoxValue;
 }
 
-function createCallable(functionDescriptor, heapView) {
+function createCallable(functionDescriptor) {
   return {
     functionName: functionDescriptor.name,
-    heapSlots: functionDescriptor.heap_slots,
     arity: functionDescriptor.arity,
-    heapView: heapView,
   };
 }
 
-function createCallFrame(executable, stack, callable, heapSlots, stackTop) {
+function createCallFrame(executable, stack, callable, stackTop) {
   let ip = 0;
 
   return {
     stackTop,
     functionName: callable.functionName,
     callable,
-    heapSlots,
     readCode() {
       ip += 1;
       return executable.functions[callable.functionName][ip - 1];
@@ -108,29 +103,6 @@ export class VM {
             this.stack[this.stack.length - 1]
           );
           break;
-        case "INIT-HEAP": {
-          const heapSlot = callFrame.readShort();
-          callFrame.heapSlots[heapSlot].value = this.stack.pop();
-          break;
-        }
-        case "SET-HEAP": {
-          const heapSlot = callFrame.readShort();
-          (
-            callFrame.callable.heapView[heapSlot] ||
-            callFrame.heapSlots[heapSlot]
-          ).value = this.stack[this.stack.length - 1];
-          break;
-        }
-        case "GET-HEAP": {
-          const heapSlot = callFrame.readShort();
-          this.stack.push(
-            (
-              callFrame.callable.heapView[heapSlot] ||
-              callFrame.heapSlots[heapSlot]
-            ).value
-          );
-          break;
-        }
         case "EQUAL": {
           const b = this.stack.pop();
           const a = this.stack.pop();
@@ -160,15 +132,7 @@ export class VM {
             callFrame.readCode()
           );
 
-          const heapView = Object.fromEntries(
-            functionDescriptor.heap_usages.map((heapUsage) => [
-              heapUsage,
-              callFrame.callable.heapView[heapUsage] ||
-                callFrame.heapSlots[heapUsage],
-            ])
-          );
-
-          const callable = createCallable(functionDescriptor, heapView);
+          const callable = createCallable(functionDescriptor);
           this.stack.push(callable);
           break;
         case "ADD": {
@@ -224,15 +188,10 @@ export class VM {
           const argumentCount = callFrame.readCode();
           const callable = this.stack[this.stack.length - argumentCount - 1];
 
-          const heapSlots = Object.fromEntries(
-            callable.heapSlots.map((heapSlot) => [heapSlot, {}])
-          );
-
           const newCallFrame = createCallFrame(
             this.executable,
             this.stack,
             callable,
-            heapSlots,
             this.stack.length - argumentCount
           );
 

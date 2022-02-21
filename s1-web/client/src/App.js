@@ -230,7 +230,7 @@ function ExecutionTab({ executable }) {
             <div className="h-96 overflow-y-scroll flex flex-col items-start pt-2">
               {Object.entries(vmState.globals || {}).map(
                 ([globalName, globalValue], index) => (
-                  <span>
+                  <span key={index}>
                     <Badge
                       text={globalName}
                       color="purple"
@@ -255,6 +255,7 @@ function ExecutionTab({ executable }) {
             <div className="flex flex-col-reverse items-start h-96 overflow-y-scroll pt-2">
               {(vmState.stack || []).map((value, index) => (
                 <Badge
+                  key={index}
                   text={loxValueInspect(value)}
                   color={
                     index === vmState.callFrame?.stackTop - 1 ? "red" : "yellow"
@@ -267,7 +268,7 @@ function ExecutionTab({ executable }) {
         </div>
         <code className="block bg-gray-100 font-mono m-4 mt-8 p-2">
           {vmState.output.length > 0
-            ? vmState.output.map((line) => <div>{line}</div>)
+            ? vmState.output.map((line, index) => <div key={index}>{line}</div>)
             : "no output"}
         </code>
       </div>
@@ -278,7 +279,7 @@ function ExecutionTab({ executable }) {
 function TokensTab({ tokens }) {
   return (
     <div>
-      {tokens.map((token) => {
+      {tokens.map((token, index) => {
         if (
           token.type === "STRING" ||
           token.type === "NUMBER" ||
@@ -286,6 +287,7 @@ function TokensTab({ tokens }) {
         ) {
           return (
             <Badge
+              key={index}
               text={`${token.type} (${token.literal || token.lexeme})`}
               color="green"
             />
@@ -323,8 +325,8 @@ function BytecodeTab({ executable }) {
 
   return (
     <>
-      {functions.map((fn) => (
-        <div>
+      {functions.map((fn, index) => (
+        <div key={index}>
           <h1 className="px-2 py-0.5 italic text-gray-500 text-sm">{fn}:</h1>
           <ExecutableFunction executable={executable} functionName={fn} />
         </div>

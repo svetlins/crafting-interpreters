@@ -1,4 +1,4 @@
-RSpec::Matchers.define :have_ast_attribute2 do |expected, at:|
+RSpec::Matchers.define :have_ast_attribute do |expected, at:|
   error = nil
 
   match do |ast|

@@ -182,12 +182,12 @@ module ALox
         elsif node.allocation.local?
           {
             allocation: "STACK",
-            "stack slot" => node.allocation.stack_slot
+            "stack slot" => node.allocation.slot
           }
-        elsif node.allocation.heap_allocated?
+        elsif node.allocation.upvalue?
           {
             allocation: "HEAP",
-            "heap slot" => node.allocation.heap_slot
+            "heap slot" => node.allocation.slot
           }
         end
       end

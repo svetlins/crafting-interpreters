@@ -10,7 +10,7 @@ module ALox
         ast
       end
 
-      it "doesn't crash" do
+      it "does function top-level locals" do
         source = <<-LOX
           var global = 1;
 
@@ -28,19 +28,19 @@ module ALox
 
         ast = analyze(source)
 
-        expect(ast).to have_ast_attribute2(:global, at: '0.allocation.kind')
+        expect(ast).to have_ast_attribute(:global, at: '0.allocation.kind')
 
-        expect(ast).to have_ast_attribute2(:local, at: '1.body.0.allocation.kind')
-        expect(ast).to have_ast_attribute2(0, at: '1.body.0.allocation.slot')
+        expect(ast).to have_ast_attribute(:local, at: '1.body.0.allocation.kind')
+        expect(ast).to have_ast_attribute(0, at: '1.body.0.allocation.slot')
 
-        expect(ast).to have_ast_attribute2(:local, at: '1.body.1.allocation.kind')
-        expect(ast).to have_ast_attribute2(1, at: '1.body.1.allocation.slot')
+        expect(ast).to have_ast_attribute(:local, at: '1.body.1.allocation.kind')
+        expect(ast).to have_ast_attribute(1, at: '1.body.1.allocation.slot')
 
-        expect(ast).to have_ast_attribute2(:local, at: '1.body.2.expression.allocation.kind')
-        expect(ast).to have_ast_attribute2(0, at: '1.body.2.expression.allocation.slot')
+        expect(ast).to have_ast_attribute(:local, at: '1.body.2.expression.allocation.kind')
+        expect(ast).to have_ast_attribute(0, at: '1.body.2.expression.allocation.slot')
 
-        expect(ast).to have_ast_attribute2(:local, at: '1.body.3.value.allocation.kind')
-        expect(ast).to have_ast_attribute2(1, at: '1.body.3.value.allocation.slot')
+        expect(ast).to have_ast_attribute(:local, at: '1.body.3.value.allocation.kind')
+        expect(ast).to have_ast_attribute(1, at: '1.body.3.value.allocation.slot')
       end
 
       it 'does top level blocks' do
@@ -55,12 +55,12 @@ module ALox
 
         ast = analyze(source)
 
-        expect(ast).to have_ast_attribute2(:global, at: '0.allocation.kind')
+        expect(ast).to have_ast_attribute(:global, at: '0.allocation.kind')
 
-        expect(ast).to have_ast_attribute2(:local, at: '1.statements.0.allocation.kind')
-        expect(ast).to have_ast_attribute2(0, at: '1.statements.0.allocation.slot')
+        expect(ast).to have_ast_attribute(:local, at: '1.statements.0.allocation.kind')
+        expect(ast).to have_ast_attribute(0, at: '1.statements.0.allocation.slot')
 
-        expect(ast).to have_ast_attribute2(2, at: '1.locals.count')
+        expect(ast).to have_ast_attribute(2, at: '1.locals.count')
       end
 
       it 'does function blocks' do
@@ -83,21 +83,21 @@ module ALox
 
         ast = analyze(source)
 
-        expect(ast).to have_ast_attribute2(:global, at: '0.allocation.kind')
+        expect(ast).to have_ast_attribute(:global, at: '0.allocation.kind')
 
-        expect(ast).to have_ast_attribute2(:local, at: '1.body.0.allocation.kind')
-        expect(ast).to have_ast_attribute2(0, at: '1.body.0.allocation.slot')
+        expect(ast).to have_ast_attribute(:local, at: '1.body.0.allocation.kind')
+        expect(ast).to have_ast_attribute(0, at: '1.body.0.allocation.slot')
 
-        expect(ast).to have_ast_attribute2(:local, at: '1.body.1.statements.0.allocation.kind')
-        expect(ast).to have_ast_attribute2(1, at: '1.body.1.statements.0.allocation.slot')
+        expect(ast).to have_ast_attribute(:local, at: '1.body.1.statements.0.allocation.kind')
+        expect(ast).to have_ast_attribute(1, at: '1.body.1.statements.0.allocation.slot')
 
-        expect(ast).to have_ast_attribute2(:local, at: '1.body.1.statements.1.allocation.kind')
-        expect(ast).to have_ast_attribute2(2, at: '1.body.1.statements.1.allocation.slot')
+        expect(ast).to have_ast_attribute(:local, at: '1.body.1.statements.1.allocation.kind')
+        expect(ast).to have_ast_attribute(2, at: '1.body.1.statements.1.allocation.slot')
 
-        expect(ast).to have_ast_attribute2(:local, at: '1.body.2.allocation.kind')
-        expect(ast).to have_ast_attribute2(1, at: '1.body.2.allocation.slot')
+        expect(ast).to have_ast_attribute(:local, at: '1.body.2.allocation.kind')
+        expect(ast).to have_ast_attribute(1, at: '1.body.2.allocation.slot')
 
-        expect(ast).to have_ast_attribute2(2, at: '1.body.1.locals.count')
+        expect(ast).to have_ast_attribute(2, at: '1.body.1.locals.count')
       end
 
       it 'does upvalues' do
@@ -113,10 +113,10 @@ module ALox
 
         ast = analyze(source)
 
-        expect(ast).to have_ast_attribute2(:local, at: '0.body.0.allocation.kind')
-        expect(ast).to have_ast_attribute2(true, at: '0.body.0.allocation.captured')
-        expect(ast).to have_ast_attribute2(:upvalue, at: '0.body.1.body.0.expression.allocation.kind')
-        expect(ast).to have_ast_attribute2(0, at: '0.body.1.body.0.expression.allocation.slot')
+        expect(ast).to have_ast_attribute(:local, at: '0.body.0.allocation.kind')
+        expect(ast).to have_ast_attribute(true, at: '0.body.0.allocation.captured')
+        expect(ast).to have_ast_attribute(:upvalue, at: '0.body.1.body.0.expression.allocation.kind')
+        expect(ast).to have_ast_attribute(0, at: '0.body.1.body.0.expression.allocation.slot')
       end
 
       it 'does deep upvalues' do
@@ -134,16 +134,16 @@ module ALox
 
         ast = analyze(source)
 
-        expect(ast).to have_ast_attribute2(:local, at: '0.body.0.allocation.kind')
-        expect(ast).to have_ast_attribute2(true, at: '0.body.0.allocation.captured')
-        expect(ast).to have_ast_attribute2(:upvalue, at: '0.body.1.body.0.body.0.expression.allocation.kind')
-        expect(ast).to have_ast_attribute2(0, at: '0.body.1.body.0.body.0.expression.allocation.slot')
+        expect(ast).to have_ast_attribute(:local, at: '0.body.0.allocation.kind')
+        expect(ast).to have_ast_attribute(true, at: '0.body.0.allocation.captured')
+        expect(ast).to have_ast_attribute(:upvalue, at: '0.body.1.body.0.body.0.expression.allocation.kind')
+        expect(ast).to have_ast_attribute(0, at: '0.body.1.body.0.body.0.expression.allocation.slot')
 
-        expect(ast).to have_ast_attribute2(true, at: '0.body.1.upvalues.0.local')
-        expect(ast).to have_ast_attribute2(false, at: '0.body.1.body.0.upvalues.0.local')
+        expect(ast).to have_ast_attribute(true, at: '0.body.1.upvalues.0.local')
+        expect(ast).to have_ast_attribute(false, at: '0.body.1.body.0.upvalues.0.local')
 
-        expect(ast).to have_ast_attribute2(true, at: '0.body.1.upvalues.0.local')
-        expect(ast).to have_ast_attribute2(false, at: '0.body.1.body.0.upvalues.0.local')
+        expect(ast).to have_ast_attribute(true, at: '0.body.1.upvalues.0.local')
+        expect(ast).to have_ast_attribute(false, at: '0.body.1.body.0.upvalues.0.local')
       end
     end
   end

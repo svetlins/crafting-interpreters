@@ -164,10 +164,9 @@ module ALox
           enclosing: @function_scopes.last
         )
 
-        function_statement.parameter_allocations =
-          function_statement.parameters.map do |parameter|
-            @function_scopes.last.add_variable(parameter.lexeme)
-          end
+        function_statement.parameters.map do |parameter|
+          @function_scopes.last.add_variable(parameter.lexeme)
+        end
 
         resolve(function_statement.body)
 

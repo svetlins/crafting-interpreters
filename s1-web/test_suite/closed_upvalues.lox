@@ -1,0 +1,12 @@
+fun fn() {
+  var x = 42;
+
+  fun inner() {
+    print x; // => 42.0
+  }
+
+  return inner;
+}
+
+var closure = fn();
+closure();

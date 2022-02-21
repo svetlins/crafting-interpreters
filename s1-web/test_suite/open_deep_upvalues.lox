@@ -1,0 +1,16 @@
+fun fn() {
+  var x = 41;
+  var y = 1;
+
+  fun middle() {
+    fun inner() {
+      print x + y; // => 42.0
+    }
+
+    return inner;
+  }
+
+  middle()();
+}
+
+fn();

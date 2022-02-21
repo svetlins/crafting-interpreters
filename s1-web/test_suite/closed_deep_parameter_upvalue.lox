@@ -1,0 +1,15 @@
+fun fn(x) {
+  fun middle(y) {
+    fun inner() {
+      return x + y;
+    }
+
+    return inner;
+  }
+
+  return middle;
+}
+
+var closure = fn(41)(1);
+
+print closure(); // => 42.0

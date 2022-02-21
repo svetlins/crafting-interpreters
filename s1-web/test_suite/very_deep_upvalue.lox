@@ -1,0 +1,25 @@
+fun fn(x, y, z) {
+  fun inner() {
+    print x; // => 1.0
+    fun inner1() {
+      print y; // => 2.0
+      fun inner2() {
+        print z; // => 3.0
+        fun inner3() {
+          fun inner4() {
+            return x * y * z; // => 6.0
+          }
+
+          return inner4;
+        }
+        return inner3;
+      }
+      return inner2;
+    }
+    return inner1;
+  }
+
+  return inner;
+}
+
+print fn(1, 2, 3)()()()()();

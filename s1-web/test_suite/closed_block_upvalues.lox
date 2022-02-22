@@ -1,0 +1,17 @@
+
+{
+  var fn;
+
+  {
+    var x = 1;
+    fun inner() {
+      print x;
+    }
+
+    fn = inner;
+  }
+
+  var y = 2;
+
+  print y; // => 2.0
+}

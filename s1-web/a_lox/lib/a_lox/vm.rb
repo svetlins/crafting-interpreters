@@ -224,10 +224,11 @@ module ALox
 
           @stack.push(result)
         when Opcodes::CLOSE_UPVALUE
-          open_upvalues.detect { _1.pointer == @stack.size - 1 }&.tap do |upvalue|
-            upvalue = open_upvalues.shift
-            upvalue.close!
-          end
+          fail 'corrupted upvalues' if open_upvalues.empty?
+          open_upvalues.shift.close!
+
+          fail 'corrupted stack' if @stack.empty?
+          @stack.pop
         when Opcodes::PRINT
           out.puts(lox_object_to_string(@stack.pop))
         when Opcodes::JUMP_ON_FALSE

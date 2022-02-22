@@ -1,0 +1,26 @@
+fun outer(xClosure) {
+  var x = 1;
+  var y = 2;
+
+  fun inner() {
+
+    fun makeYClosure() {
+      return y;
+    }
+
+    fun makeXClosure() {
+      return x;
+    }
+
+    if (xClosure) {
+      print makeXClosure();
+    } else {
+      print makeYClosure();
+    }
+  }
+
+  inner();
+}
+
+outer(false); // => 2.0
+outer(true); // => 1.0

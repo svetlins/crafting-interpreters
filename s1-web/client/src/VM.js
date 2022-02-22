@@ -70,7 +70,7 @@ export class VM {
     this.stack = [];
     this.globals = {};
     this.callFrames = [
-      createCallFrame(this.executable, this.stack, TOP_LEVEL_SCRIPT, {}, 0),
+      createCallFrame(this.executable, this.stack, TOP_LEVEL_SCRIPT, 0),
     ];
   }
 

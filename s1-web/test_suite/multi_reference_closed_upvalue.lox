@@ -1,0 +1,35 @@
+fun makeCounter() {
+  var count = 0;
+
+  fun increment() {
+    count = count + 1;
+    return count;
+  }
+
+  fun decrement() {
+    count = count - 1;
+    return count;
+  }
+
+  fun change(inc) {
+    if (inc) {
+      return increment();
+    } else {
+      return decrement();
+    }
+
+  }
+
+  return change;
+}
+
+var counter1 = makeCounter();
+var counter2 = makeCounter();
+
+print counter1(true); // => 1.0
+print counter1(true); // => 2.0
+print counter2(true); // => 1.0
+print counter1(true); // => 3.0
+print counter1(false); // => 2.0
+print counter2(true); // => 2.0
+print counter2(false); // => 1.0

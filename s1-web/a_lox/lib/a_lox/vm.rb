@@ -197,12 +197,16 @@ module ALox
           callable = @stack[-argument_count - 1]
 
           if callable.is_a? Callable
-            call_frames << CallFrame.new(
-              executable,
-              @stack,
-              callable,
-              @stack.size - argument_count
-            )
+            if callable.arity == argument_count
+              call_frames << CallFrame.new(
+                executable,
+                @stack,
+                callable,
+                @stack.size - argument_count
+              )
+            else
+              error("function #{callable.function_name} takes #{callable.arity} arguments but #{argument_count} provided")
+            end
           else
             error("#{lox_object_to_string(callable)} is not callable")
           end

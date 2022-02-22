@@ -1,0 +1,23 @@
+fun makeTrue() {
+  print "true";
+  return true;
+}
+
+fun makeFalse() {
+  print "false";
+  return false;
+}
+
+// => true
+// => false
+makeTrue() and makeFalse();
+
+// => false
+makeFalse() and makeTrue();
+
+// => true
+makeTrue() or makeFalse();
+
+// => false
+// => true
+makeFalse() or makeTrue();

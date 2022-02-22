@@ -1,0 +1,23 @@
+fun outer() {
+  var outerX = "before";
+
+  fun inner1() {
+    var x = 1;
+
+    fun closure() {
+      print x;
+    }
+  }
+
+  fun inner2() {
+    print outerX;
+  }
+
+  inner1();
+
+  outerX = "after";
+
+  return inner2;
+}
+
+outer()(); // => after

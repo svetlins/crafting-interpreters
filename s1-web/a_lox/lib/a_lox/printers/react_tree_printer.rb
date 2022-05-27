@@ -111,11 +111,14 @@ module ALox
 
       def visit_binary(binary_expression)
         {
-          name: "BINARY_EXP",
+          name: "BINARY",
           attributes: {
             operator: binary_expression.operator.lexeme
           },
-          children: [binary_expression.left.accept(self), binary_expression.right.accept(self)]
+          children: [
+            binary_expression.left.accept(self),
+            binary_expression.right.accept(self)
+          ]
         }
       end
 
@@ -135,7 +138,16 @@ module ALox
         }
       end
 
-      def visit_logical(expression) = {name: "LOGICAL", attributes: {}}
+      def visit_logical(logical_expression)
+        {
+          name: "LOGICAL",
+          attributes: {value: logical_expression.operator.lexeme},
+          children: [
+            logical_expression.left.accept(self),
+            logical_expression.right.accept(self)
+          ]
+        }
+      end
 
       def visit_unary(unary_expression)
         {

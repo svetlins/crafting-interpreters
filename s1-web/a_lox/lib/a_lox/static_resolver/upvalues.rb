@@ -62,7 +62,7 @@ module ALox
 
           return local if local
 
-          if @enclosing # ? maybe not needed to if
+          if @enclosing
             upvalue_slot, is_local = @enclosing.find_upvalue(name)
 
             if upvalue_slot

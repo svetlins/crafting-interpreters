@@ -240,7 +240,7 @@ module ALox
           fail op.inspect
         end
 
-        print_debug_info(binding) if debug
+        print_debug_info(op) if debug
       end
 
       @stack.pop
@@ -273,16 +273,17 @@ module ALox
       @error_reporter&.report_runtime_error(message)
     end
 
-    def print_debug_info(b)
-      puts b.local_variable_get(:op)
+    def print_debug_info(op)
+      puts "DEBUG: #{op}"
       print_stack
       puts
     end
 
     def print_stack
       puts [
+        "STACK:",
         "[",
-        *@stack.map { |value| value.is_a?(Callable) ? "<#{value.function_name}>" : value },
+        *@stack.map { |value| value.is_a?(Callable) ? "<#{value.function_name}>" : value.inspect }.join(", "),
         "]"
       ].join(" ")
     end

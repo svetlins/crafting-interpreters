@@ -28,7 +28,7 @@ class CompilationEnvironment
 
       throw :error if @errors.any?
 
-      ALox::StaticResolver::Upvalues.new(error_reporter: self).resolve(ast)
+      ALox::StaticResolver.new(error_reporter: self).resolve(ast)
 
       throw :error if @errors.any?
 

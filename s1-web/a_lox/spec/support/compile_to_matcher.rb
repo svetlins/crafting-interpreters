@@ -26,7 +26,7 @@ RSpec::Matchers.define :compile_to do |expected|
     return if @compilation_error
     executable = ALox::ExecutableContainer.new
 
-    ALox::StaticResolver::Upvalues.new(error_reporter: self).resolve(ast)
+    ALox::StaticResolver.new(error_reporter: self).resolve(ast)
     return if @compilation_error
 
     ALox::Compiler.new(ast, executable, error_reporter: self).compile

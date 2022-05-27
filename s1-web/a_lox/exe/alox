@@ -63,7 +63,7 @@ module ALox
 
       return if @had_error
 
-      StaticResolver::Upvalues.new(error_reporter: self).resolve(ast)
+      StaticResolver.new(error_reporter: self).resolve(ast)
 
       return if @had_error
 

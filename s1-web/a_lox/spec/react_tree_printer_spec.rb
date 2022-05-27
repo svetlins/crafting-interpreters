@@ -22,7 +22,7 @@ module ALox
 
       tokens = Scanner.new(source, error_reporter: self).scan
       ast = Parser.new(tokens, error_reporter: self).parse
-      StaticResolver::Upvalues.new.resolve(ast)
+      StaticResolver.new.resolve(ast)
 
       expect do
         Printers::ReactTreePrinter.new(ast).print

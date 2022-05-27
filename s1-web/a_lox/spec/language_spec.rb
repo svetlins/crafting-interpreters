@@ -6,7 +6,7 @@ module ALox
       executable = ExecutableContainer.new
       tokens = Scanner.new(source).scan
       ast = Parser.new(tokens).parse
-      StaticResolver::Upvalues.new.resolve(ast)
+      StaticResolver.new.resolve(ast)
       Compiler.new(ast, executable).compile
 
       stdout = StringIO.new

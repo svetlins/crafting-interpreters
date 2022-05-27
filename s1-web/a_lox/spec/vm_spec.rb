@@ -8,7 +8,7 @@ module ALox
       ast = Parser.new(tokens).parse
       executable = ExecutableContainer.new
 
-      StaticResolver::Upvalues.new.resolve(ast)
+      StaticResolver.new.resolve(ast)
       Compiler.new(ast, executable).compile
 
       stdout = StringIO.new

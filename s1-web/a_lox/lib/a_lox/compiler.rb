@@ -1,6 +1,6 @@
 module ALox
   class Compiler
-    class FunctionDescriptor
+    class CompiledFunction
       attr_reader :arity, :name
 
       def initialize(name, arity, upvalues)
@@ -27,7 +27,7 @@ module ALox
       @statements = statements
       @executable = executable
       @name = name
-      @function = FunctionDescriptor.new(name, arity, upvalues)
+      @function = CompiledFunction.new(name, arity, upvalues)
       @error_reporter = error_reporter
 
       executable.reset_function(name)

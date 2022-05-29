@@ -2,7 +2,7 @@ require "ostruct"
 
 module ALox
   class VM
-    class Callable
+    class Function
       def self.top_level_script
         OpenStruct.new(
           function_name: "__toplevel__",
@@ -12,34 +12,34 @@ module ALox
 
       attr_reader :upvalues
 
-      def initialize(function_descriptor, upvalues)
-        @function_descriptor = function_descriptor
+      def initialize(compiled_function, upvalues)
+        @compiled_function = compiled_function
         @upvalues = upvalues
       end
 
       def function_name
-        @function_descriptor.name
+        @compiled_function.name
       end
 
       def arity
-        @function_descriptor.arity
+        @compiled_function.arity
       end
     end
 
     class CallFrame
-      attr_reader :callable, :stack_top
+      attr_reader :function, :stack_top
 
-      def initialize(executable, stack, callable, stack_top = 0)
+      def initialize(executable, stack, function, stack_top = 0)
         @executable = executable
         @stack = stack
-        @callable = callable
+        @function = function
         @ip = 0
         @stack_top = stack_top
       end
 
       def read_code
         @ip += 1
-        @executable.functions[@callable.function_name][@ip - 1]
+        @executable.functions[@function.function_name][@ip - 1]
       end
 
       def read_short
@@ -100,7 +100,7 @@ module ALox
 
     def execute(executable, out: $stdout, debug: false)
       call_frames = [
-        CallFrame.new(executable, @stack, Callable.top_level_script)
+        CallFrame.new(executable, @stack, Function.top_level_script)
       ]
 
       open_upvalues = []
@@ -120,10 +120,10 @@ module ALox
         when Opcodes::LOAD_CONSTANT
           @stack.push(call_frame.read_constant(call_frame.read_code))
         when Opcodes::LOAD_CLOSURE
-          function_descriptor = call_frame.read_constant(call_frame.read_code)
+          compiled_function = call_frame.read_constant(call_frame.read_code)
 
           upvalues =
-            function_descriptor.upvalue_count.times.map do |upvalue_description|
+            compiled_function.upvalue_count.times.map do |upvalue_description|
               is_local, slot = call_frame.read_code, call_frame.read_code
 
               if is_local == 1
@@ -136,12 +136,12 @@ module ALox
 
                 new_upvalue
               else
-                call_frame.callable.upvalues[slot]
+                call_frame.function.upvalues[slot]
               end
             end
 
           @stack.push(
-            Callable.new(function_descriptor, upvalues)
+            Function.new(compiled_function, upvalues)
           )
         when Opcodes::SET_GLOBAL
           @globals[call_frame.read_constant(call_frame.read_code)] = @stack.last
@@ -156,9 +156,9 @@ module ALox
         when Opcodes::GET_LOCAL
           @stack.push(call_frame.get_stack_slot(call_frame.read_code))
         when Opcodes::GET_UPVALUE
-          @stack.push(call_frame.callable.upvalues[call_frame.read_code].value)
+          @stack.push(call_frame.function.upvalues[call_frame.read_code].value)
         when Opcodes::SET_UPVALUE
-          call_frame.callable.upvalues[call_frame.read_code].set_value(@stack.last)
+          call_frame.function.upvalues[call_frame.read_code].set_value(@stack.last)
         when Opcodes::NIL_OP
           @stack.push(nil)
         when Opcodes::TRUE_OP
@@ -194,21 +194,21 @@ module ALox
           @stack.push(a < b)
         when Opcodes::CALL
           argument_count = call_frame.read_code
-          callable = @stack[-argument_count - 1]
+          function = @stack[-argument_count - 1]
 
-          if callable.is_a? Callable
-            if callable.arity == argument_count
+          if function.is_a? Function
+            if function.arity == argument_count
               call_frames << CallFrame.new(
                 executable,
                 @stack,
-                callable,
+                function,
                 @stack.size - argument_count
               )
             else
-              error("function #{callable.function_name} takes #{callable.arity} arguments but #{argument_count} provided")
+              error("function #{function.function_name} takes #{function.arity} arguments but #{argument_count} provided")
             end
           else
-            error("#{lox_object_to_string(callable)} is not callable")
+            error("#{lox_object_to_string(function)} is not function")
           end
         when Opcodes::RETURN
           result = @stack.pop
@@ -220,7 +220,7 @@ module ALox
 
           call_frames.pop
 
-          @stack[0..-1] = @stack[0...call_frame.stack_top - 1]
+          @stack[0..-1] = @stack[0..call_frame.stack_top - 2]
 
           @stack.push(result)
         when Opcodes::CLOSE_UPVALUE
@@ -259,7 +259,7 @@ module ALox
     end
 
     def lox_object_to_string(lox_object)
-      if lox_object.is_a? Callable
+      if lox_object.is_a? Function
         "fun #{lox_object.function_name}/#{lox_object.arity}"
       elsif lox_object.nil?
         "nil"
@@ -283,7 +283,7 @@ module ALox
       puts [
         "STACK:",
         "[",
-        *@stack.map { |value| value.is_a?(Callable) ? "<#{value.function_name}>" : value.inspect }.join(", "),
+        *@stack.map { |value| value.is_a?(Function) ? "<#{value.function_name}>" : value.inspect }.join(", "),
         "]"
       ].join(" ")
     end

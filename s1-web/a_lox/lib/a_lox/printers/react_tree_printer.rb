@@ -3,6 +3,7 @@ module ALox
     class ReactTreePrinter
       def initialize(statements)
         @statements = statements
+        @function_stack = []
       end
 
       def print
@@ -29,13 +30,19 @@ module ALox
       end
 
       def visit_function_statement(function_statement)
-        {
+        @function_stack << function_statement
+
+        function_node = {
           name: "FUN-DEF",
           attributes: {
             name: "#{function_statement.name.lexeme}(#{function_statement.parameters.map(&:lexeme).join(", ")})"
           },
           children: function_statement.body.map { |statement| statement.accept(self) }
         }
+
+        @function_stack.pop
+
+        function_node
       end
 
       def visit_return_statement(return_statement)
@@ -197,9 +204,12 @@ module ALox
             "stack slot" => node.allocation.slot
           }
         elsif node.allocation.upvalue?
+          upvalue = @function_stack.last.upvalues[node.allocation.slot]
           {
-            allocation: "HEAP",
-            "heap slot" => node.allocation.slot
+            allocation: "UPVALUE",
+            variable_slot: node.allocation.slot,
+            upvalue_slot: upvalue.slot,
+            upvalue_local: upvalue.local,
           }
         end
       end

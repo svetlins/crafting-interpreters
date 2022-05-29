@@ -2,6 +2,7 @@ module ALox
   class StaticResolver
     Variable = Struct.new(:name, :kind, :slot, :depth) do
       attr_accessor :captured
+
       def self.global = new(nil, :global, nil)
       def self.local(name:, slot:, depth:) = new(name, :local, slot, depth)
       def self.upvalue(name:, slot:) = new(name, :upvalue, slot, nil)

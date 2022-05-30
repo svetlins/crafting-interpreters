@@ -34,9 +34,12 @@ module ALox
 
         function_node = {
           name: "FUN-DEF",
-          attributes: {
-            name: "#{function_statement.name.lexeme}(#{function_statement.parameters.map(&:lexeme).join(", ")})"
-          },
+          attributes: output_upvalues(
+            {
+              name: "#{function_statement.name.lexeme}(#{function_statement.parameters.map(&:lexeme).join(", ")})",
+            },
+            function_statement,
+          ),
           children: function_statement.body.map { |statement| statement.accept(self) }
         }
 
@@ -195,12 +198,22 @@ module ALox
         end
       end
 
+      def output_upvalues(attributes, function_statement)
+        if function_statement.upvalues.any?
+          attributes.merge(
+            upvalues: function_statement.upvalues.map { "#{_1.slot}:#{_1.local}" }.join(", ")
+          )
+        else
+          attributes
+        end
+      end
+
       def scope_attributes(node)
         if node.allocation.global?
           {allocation: "GLOBAL"}
         elsif node.allocation.local?
           {
-            allocation: "STACK",
+            :allocation => "STACK",
             "stack slot" => node.allocation.slot
           }
         elsif node.allocation.upvalue?
@@ -209,7 +222,7 @@ module ALox
             allocation: "UPVALUE",
             variable_slot: node.allocation.slot,
             upvalue_slot: upvalue.slot,
-            upvalue_local: upvalue.local,
+            upvalue_local: upvalue.local
           }
         end
       end

@@ -126,6 +126,26 @@ print firstCounter();
 print secondCounter();
     `,
   },
+  {
+    title: "Deep Closure",
+    source: `fun outer() {
+  var x = 1;
+  var y = 2;
+
+  fun inner1() {
+    var z = 3;
+
+    fun inner2() {
+      print x + y + z;
+    }
+
+    return inner2;
+  }
+
+  return inner1;
+}
+    `,
+  },
 ];
 
 export function PresetDropdown({ onChange }) {
